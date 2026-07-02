@@ -26,14 +26,18 @@ const state = {
 const routes = {
   projects: { label: "PRD 项目库", module: "projects", title: "PRD 展示平台" },
   home: { label: "项目首页", module: "home", title: "AI 录单系统" },
+  statistics: { label: "统计", module: "statistics", title: "主工作区" },
+  "decision-screen": { label: "决策大屏", module: "decision", title: "主工作区" },
   "sales-entry": { label: "销售订单录入", module: "sales", title: "销售 Agent" },
   "sales-review": { label: "销售订单审核", module: "sales", title: "销售 Agent" },
   "sales-customers": { label: "客户管理", module: "sales", title: "销售 Agent" },
+  "sales-customer-groups": { label: "客户分组", module: "sales", title: "销售 Agent" },
   "sales-groups": { label: "销售群聊管理", module: "sales", title: "销售 Agent" },
   "purchase-entry": { label: "采购入库单录入", module: "purchase", title: "采购 Agent" },
   "purchase-review": { label: "采购入库单审核", module: "purchase", title: "采购 Agent" },
   "purchase-detail": { label: "采购入库单详情", module: "purchase", title: "采购 Agent" },
   "purchase-suppliers": { label: "供应商管理", module: "purchase", title: "采购 Agent" },
+  "purchase-supplier-groups": { label: "供应商分组", module: "purchase", title: "采购 Agent" },
   "purchase-groups": { label: "采购群聊管理", module: "purchase", title: "采购 Agent" },
   "sales-prompts": { label: "提示词", tabLabel: "销售提示词", module: "sales", title: "销售 Agent" },
   "sales-memory": { label: "AI 记忆", tabLabel: "销售 AI 记忆", module: "sales", title: "销售 Agent" },
@@ -51,6 +55,8 @@ const primaryMenus = [
   { key: "home", label: "首页", icon: "home", module: "home" },
   { key: "sales-entry", label: "销售 Agent", icon: "sales", module: "sales" },
   { key: "purchase-entry", label: "采购 Agent", icon: "purchase", module: "purchase" },
+  { key: "statistics", label: "统计", icon: "stats", module: "statistics" },
+  { key: "decision-screen", label: "决策大屏", icon: "dashboard", module: "decision" },
   { key: "settings", label: "租户设置", icon: "setting", module: "settings" },
 ];
 
@@ -59,6 +65,7 @@ const sideMenus = {
     { key: "sales-entry", label: "订单录入", icon: "edit" },
     { key: "sales-review", label: "订单审核", icon: "review" },
     { key: "sales-customers", label: "客户管理", icon: "customer" },
+    { key: "sales-customer-groups", label: "客户分组", icon: "group" },
     { key: "sales-groups", label: "群聊管理", icon: "group" },
     { key: "sales-prompts", label: "提示词", icon: "prompt" },
     { key: "sales-memory", label: "AI 记忆", icon: "memory" },
@@ -67,6 +74,7 @@ const sideMenus = {
     { key: "purchase-entry", label: "入库录入", icon: "edit" },
     { key: "purchase-review", label: "入库审核", icon: "review" },
     { key: "purchase-suppliers", label: "供应商管理", icon: "supplier" },
+    { key: "purchase-supplier-groups", label: "供应商分组", icon: "group" },
     { key: "purchase-groups", label: "群聊管理", icon: "group" },
     { key: "purchase-prompts", label: "提示词", icon: "prompt" },
     { key: "purchase-memory", label: "AI 记忆", icon: "memory" },
@@ -86,6 +94,8 @@ const iconSvg = {
   group: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8" cy="9" r="3"/><circle cx="17" cy="9" r="3"/><path d="M2.5 20a5.5 5.5 0 0 1 11 0"/><path d="M12.5 20a5 5 0 0 1 8.5-3.5"/></svg>',
   prompt: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 4h14v12H8l-3 3z"/><path d="M8 8h8"/><path d="M8 12h6"/></svg>',
   memory: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 4h8a4 4 0 0 1 4 4v8a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V8a4 4 0 0 1 4-4Z"/><path d="M8 2v4"/><path d="M16 2v4"/><path d="M8 18v4"/><path d="M16 18v4"/><path d="M2 8h4"/><path d="M18 8h4"/><path d="M2 16h4"/><path d="M18 16h4"/><circle cx="12" cy="12" r="3"/></svg>',
+  stats: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19V5"/><path d="M4 19h16"/><path d="M8 16v-5"/><path d="M12 16V8"/><path d="M16 16v-9"/></svg>',
+  dashboard: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 13a8 8 0 1 1 16 0"/><path d="M12 13l4-4"/><path d="M6.5 17h11"/><path d="M9 21h6"/></svg>',
   setting: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.8 1.8 0 0 0 .3 2l.1.1-2.1 2.1-.1-.1a1.8 1.8 0 0 0-2-.3 1.8 1.8 0 0 0-1 1.6V21h-3v-.2a1.8 1.8 0 0 0-1-1.6 1.8 1.8 0 0 0-2 .3l-.1.1-2.1-2.1.1-.1a1.8 1.8 0 0 0 .3-2 1.8 1.8 0 0 0-1.6-1H5v-3h.2a1.8 1.8 0 0 0 1.6-1 1.8 1.8 0 0 0-.3-2l-.1-.1 2.1-2.1.1.1a1.8 1.8 0 0 0 2 .3 1.8 1.8 0 0 0 1-1.6V3h3v.2a1.8 1.8 0 0 0 1 1.6 1.8 1.8 0 0 0 2-.3l.1-.1 2.1 2.1-.1.1a1.8 1.8 0 0 0-.3 2 1.8 1.8 0 0 0 1.6 1h.2v3h-.2a1.8 1.8 0 0 0-1.6 1Z"/></svg>',
 };
 
@@ -133,7 +143,7 @@ const prdProjects = [
     owner: "管理员",
     updated: "2026-07-02",
     desc: "用可交互前端承载销售订单、采购入库、群聊看板、提示词和 AI 记忆等 PRD 内容。",
-    pages: ["首页看板", "销售 Agent", "采购 Agent", "租户设置", "批注面板"],
+    pages: ["首页看板", "统计", "决策大屏", "销售 Agent", "采购 Agent", "批注面板"],
   },
   {
     id: "next-retail",
@@ -195,6 +205,20 @@ let pageAnnotations = {
     business: ["销售与采购 Agent 的入口相互独立，但首页保留全局汇总，适合管理者查看整体处理情况。", "群聊看板默认展示全部，点击销售订单或采购入库单时只看对应业务域。"],
     iteration: ["V0.2 调整群聊看板，去掉业务域列，新增筛选标签和全部汇总入口。"],
   },
+  statistics: {
+    title: "统计",
+    overview: "统计页用于查看操作员绩效，操作员统一包含审核员和录单员，当前原型重点展示提交订单、下单商品、识别率和平均停留等指标。",
+    dev: ["统计页为主工作区一级菜单，路由为 statistics。", "当前数据为静态演示表格，后续可按日期范围、角色和操作员维度接入真实绩效接口。"],
+    business: ["业务方重点确认绩效指标口径是否满足审核员和录单员管理。", "导出 Excel 为前端演示按钮，后续需要明确导出字段和权限。"],
+    iteration: ["新增主工作区统计菜单和操作员绩效页面。"],
+  },
+  "decision-screen": {
+    title: "决策大屏",
+    overview: "决策大屏用于从额度资产、下单类型、异常诊断和操作员效能四个角度总览 AI 录单业务表现。",
+    dev: ["决策大屏为主工作区一级菜单，路由为 decision-screen。", "页面按卡片和表格分区承载静态指标，后续可替换为实时指标接口和图表组件。"],
+    business: ["管理者可通过大屏快速判断额度消耗、订单提交、识别质量和人工纠错情况。", "时间范围控件用于表达今日实时、昨日、近 7 天、近 30 天和自定义查询。"],
+    iteration: ["新增经营决策大屏页面，补充管理层视角。"],
+  },
   "sales-entry": {
     title: "销售订单录入",
     overview: "销售录入页模拟录单员从客户或群聊进入，对文字、图片、Excel、PDF 订单内容进行 AI 识别。",
@@ -225,10 +249,10 @@ let pageAnnotations = {
   },
   "purchase-detail": {
     title: "采购入库单详情",
-    overview: "详情页展示一张采购入库单的原始消息、补充说明和商品明细，适合开发对齐字段级规则。",
-    dev: ["当前 activeDetailId 控制详情数据，明细表格使用静态输入框模拟可编辑状态。", "保存和全部确认入库使用 toast 演示，后续替换为接口提交。"],
-    business: ["入库明细需要逐行确认商品、规格、数量、单位和仓库。", "全部确认入库前，应先处理无法识别或价格异常的行。"],
-    iteration: ["V0.1 完成采购详情结构，后续可补充差异原因和附件下载。"],
+    overview: "详情页展示供应商送货单、AI 识别入库明细、系统采购单据匹配结果和逐行差异校验，帮助入库员在确认入库前完成对账。",
+    dev: ["当前 activeDetailId 控制详情数据，明细表格使用静态输入框模拟可编辑状态。", "新增系统采购单据匹配区、差异汇总和逐行对账表，后续应分别接入采购单查询、自动匹配、人工改派采购单和差异处理接口。", "保存和全部确认入库使用 toast 演示，后续替换为接口提交。"],
+    business: ["入库员先核对供应商送货单与系统采购单是否匹配，再逐行确认商品、数量、单位和仓库。", "数量超出、采购单缺失、商品不一致等差异不得直接全部入库，需要人工确认处理方式。", "允许一张供应商送货单匹配多张系统采购单，系统应展示每张采购单的可入库余额。"],
+    iteration: ["V0.1 完成采购详情结构。", "V0.4 新增系统采购单据匹配、AI 明细与采购单逐行对账、差异汇总和处理建议。"],
   },
   "sales-customers": {
     title: "客户管理",
@@ -237,12 +261,26 @@ let pageAnnotations = {
     business: ["客户绑定群聊后，群聊订单才能正确归属客户。", "SKU 同步数量用于判断客户商品范围是否完整。"],
     iteration: ["V0.1 完成客户列表和搜索能力。"],
   },
+  "sales-customer-groups": {
+    title: "客户分组",
+    overview: "客户分组页用于把审核员与客户、客户群聊建立分组关系，便于销售订单进入对应人员的处理范围。",
+    dev: ["客户分组属于销售 Agent 二级菜单，路由为 sales-customer-groups。", "新建分组弹窗展示审核员、分组名称、群聊和客户选择区，当前为静态前端原型。"],
+    business: ["一个客户分组可以绑定审核员、多个群聊和多个客户。", "客户分组用于明确销售订单审核归属，减少无人处理或重复处理。"],
+    iteration: ["新增销售 Agent 客户分组菜单和新建分组弹窗。"],
+  },
   "purchase-suppliers": {
     title: "供应商管理",
     overview: "供应商管理页展示供应商分类、联系人、绑定群聊、默认仓库和同步状态。",
     dev: ["搜索条件写入 state.filters.purchaseSupplier，和客户管理共用 partyPage 模板。", "供应商字段与客户字段保持同类结构，便于复用表格组件。"],
     business: ["供应商绑定群聊后，群聊入库消息才能自动归属。", "默认仓库帮助 AI 识别缺失仓库信息。"],
     iteration: ["V0.1 完成供应商列表和搜索能力。"],
+  },
+  "purchase-supplier-groups": {
+    title: "供应商分组",
+    overview: "供应商分组页用于把入库员与供应商、供应商群聊建立分组关系，便于采购入库任务进入对应人员的处理范围。",
+    dev: ["供应商分组属于采购 Agent 二级菜单，路由为 purchase-supplier-groups。", "新建分组弹窗展示入库员、分组名称、群聊和供应商选择区，当前为静态前端原型。"],
+    business: ["一个供应商分组可以绑定入库员、多个供应商和多个供应商群聊。", "供应商分组用于明确采购入库审核和入库确认责任人。"],
+    iteration: ["新增采购 Agent 供应商分组菜单和新建分组弹窗。"],
   },
   "sales-groups": {
     title: "销售群聊管理",
@@ -462,6 +500,8 @@ function renderContent() {
   const content = document.getElementById("content");
   if (state.route === "projects") content.innerHTML = projectsPage();
   if (state.route === "home") content.innerHTML = homePage();
+  if (state.route === "statistics") content.innerHTML = statisticsPage();
+  if (state.route === "decision-screen") content.innerHTML = decisionScreenPage();
   if (state.route === "sales-entry") content.innerHTML = entryPage("sales");
   if (state.route === "purchase-entry") content.innerHTML = entryPage("purchase");
   if (state.route === "sales-review") content.innerHTML = reviewPage("sales");
@@ -469,6 +509,8 @@ function renderContent() {
   if (state.route === "purchase-detail") content.innerHTML = purchaseDetailPage();
   if (state.route === "sales-customers") content.innerHTML = partyPage("sales");
   if (state.route === "purchase-suppliers") content.innerHTML = partyPage("purchase");
+  if (state.route === "sales-customer-groups") content.innerHTML = partyGroupPage("sales");
+  if (state.route === "purchase-supplier-groups") content.innerHTML = partyGroupPage("purchase");
   if (state.route === "sales-groups") content.innerHTML = groupsPage("sales");
   if (state.route === "purchase-groups") content.innerHTML = groupsPage("purchase");
   if (state.route === "sales-prompts") content.innerHTML = promptsPage("sales");
@@ -989,7 +1031,7 @@ function homePage() {
             </span>
           </span>
           <span class="agent-menus">
-            <span class="pill blue">订单录入</span><span class="pill blue">订单审核</span><span class="pill">客户管理</span><span class="pill">群聊管理</span><span class="pill">提示词</span><span class="pill">AI 记忆</span>
+            <span class="pill blue">订单录入</span><span class="pill blue">订单审核</span><span class="pill">客户管理</span><span class="pill">客户分组</span><span class="pill">群聊管理</span><span class="pill">提示词</span><span class="pill">AI 记忆</span>
           </span>
         </button>
         <button class="agent-card" data-route="purchase-entry">
@@ -1001,7 +1043,7 @@ function homePage() {
             </span>
           </span>
           <span class="agent-menus">
-            <span class="pill green">入库录入</span><span class="pill green">入库审核</span><span class="pill">供应商管理</span><span class="pill">群聊管理</span><span class="pill">提示词</span><span class="pill">AI 记忆</span>
+            <span class="pill green">入库录入</span><span class="pill green">入库审核</span><span class="pill">供应商管理</span><span class="pill">供应商分组</span><span class="pill">群聊管理</span><span class="pill">提示词</span><span class="pill">AI 记忆</span>
           </span>
         </button>
       </div>
@@ -1052,6 +1094,8 @@ function homePage() {
 
       <div class="section-title"><h2>租户基础公共配置</h2></div>
       <div class="grid two">
+        ${configCard("statistics", "统", "统计", "按操作员查看审核员、录单员绩效，支持日期筛选和导出演示。")}
+        ${configCard("decision-screen", "屏", "决策大屏", "从额度、订单、异常、效能多视角查看 AI 录单业务表现。")}
         ${configCard("settings", "设", "租户设置", "公共参数、租户同步规则、角色身份、成员权限与额度阈值配置。")}
       </div>
     </div>
@@ -1065,6 +1109,146 @@ function configCard(route, icon, title, desc) {
       <span class="agent-menus"><span class="pill blue">租户级配置</span><span class="pill">全局生效</span></span>
     </button>
   `;
+}
+
+function statisticsPage() {
+  const rows = [
+    { name: "张三", role: "审核员", customers: 1, orders: 2, goods: 8, rate: "100%", stay: "141 秒" },
+    { name: "系统管理员", role: "审核员", customers: 2, orders: 2, goods: 2, rate: "100%", stay: "92 秒" },
+    { name: "李娜", role: "录单员", customers: 4, orders: 7, goods: 26, rate: "98%", stay: "78 秒" },
+    { name: "赵倩", role: "录单员", customers: 3, orders: 5, goods: 18, rate: "96%", stay: "113 秒" },
+  ];
+  return `
+    <div class="page wide-page ops-page">
+      <section class="ops-panel">
+        <div class="tabs ops-tabs">
+          <button class="subtab active">审核员绩效</button>
+          <button class="subtab">录单员绩效</button>
+          <button class="subtab">操作员汇总</button>
+        </div>
+      </section>
+
+      <section class="ops-panel">
+        <div class="ops-filter-bar">
+          <strong>操作员绩效</strong>
+          <div class="segmented">
+            <button class="active">今日</button><button>昨日</button><button>本周</button><button>本月</button><button>上月</button>
+          </div>
+          <label class="date-range"><input placeholder="开始日期"><span>→</span><input placeholder="结束日期"></label>
+          <button class="btn export-btn" data-toast="已导出操作员绩效 Excel">导出 Excel</button>
+        </div>
+        <div class="table-scroll">
+          <table class="ops-table">
+            <thead><tr><th>#</th><th>操作员</th><th>角色</th><th class="right">下单客户数</th><th class="right active-sort">提交订单数</th><th class="right">下单商品数</th><th class="right">识别率</th><th class="right">平均停留</th></tr></thead>
+            <tbody>${rows.map((row, index) => `
+              <tr>
+                <td>${index + 1}</td>
+                <td><strong>${row.name}</strong></td>
+                <td><span class="tag blue">${row.role}</span></td>
+                <td class="right">${row.customers}</td>
+                <td class="right">${row.orders}</td>
+                <td class="right">${row.goods}</td>
+                <td class="right"><span class="tag green">${row.rate}</span></td>
+                <td class="right">${row.stay}</td>
+              </tr>
+            `).join("")}</tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  `;
+}
+
+function decisionScreenPage() {
+  const modalityRows = [
+    { title: "纯文本下单", orders: 4, manual: 0, rate: "100%" },
+    { title: "图片下单", orders: 1, manual: 0, rate: "100%" },
+    { title: "文件下单", orders: 0, manual: 0, rate: "-" },
+    { title: "其他类型", orders: 0, manual: 0, rate: "-" },
+  ];
+  const errorRows = [
+    ["d6ef90f3...", "text", "观麦大学", 1, 1, "0 / 1"],
+    ["d456761e...", "text", "观麦大学", 2, 2, "0 / 2"],
+    ["0476729a...", "image", "张三小学第二食堂", 3, 3, "0 / 3"],
+  ];
+  return `
+    <div class="page wide-page decision-page">
+      <div class="decision-head">
+        <div>
+          <h2>${iconSvg.dashboard} 经营决策大屏</h2>
+          <p>从单维看明细到看诊断与管资产，一屏总览 AI 商业价值</p>
+        </div>
+        <div class="decision-range"><span>时间范围</span><button class="active">今日实时</button><button>昨日</button><button>近 7 天</button><button>近 30 天</button><button>自定义</button></div>
+      </div>
+
+      ${decisionSectionTitle("01", "核心指标概览", "资产、经营与降本视角")}
+      <section class="decision-card">
+        <h3>AI 额度资产与消耗</h3>
+        <div class="decision-kpi-grid">
+          ${decisionKpi("剩余可用条数", "99,330", "额度充足", "blue")}
+          ${decisionKpi("累计充值总额度", "101,170", "历史累计", "")}
+          ${decisionKpi("今日提交总条数", "8", "0:00 起统计", "")}
+          ${decisionKpi("今日已消耗条数", "8", "成功扣费", "red")}
+        </div>
+      </section>
+      <div class="decision-mini-grid">
+        ${decisionMiniCard("累计节省工时", "0.0 人/日", "全职接单员", "green")}
+        ${decisionMiniCard("商品识别率", "100.0 %", "商品识别率", "blue")}
+        ${decisionMiniCard("活跃群占比", "1 / 4", "下单群 / 绑定群", "")}
+        ${decisionMiniCard("订单提交数", "5 / 8", "提交 / 生成", "")}
+        ${decisionMiniCard("新增记忆数", "0", "纠错 + 习惯", "blue")}
+      </div>
+
+      ${decisionSectionTitle("02", "多模态分析与趋势", "算法表现视角")}
+      <section class="decision-card">
+        <h3>多模态下单类型分析</h3>
+        <div class="modality-grid">
+          ${modalityRows.map((row) => `
+            <article class="modality-card">
+              <h4>${row.title}</h4>
+              <div><span>接收订单</span><b>${row.orders}</b></div>
+              <div><span>人工干预</span><b class="danger-text">${row.manual}</b></div>
+              <div><span>准确率</span><b class="${row.rate === "100%" ? "primary-text" : "muted"}">${row.rate}</b></div>
+            </article>
+          `).join("")}
+        </div>
+        <div class="blank-chart">单日数据不展示趋势图</div>
+      </section>
+
+      ${decisionSectionTitle("03", "异常诊断", "业务排雷视角")}
+      <div class="grid two">
+        <section class="decision-card"><h3>商品 SKU 纠错榜 Top 5</h3><div class="empty-block">暂无数据</div></section>
+        <section class="decision-card">
+          <h3>错误订单 Top 5</h3>
+          <table><thead><tr><th>订单编码</th><th>下单类型</th><th>门店</th><th class="right">总条目</th><th class="right">正确数</th><th class="right">人工修改/总提交</th></tr></thead>
+          <tbody>${errorRows.map((row) => `<tr><td><code>${row[0]}</code></td><td><span class="tag blue">${row[1]}</span></td><td>${row[2]}</td><td class="right">${row[3]}</td><td class="right">${row[4]}</td><td class="right"><span class="danger-text">${row[5]}</span></td></tr>`).join("")}</tbody></table>
+        </section>
+      </div>
+
+      ${decisionSectionTitle("04", "操作员效能", "内部管理视角")}
+      <section class="decision-card">
+        <h3>操作员效能统计 <span class="muted">标红行：单次停留 &lt; 1 秒，疑似首审</span></h3>
+        <table><thead><tr><th>接单员</th><th class="right">审核订单</th><th class="right">提交订单</th><th class="right">负责群数</th><th class="right">人工纠错</th><th class="right">识别率</th><th class="right">平均停留</th><th>状态</th></tr></thead>
+        <tbody>
+          <tr><td><strong>系统管理员</strong></td><td class="right">1</td><td class="right">1</td><td class="right">0</td><td class="right">0</td><td class="right"><span class="primary-text">100%</span></td><td class="right">141 秒</td><td><span class="tag green">正常</span></td></tr>
+          <tr><td><strong>0623</strong></td><td class="right">4</td><td class="right">4</td><td class="right">16</td><td class="right">0</td><td class="right"><span class="primary-text">100%</span></td><td class="right">770 秒</td><td><span class="tag green">正常</span></td></tr>
+        </tbody></table>
+      </section>
+      <p class="decision-foot">AI 智能订单助手 · 经营决策大屏 V1.0</p>
+    </div>
+  `;
+}
+
+function decisionSectionTitle(index, title, desc) {
+  return `<div class="decision-section-title"><span>${index}</span><h3>${title}</h3><em>${desc}</em></div>`;
+}
+
+function decisionKpi(label, value, desc, tone) {
+  return `<div class="decision-kpi"><span>${label}</span><strong class="${tone ? `${tone}-text` : ""}">${value}</strong><small>${desc}</small></div>`;
+}
+
+function decisionMiniCard(label, value, desc, tone) {
+  return `<article class="decision-mini-card"><span>${label}</span><strong class="${tone ? `${tone}-text` : ""}">${value}</strong><small>${desc}</small></article>`;
 }
 
 function getGroupDomain(group) {
@@ -1294,6 +1478,35 @@ const purchaseDetailItems = [
   { raw: "猪五花 18 件", name: "猪五花", category: "肉禽冻品", qtyBase: "180 kg", priceBase: "23.80 / kg", diff: "0.00", amount: "4284.00", amountNoTax: "3930.28", relatedOrder: "PO-20260701-233" },
 ];
 
+const systemPurchaseOrders = [
+  { id: "PO-20260701-201", supplier: "海盛水产", warehouse: "中心仓", arrival: "2026-07-01 20:00", status: "待入库", items: 2, ordered: "220 件/斤", received: "20 条", available: "80 条、100 斤", matched: true },
+  { id: "PO-20260701-217", supplier: "春田蔬菜基地", warehouse: "中心仓", arrival: "2026-07-01 20:00", status: "部分入库", items: 2, ordered: "620 斤", received: "60 斤", available: "400 斤、220 斤", matched: true },
+  { id: "PO-20260701-233", supplier: "岭南肉禽", warehouse: "冷链仓", arrival: "2026-07-01 21:30", status: "待确认", items: 2, ordered: "480 kg", received: "0 kg", available: "300 kg、180 kg", matched: false },
+];
+
+const purchaseOrderMatchRows = [
+  { raw: "鲈鱼 80 条", aiName: "鲜活鲈鱼", orderName: "鲜活鲈鱼", orderId: "PO-20260701-201", aiQty: "80 条", orderQty: "100 条", received: "20 条", available: "80 条", diff: "一致", suggestion: "可按 AI 数量入库", status: "匹配成功" },
+  { raw: "基围虾 120 斤", aiName: "基围虾", orderName: "基围虾", orderId: "PO-20260701-201", aiQty: "120 斤", orderQty: "100 斤", received: "0 斤", available: "100 斤", diff: "超出 20 斤", suggestion: "按 100 斤入库，超出部分转异常确认", status: "数量超出" },
+  { raw: "云南生菜 400 斤", aiName: "云南生菜", orderName: "云南生菜", orderId: "PO-20260701-217", aiQty: "400 斤", orderQty: "400 斤", received: "0 斤", available: "400 斤", diff: "一致", suggestion: "可按 AI 数量入库", status: "匹配成功" },
+  { raw: "油麦菜 260 斤", aiName: "油麦菜", orderName: "油麦菜", orderId: "PO-20260701-217", aiQty: "260 斤", orderQty: "280 斤", received: "60 斤", available: "220 斤", diff: "超出 40 斤", suggestion: "需入库员确认短缺或拆分入库", status: "需人工确认" },
+  { raw: "鸡腿 30 件", aiName: "冻鸡腿", orderName: "冻鸡腿", orderId: "PO-20260701-233", aiQty: "300 kg", orderQty: "300 kg", received: "0 kg", available: "300 kg", diff: "单位已换算", suggestion: "确认 30 件=300 kg 后可入库", status: "单位换算" },
+  { raw: "猪五花 18 件", aiName: "猪五花", orderName: "未匹配", orderId: "-", aiQty: "180 kg", orderQty: "-", received: "-", available: "-", diff: "采购单缺失", suggestion: "手动选择采购单或转新增采购异常", status: "采购单缺失" },
+];
+
+const purchaseMatchSummary = [
+  { label: "匹配成功", value: 2, tone: "green" },
+  { label: "数量超出", value: 2, tone: "gold" },
+  { label: "单位换算", value: 1, tone: "blue" },
+  { label: "采购单缺失", value: 1, tone: "red" },
+];
+
+function matchStatusClass(status) {
+  if (status === "匹配成功") return "green";
+  if (status === "采购单缺失") return "red";
+  if (status === "数量超出" || status === "需人工确认") return "gold";
+  return "blue";
+}
+
 function purchaseDetailPage() {
   const task = purchaseTasks.find((item) => item.id === state.activeDetailId) || purchaseTasks[0];
   return `
@@ -1344,6 +1557,84 @@ ${task.raw}
             <button class="btn primary" data-toast="采购入库单已全部确认入库">全部确认入库</button>
           </div>
         </div>
+
+        <section class="purchase-group po-match-card">
+          <div class="purchase-group-head">
+            <div><strong>系统采购单据匹配</strong><span class="tag green">已匹配 2 张</span><span class="tag gold">1 张需确认</span></div>
+            <div>
+              <button class="btn" data-toast="已刷新系统采购单据">刷新系统单据</button>
+              <button class="btn" data-toast="已根据供应商、到仓时间和商品重新匹配采购单">自动匹配</button>
+              <button class="btn primary" data-toast="手动选择采购单为后续接口动作">手动选择采购单</button>
+            </div>
+          </div>
+          <div class="po-match-intro">
+            <div>
+              <span class="muted">匹配依据</span>
+              <strong>供应商、群聊归属、预计到仓时间、商品名称/别名、剩余可入库数量</strong>
+            </div>
+            <div>
+              <span class="muted">入库校验结论</span>
+              <strong>4 行可继续处理，2 行需要人工确认后才能全部入库</strong>
+            </div>
+          </div>
+          <div class="po-order-grid">
+            ${systemPurchaseOrders.map((order) => `
+              <article class="po-order-card ${order.matched ? "is-matched" : "is-warning"}">
+                <div class="po-order-top">
+                  <strong>${order.id}</strong>
+                  <span class="tag ${order.matched ? "green" : "gold"}">${order.status}</span>
+                </div>
+                <div class="po-order-meta">
+                  <span>供应商：${order.supplier}</span>
+                  <span>仓库：${order.warehouse}</span>
+                  <span>预计到仓：${order.arrival}</span>
+                  <span>商品数：${order.items}</span>
+                  <span>已入库：${order.received}</span>
+                  <span>可入库：${order.available}</span>
+                </div>
+              </article>
+            `).join("")}
+          </div>
+        </section>
+
+        <section class="purchase-group reconcile-card">
+          <div class="purchase-group-head">
+            <div><strong>AI 入库明细与采购单对账</strong><span class="tag blue">实时校验</span></div>
+            <div><button class="btn" data-toast="差异处理将在真实系统中写入审核记录">批量处理差异</button></div>
+          </div>
+          <div class="reconcile-summary">
+            ${purchaseMatchSummary.map((item) => `
+              <div class="reconcile-stat ${item.tone}">
+                <strong>${item.value}</strong>
+                <span>${item.label}</span>
+              </div>
+            `).join("")}
+          </div>
+          <div class="purchase-table-wrap reconcile-table-wrap">
+            <table class="purchase-detail-table reconcile-table">
+              <thead>
+                <tr><th>送货单识别</th><th>AI 商品</th><th>系统采购商品</th><th>关联采购单</th><th>AI 数量</th><th>采购单数量</th><th>已入库</th><th>本次可入库</th><th>差异</th><th>处理建议</th><th>状态</th></tr>
+              </thead>
+              <tbody>
+                ${purchaseOrderMatchRows.map((item) => `
+                  <tr>
+                    <td>${item.raw}</td>
+                    <td>${item.aiName}</td>
+                    <td>${item.orderName}</td>
+                    <td>${item.orderId === "-" ? `<button class="text-btn" data-toast="请选择对应系统采购单">选择采购单</button>` : item.orderId}</td>
+                    <td>${item.aiQty}</td>
+                    <td>${item.orderQty}</td>
+                    <td>${item.received}</td>
+                    <td>${item.available}</td>
+                    <td>${item.diff}</td>
+                    <td>${item.suggestion}</td>
+                    <td><span class="match-status ${matchStatusClass(item.status)}">${item.status}</span></td>
+                  </tr>
+                `).join("")}
+              </tbody>
+            </table>
+          </div>
+        </section>
 
         <section class="purchase-group">
           <div class="purchase-group-head">
@@ -1433,6 +1724,76 @@ function supplierTable(rows) {
       <thead><tr><th>供应商 ID</th><th>供应商名称</th><th>品类</th><th>联系人</th><th>群绑定</th><th>默认仓库</th><th class="right">已同步 SKU</th></tr></thead>
       <tbody>${rows.map((row) => `<tr><td><code>${row.id}</code></td><td><strong>${row.name}</strong></td><td>${row.category}</td><td>${row.contact}</td><td>${row.groups}</td><td>${row.warehouse}</td><td class="right"><span class="tag green">${row.synced}</span></td></tr>`).join("")}</tbody>
     </table>
+  `;
+}
+
+function partyGroupPage(type) {
+  const isSales = type === "sales";
+  const partyLabel = isSales ? "客户" : "供应商";
+  const ownerLabel = isSales ? "审核员" : "入库员";
+  const modalType = isSales ? "customer-group" : "supplier-group";
+  const rows = isSales ? [
+    { name: "王五的客群", owner: "王五", groups: 1, parties: 0, editable: false },
+    { name: "李四负责客户", owner: "李四", groups: 0, parties: 0, editable: false },
+    { name: "xky_test 客户组", owner: "xky_test", groups: 1, parties: 2, editable: true },
+  ] : [
+    { name: "海鲜供应组", owner: "赵倩", groups: 1, parties: 1, editable: true },
+    { name: "蔬菜入库组", owner: "系统管理员", groups: 1, parties: 2, editable: true },
+    { name: "冻品供应组", owner: "李娜", groups: 0, parties: 1, editable: false },
+  ];
+  return `
+    <div class="page wide-page group-config-page">
+      <section class="table-card group-config-card">
+        <div class="toolbar">
+          <div class="stat-chip">分组总数 <b>${rows.length}</b></div>
+          <button class="btn primary" data-modal="${modalType}">新建分组</button>
+        </div>
+        <div class="table-scroll">
+          <table class="group-config-table">
+            <thead><tr><th>分组名称</th><th>${ownerLabel}</th><th class="right">群聊</th><th class="right">${partyLabel}</th><th>操作</th></tr></thead>
+            <tbody>${rows.map((row) => `
+              <tr>
+                <td><strong>${row.name}</strong></td>
+                <td><span class="tag purple">${row.owner}</span></td>
+                <td class="right"><span class="count-badge blue">${row.groups}</span></td>
+                <td class="right"><span class="count-badge green">${row.parties}</span></td>
+                <td>${row.editable ? `<button class="text-btn" data-modal="${modalType}">编辑</button><button class="text-btn danger-text" data-toast="演示环境未实际删除">删除</button>` : `<button class="text-btn" data-toast="已打开分组详情">查看</button>`}</td>
+              </tr>
+            `).join("")}</tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  `;
+}
+
+function groupBindingModal(type) {
+  const isSales = type === "customer-group";
+  const partyLabel = isSales ? "客户" : "供应商";
+  const ownerLabel = isSales ? "审核员" : "入库员";
+  const partyRows = isSales ? customers : suppliers;
+  const groupRows = groups.filter((group) => isSales ? group.purchaseBound === "-" : group.purchaseBound !== "-");
+  return `
+    <div class="group-modal-form">
+      <label class="field"><span>${ownerLabel}</span><select><option>选择${ownerLabel}（操作员）</option><option>系统管理员</option><option>李娜</option><option>赵倩</option><option>xky_test</option></select></label>
+      <label class="field"><span>分组名称</span><input placeholder="输入分组名称"></label>
+      <div class="group-modal-grid">
+        ${groupPickPanel("群聊", groupRows.map((item) => item.name), `搜索并添加群聊...`)}
+        ${groupPickPanel(partyLabel, partyRows.map((item) => item.name), `搜索并添加${partyLabel}...`, isSales ? "不使用群聊录单的客户" : "不使用群聊入库的供应商")}
+      </div>
+    </div>
+  `;
+}
+
+function groupPickPanel(title, rows, placeholder, desc = "") {
+  return `
+    <section class="group-pick-panel">
+      <div class="group-pick-title"><strong>${title} (0)</strong>${desc ? `<span>${desc}</span>` : ""}</div>
+      <div class="group-pick-list">
+        ${rows.slice(0, 4).map((row) => `<label><input type="checkbox"> ${row}</label>`).join("")}
+      </div>
+      <label class="select-like"><input placeholder="${placeholder}"><span>⌄</span></label>
+    </section>
   `;
 }
 
@@ -1690,6 +2051,10 @@ function wirePageInteractions() {
   document.querySelectorAll("[data-modal]").forEach((button) => {
     button.onclick = () => {
       const type = button.dataset.modal;
+      if (type === "customer-group" || type === "supplier-group") {
+        openModal(type === "customer-group" ? "新建客户分组" : "新建供应商分组", groupBindingModal(type), { wide: true });
+        return;
+      }
       const title = type === "prompt" ? "编辑 Prompt 模板" : type === "operator" ? "新增成员" : "AI 记忆详情";
       openModal(title, type === "operator" ? operatorModal() : type === "prompt" ? promptModal() : memoryModal());
     };
