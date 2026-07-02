@@ -7,6 +7,7 @@ const state = {
   promptTab: "customer",
   settingsTab: "roles",
   reviewTab: "list",
+  groupBoardFilter: "all",
   filters: {
     salesCustomer: "",
     purchaseSupplier: "",
@@ -26,34 +27,41 @@ const routes = {
   "purchase-detail": { label: "采购入库单详情", module: "purchase", title: "采购 Agent" },
   "purchase-suppliers": { label: "供应商管理", module: "purchase", title: "采购 Agent" },
   "purchase-groups": { label: "采购群聊管理", module: "purchase", title: "采购 Agent" },
-  prompts: { label: "提示词", module: "ai", title: "AI 公共配置" },
-  memory: { label: "AI 记忆", module: "ai", title: "AI 公共配置" },
-  settings: { label: "设置", module: "ai", title: "AI 公共配置" },
+  "sales-prompts": { label: "提示词", tabLabel: "销售提示词", module: "sales", title: "销售 Agent" },
+  "sales-memory": { label: "AI 记忆", tabLabel: "销售 AI 记忆", module: "sales", title: "销售 Agent" },
+  "purchase-prompts": { label: "提示词", tabLabel: "采购提示词", module: "purchase", title: "采购 Agent" },
+  "purchase-memory": { label: "AI 记忆", tabLabel: "采购 AI 记忆", module: "purchase", title: "采购 Agent" },
+  settings: { label: "租户设置", module: "settings", title: "租户公共设置" },
 };
 
+const routeAliases = {
+  prompts: "sales-prompts",
+  memory: "sales-memory",
+};
+
+const primaryMenus = [
+  { key: "home", label: "首页", icon: "home", module: "home" },
+  { key: "sales-entry", label: "销售 Agent", icon: "sales", module: "sales" },
+  { key: "purchase-entry", label: "采购 Agent", icon: "purchase", module: "purchase" },
+  { key: "settings", label: "租户设置", icon: "setting", module: "settings" },
+];
+
 const sideMenus = {
-  home: [
-    { key: "home", label: "首页", icon: "home" },
-    { key: "sales-entry", label: "销售 Agent", icon: "sales" },
-    { key: "purchase-entry", label: "采购 Agent", icon: "purchase" },
-    { key: "prompts", label: "AI 配置", icon: "config" },
-  ],
   sales: [
     { key: "sales-entry", label: "订单录入", icon: "edit" },
     { key: "sales-review", label: "订单审核", icon: "review" },
     { key: "sales-customers", label: "客户管理", icon: "customer" },
     { key: "sales-groups", label: "群聊管理", icon: "group" },
+    { key: "sales-prompts", label: "提示词", icon: "prompt" },
+    { key: "sales-memory", label: "AI 记忆", icon: "memory" },
   ],
   purchase: [
-    { key: "purchase-entry", label: "订单录入", icon: "edit" },
-    { key: "purchase-review", label: "订单审核", icon: "review" },
+    { key: "purchase-entry", label: "入库录入", icon: "edit" },
+    { key: "purchase-review", label: "入库审核", icon: "review" },
     { key: "purchase-suppliers", label: "供应商管理", icon: "supplier" },
     { key: "purchase-groups", label: "群聊管理", icon: "group" },
-  ],
-  ai: [
-    { key: "prompts", label: "提示词", icon: "prompt" },
-    { key: "memory", label: "AI 记忆", icon: "memory" },
-    { key: "settings", label: "设置", icon: "setting" },
+    { key: "purchase-prompts", label: "提示词", icon: "prompt" },
+    { key: "purchase-memory", label: "AI 记忆", icon: "memory" },
   ],
 };
 
@@ -125,6 +133,7 @@ function routeTo(key) {
 
 function getRouteFromHash() {
   const key = window.location.hash.replace(/^#/, "");
+  if (routeAliases[key]) return routeAliases[key];
   return routes[key] ? key : "home";
 }
 
@@ -141,7 +150,7 @@ function render() {
 
 function ensureTab(key) {
   if (state.tabs.some((tab) => tab.key === key)) return;
-  state.tabs.push({ key, label: routes[key].label, isHome: key === "home" });
+  state.tabs.push({ key, label: routes[key].tabLabel || routes[key].label, isHome: key === "home" });
 }
 
 function bindRouteButtons(root = document) {
@@ -152,28 +161,45 @@ function bindRouteButtons(root = document) {
 
 function renderSideMenu() {
   const route = routes[state.route];
-  const menu = sideMenus[route.module] || sideMenus.home;
   const activeKey = state.route === "purchase-detail" ? "purchase-review" : state.route;
-  document.getElementById("sideMenu").innerHTML = menu.map((item) => `
-    <button class="side-item ${item.key === activeKey ? "active" : ""}" data-route="${item.key}" title="${item.label}" aria-label="${item.label}">
-      <span class="side-icon" aria-hidden="true">${iconSvg[item.icon] || iconSvg.home}</span>
-      <span class="side-label">${item.label}</span>
-    </button>
-  `).join("");
+  const moduleTitle = route.module === "sales" ? "销售 Agent" : route.module === "purchase" ? "采购 Agent" : "";
+  const primaryHtml = `
+    <div class="side-group">
+      <div class="side-section">主工作区</div>
+      ${primaryMenus.map((item) => `
+        <button class="side-item side-primary ${item.module === route.module ? "active" : ""}" data-route="${item.key}" title="${item.label}" aria-label="${item.label}">
+          <span class="side-icon" aria-hidden="true">${iconSvg[item.icon] || iconSvg.home}</span>
+          <span class="side-label">${item.label}</span>
+        </button>
+      `).join("")}
+    </div>
+  `;
+  const menu = sideMenus[route.module] || [];
+  const moduleHtml = menu.length ? `
+    <div class="side-group side-subgroup">
+      <div class="side-section">${moduleTitle}</div>
+      ${menu.map((item) => `
+        <button class="side-item side-subitem ${item.key === activeKey ? "active" : ""}" data-route="${item.key}" title="${item.label}" aria-label="${item.label}">
+          <span class="side-icon" aria-hidden="true">${iconSvg[item.icon] || iconSvg.home}</span>
+          <span class="side-label">${item.label}</span>
+        </button>
+      `).join("")}
+    </div>
+  ` : "";
+  document.getElementById("sideMenu").innerHTML = primaryHtml + moduleHtml;
+}
+
+function routeBreadcrumb(route) {
+  if (route.module === "home") return route.title;
+  return `${route.title} / ${route.label}`;
 }
 
 function renderTopbar() {
   const route = routes[state.route];
-  const isEntry = state.route === "sales-entry" || state.route === "purchase-entry" || state.route === "purchase-detail";
-  document.querySelector(".tenant strong").textContent = isEntry ? "AI录单测试站点" : "观麦演示租户";
-  document.querySelector(".user-name").textContent = isEntry ? "系统管理员" : "管理员 王明";
-  document.querySelector(".top-actions .text-btn.muted").textContent = isEntry ? "⟳" : "退出";
-  document.getElementById("moduleHint").textContent = route.title;
-  document.querySelectorAll(".top-actions [data-route]").forEach((button) => {
-    const target = button.dataset.route;
-    const targetModule = routes[target]?.module;
-    button.classList.toggle("active", target === state.route || targetModule === route.module && target !== "home");
-  });
+  document.querySelector(".tenant strong").textContent = "观麦演示租户";
+  document.querySelector(".user-name").textContent = "管理员 王明";
+  document.querySelector(".top-actions .text-btn.muted").textContent = "退出";
+  document.getElementById("moduleHint").textContent = routeBreadcrumb(route);
 }
 
 function renderTabs() {
@@ -213,8 +239,10 @@ function renderContent() {
   if (state.route === "purchase-suppliers") content.innerHTML = partyPage("purchase");
   if (state.route === "sales-groups") content.innerHTML = groupsPage("sales");
   if (state.route === "purchase-groups") content.innerHTML = groupsPage("purchase");
-  if (state.route === "prompts") content.innerHTML = promptsPage();
-  if (state.route === "memory") content.innerHTML = memoryPage();
+  if (state.route === "sales-prompts") content.innerHTML = promptsPage("sales");
+  if (state.route === "sales-memory") content.innerHTML = memoryPage("sales");
+  if (state.route === "purchase-prompts") content.innerHTML = promptsPage("purchase");
+  if (state.route === "purchase-memory") content.innerHTML = memoryPage("purchase");
   if (state.route === "settings") content.innerHTML = settingsPage();
   wirePageInteractions();
 }
@@ -224,7 +252,7 @@ function homePage() {
     <div class="page">
       <section class="banner">
         <h1>晚上好，观麦演示租户</h1>
-        <p>2026年07月01日 星期三。首页作为唯一总入口，聚合双 Agent、全局看板与 AI 公共配置。</p>
+        <p>2026年07月01日 星期三。首页聚合双 Agent、全局看板与租户公共设置，提示词和 AI 记忆在各 Agent 内独立维护。</p>
       </section>
 
       <div class="section-title"><h2>业务入口</h2></div>
@@ -238,7 +266,7 @@ function homePage() {
             </span>
           </span>
           <span class="agent-menus">
-            <span class="pill blue">订单录入</span><span class="pill blue">订单审核</span><span class="pill">客户管理</span><span class="pill">群聊管理</span>
+            <span class="pill blue">订单录入</span><span class="pill blue">订单审核</span><span class="pill">客户管理</span><span class="pill">群聊管理</span><span class="pill">提示词</span><span class="pill">AI 记忆</span>
           </span>
         </button>
         <button class="agent-card" data-route="purchase-entry">
@@ -250,7 +278,7 @@ function homePage() {
             </span>
           </span>
           <span class="agent-menus">
-            <span class="pill green">订单录入</span><span class="pill green">订单审核</span><span class="pill">供应商管理</span><span class="pill">群聊管理</span>
+            <span class="pill green">入库录入</span><span class="pill green">入库审核</span><span class="pill">供应商管理</span><span class="pill">群聊管理</span><span class="pill">提示词</span><span class="pill">AI 记忆</span>
           </span>
         </button>
       </div>
@@ -283,20 +311,24 @@ function homePage() {
       </div>
 
       <section class="table-card">
+        <div class="group-board-tabs">
+          <button class="group-board-tab ${state.groupBoardFilter === "sales" ? "active" : ""}" data-group-board-filter="sales">销售订单</button>
+          <button class="group-board-tab ${state.groupBoardFilter === "purchase" ? "active" : ""}" data-group-board-filter="purchase">采购入库单</button>
+        </div>
         <div class="toolbar">
           <strong>群聊看板</strong>
-          <span class="muted">跨销售、采购渠道汇总展示</span>
+          <span class="group-board-summary">
+            <button class="group-board-all ${state.groupBoardFilter === "all" ? "active" : ""}" data-group-board-filter="all">全部</button>
+          </span>
         </div>
         <div class="table-scroll">
           ${groupBoardTable()}
         </div>
       </section>
 
-      <div class="section-title"><h2>AI 基础公共配置</h2></div>
-      <div class="grid three">
-        ${configCard("prompts", "词", "提示词", "AI 录单话术模板、客户专属规则、系统领域知识统一配置。")}
-        ${configCard("memory", "忆", "AI 记忆", "对话上下文、修正记忆、下单习惯统一管理，双 Agent 共享。")}
-        ${configCard("settings", "设", "设置", "公共参数、租户同步规则、角色身份与额度阈值配置。")}
+      <div class="section-title"><h2>租户基础公共配置</h2></div>
+      <div class="grid two">
+        ${configCard("settings", "设", "租户设置", "公共参数、租户同步规则、角色身份、成员权限与额度阈值配置。")}
       </div>
     </div>
   `;
@@ -306,17 +338,25 @@ function configCard(route, icon, title, desc) {
   return `
     <button class="agent-card" data-route="${route}">
       <span class="agent-head"><span class="app-icon config-grad">${icon}</span><span><h3>${title}</h3><p>${desc}</p></span></span>
-      <span class="agent-menus"><span class="pill blue">公共配置</span><span class="pill">双 Agent 共享</span></span>
+      <span class="agent-menus"><span class="pill blue">租户级配置</span><span class="pill">全局生效</span></span>
     </button>
   `;
 }
 
+function getGroupDomain(group) {
+  return group.purchaseBound === "-" ? "sales" : "purchase";
+}
+
 function groupBoardTable() {
+  const rows = state.groupBoardFilter === "all"
+    ? groups
+    : groups.filter((group) => getGroupDomain(group) === state.groupBoardFilter);
+
   return `
     <table>
-      <thead><tr><th>群聊名称</th><th>业务域</th><th class="right">待处理</th><th class="right">已完成</th><th>机器人</th></tr></thead>
+      <thead><tr><th>群聊名称</th><th class="right">待处理</th><th class="right">已完成</th><th>机器人</th></tr></thead>
       <tbody>
-        ${groups.map((g) => `<tr><td><strong>${g.name}</strong></td><td>${g.purchaseBound === "-" ? "销售" : "采购"}</td><td class="right"><span class="tag gold">${g.pending}</span></td><td class="right">${12 - g.pending}</td><td>${g.bot}</td></tr>`).join("")}
+        ${rows.map((g) => `<tr><td><strong>${g.name}</strong></td><td class="right"><span class="tag gold">${g.pending}</span></td><td class="right">${12 - g.pending}</td><td>${g.bot}</td></tr>`).join("")}
       </tbody>
     </table>
   `;
@@ -695,33 +735,40 @@ function groupsPage(type) {
   `;
 }
 
-function promptsPage() {
+function promptsPage(type) {
+  const isSales = type === "sales";
   return `
     <div class="page wide-page">
       <section class="table-card">
         <div class="tabs">
-          <button class="subtab ${state.promptTab === "customer" ? "active" : ""}" data-prompt-tab="customer">客户提示词</button>
-          <button class="subtab ${state.promptTab === "system" ? "active" : ""}" data-prompt-tab="system">系统提示词</button>
+          <button class="subtab ${state.promptTab === "customer" ? "active" : ""}" data-prompt-tab="customer">${isSales ? "客户提示词" : "供应商提示词"}</button>
+          <button class="subtab ${state.promptTab === "system" ? "active" : ""}" data-prompt-tab="system">Agent 提示词</button>
         </div>
-        ${state.promptTab === "customer" ? promptCustomerTab() : promptSystemTab()}
+        ${state.promptTab === "customer" ? promptCustomerTab(type) : promptSystemTab(type)}
       </section>
     </div>
   `;
 }
 
-function promptCustomerTab() {
+function promptCustomerTab(type) {
+  const isSales = type === "sales";
+  const partyLabel = isSales ? "客户" : "供应商";
+  const defaultTarget = isSales ? "全部客户" : "全部供应商";
+  const specialName = isSales ? "天河鲜食店特殊规则" : "海盛水产入库规则";
+  const specialTarget = isSales ? "天河鲜食店" : "海盛水产";
+  const preview = isSales ? "“大白”按大白菜识别，备注保留原文..." : "“今晚到”默认入中心仓，鱼类按条解析...";
   return `
     <div style="margin-top:16px">
       <div class="toolbar">
         <div class="stat-strip" style="margin:0"><span>总模板 <b>4</b></span></div>
-        <div><label class="field compact"><input placeholder="搜索客户名称或 ID"></label><button class="btn primary" data-modal="prompt">新建模板</button></div>
+        <div><label class="field compact"><input placeholder="搜索${partyLabel}名称或 ID"></label><button class="btn primary" data-modal="prompt">新建模板</button></div>
       </div>
       <div class="table-scroll" style="margin-top:12px">
         <table>
-          <thead><tr><th>模板名称</th><th>类型</th><th>绑定客户</th><th>状态</th><th>Prompt 预览</th><th>更新时间</th><th>操作</th></tr></thead>
+          <thead><tr><th>模板名称</th><th>类型</th><th>绑定${partyLabel}</th><th>状态</th><th>Prompt 预览</th><th>更新时间</th><th>操作</th></tr></thead>
           <tbody>
-            <tr><td><strong>默认订单解析模板</strong></td><td><span class="tag blue">订单解析</span></td><td>全部客户</td><td><span class="tag green">启用</span></td><td>识别客户消息中的商品、数量、单位、配送日期...</td><td>2026-07-01 09:20</td><td><button class="text-btn" data-modal="prompt">编辑</button></td></tr>
-            <tr><td><strong>天河鲜食店特殊规则</strong></td><td><span class="tag blue">订单解析</span></td><td>天河鲜食店</td><td><span class="tag green">启用</span></td><td>“大白”按大白菜识别，备注保留原文...</td><td>2026-06-28 18:10</td><td><button class="text-btn" data-modal="prompt">编辑</button></td></tr>
+            <tr><td><strong>默认${isSales ? "订单" : "入库"}解析模板</strong></td><td><span class="tag blue">${isSales ? "订单解析" : "入库解析"}</span></td><td>${defaultTarget}</td><td><span class="tag green">启用</span></td><td>识别${partyLabel}消息中的商品、数量、单位、${isSales ? "配送日期" : "入库仓库"}...</td><td>2026-07-01 09:20</td><td><button class="text-btn" data-modal="prompt">编辑</button></td></tr>
+            <tr><td><strong>${specialName}</strong></td><td><span class="tag blue">${isSales ? "订单解析" : "入库解析"}</span></td><td>${specialTarget}</td><td><span class="tag green">启用</span></td><td>${preview}</td><td>2026-06-28 18:10</td><td><button class="text-btn" data-modal="prompt">编辑</button></td></tr>
           </tbody>
         </table>
       </div>
@@ -729,35 +776,44 @@ function promptCustomerTab() {
   `;
 }
 
-function promptSystemTab() {
+function promptSystemTab(type) {
+  const isSales = type === "sales";
   return `
     <div style="margin-top:16px">
-      <p class="muted">系统级提示词对销售、采购两类 Agent 统一生效，用于维护商品别名、品类术语、入库/下单通用规则。</p>
+      <p class="muted">${isSales ? "销售 Agent 提示词仅影响销售订单录入、审核与客户规则。" : "采购 Agent 提示词仅影响采购入库录入、审核与供应商规则。"}</p>
       <textarea style="min-height:320px;font-family:Consolas,monospace"># 商品别名
 - 小番茄 / 圣女果 / 千禧果 → 圣女果
 - 大白 → 大白菜
 
-# 采购入库规则
-- 供应商消息中的“件”优先按入库包装规格解析
-- 未明确仓库时使用供应商默认仓库</textarea>
-      <div style="text-align:right;margin-top:12px"><button class="btn">重置</button><button class="btn primary" data-toast="系统提示词已保存">保存</button></div>
+# ${isSales ? "销售订单规则" : "采购入库规则"}
+- ${isSales ? "客户消息中的“明早送”默认解析为次日配送" : "供应商消息中的“件”优先按入库包装规格解析"}
+- ${isSales ? "无法确认客户时进入人工审核，不自动创建新客户" : "未明确仓库时使用供应商默认仓库"}</textarea>
+      <div style="text-align:right;margin-top:12px"><button class="btn">重置</button><button class="btn primary" data-toast="Agent 提示词已保存">保存</button></div>
     </div>
   `;
 }
 
-function memoryPage() {
+function memoryPage(type) {
+  const isSales = type === "sales";
+  const rows = isSales ? [
+    ["修正记忆", "gold", "天河鲜食店", "小番茄", "圣女果", 23, "2026-07-01 10:12"],
+    ["下单习惯", "blue", "江北食堂", "白菜一筐", "大白菜 30斤，备注按筐", 17, "2026-06-30 16:41"],
+    ["群级记忆", "green", "华南餐饮订货群", "明早送", "默认配送日期为次日", 12, "2026-07-01 08:33"],
+  ] : [
+    ["修正记忆", "gold", "海盛水产", "基围虾 120 斤", "基围虾 120 斤，入中心仓", 19, "2026-07-01 09:42"],
+    ["入库习惯", "blue", "春田蔬菜基地", "油麦菜 260", "油麦菜 260 斤，默认一号冷库", 14, "2026-06-30 16:18"],
+    ["群级记忆", "green", "海鲜供应商对接群", "今晚到", "默认入库日期为当日", 9, "2026-07-01 08:33"],
+  ];
   return `
     <div class="page wide-page">
       <section class="table-card">
-        <div class="toolbar"><strong>AI 记忆</strong><button class="btn" data-toast="记忆列表已刷新">刷新</button></div>
-        <div class="stat-strip"><span>修正记忆 <b>128</b></span><span class="divider">|</span><span>下单习惯 <b>56</b></span><span class="divider">|</span><span>群级记忆 <b>18</b></span></div>
+        <div class="toolbar"><strong>${isSales ? "销售 Agent AI 记忆" : "采购 Agent AI 记忆"}</strong><button class="btn" data-toast="记忆列表已刷新">刷新</button></div>
+        <div class="stat-strip"><span>修正记忆 <b>${isSales ? 78 : 50}</b></span><span class="divider">|</span><span>${isSales ? "下单习惯" : "入库习惯"} <b>${isSales ? 34 : 22}</b></span><span class="divider">|</span><span>群级记忆 <b>${isSales ? 11 : 7}</b></span></div>
         <div class="table-scroll">
           <table>
             <thead><tr><th>记忆类型</th><th>业务对象</th><th>命中内容</th><th>修正为</th><th class="right">命中次数</th><th>最近更新</th><th>操作</th></tr></thead>
             <tbody>
-              <tr><td><span class="tag gold">修正记忆</span></td><td>天河鲜食店</td><td>小番茄</td><td>圣女果</td><td class="right">23</td><td>2026-07-01 10:12</td><td><button class="text-btn" data-modal="memory">查看</button></td></tr>
-              <tr><td><span class="tag blue">下单习惯</span></td><td>江北食堂</td><td>白菜一筐</td><td>大白菜 30斤，备注按筐</td><td class="right">17</td><td>2026-06-30 16:41</td><td><button class="text-btn" data-modal="memory">查看</button></td></tr>
-              <tr><td><span class="tag green">群级记忆</span></td><td>海鲜供应商对接群</td><td>今晚到</td><td>默认入库日期为当日</td><td class="right">9</td><td>2026-07-01 08:33</td><td><button class="text-btn" data-modal="memory">查看</button></td></tr>
+              ${rows.map((row) => `<tr><td><span class="tag ${row[1]}">${row[0]}</span></td><td>${row[2]}</td><td>${row[3]}</td><td>${row[4]}</td><td class="right">${row[5]}</td><td>${row[6]}</td><td><button class="text-btn" data-modal="memory">查看</button></td></tr>`).join("")}
             </tbody>
           </table>
         </div>
@@ -786,7 +842,7 @@ function settingsPage() {
 function roleSettings() {
   return `
     <div style="margin-top:16px" class="grid two">
-      <div class="card"><h3>管理员</h3><p>可访问首页、销售 Agent、采购 Agent、AI 公共配置、租户同步规则与成员管理。</p><div class="agent-menus"><span class="pill blue">全功能访问</span><span class="pill">配置管理</span></div></div>
+      <div class="card"><h3>管理员</h3><p>可访问首页、销售 Agent、采购 Agent、租户公共设置，以及各 Agent 内部的提示词和记忆配置。</p><div class="agent-menus"><span class="pill blue">全功能访问</span><span class="pill">配置管理</span></div></div>
       <div class="card"><h3>普通成员</h3><p>拥有基础录单和审核操作权限。身份标签仅用于展示和业务分组，现阶段不做细粒度权限拦截。</p><div class="agent-menus"><span class="pill green">基础录单</span><span class="pill">身份标签</span></div></div>
     </div>
   `;
@@ -889,6 +945,12 @@ function wirePageInteractions() {
       renderContent();
     };
   });
+  document.querySelectorAll("[data-group-board-filter]").forEach((button) => {
+    button.onclick = () => {
+      state.groupBoardFilter = button.dataset.groupBoardFilter;
+      renderContent();
+    };
+  });
   document.querySelectorAll("[data-prompt-tab]").forEach((button) => {
     button.onclick = () => {
       state.promptTab = button.dataset.promptTab;
@@ -942,7 +1004,7 @@ function promptModal() {
 function memoryModal() {
   return `
     <p><strong>记忆来源：</strong>人工审核修正</p>
-    <p><strong>业务范围：</strong>租户共享，销售/采购 Agent 可复用</p>
+    <p><strong>业务范围：</strong>当前 Agent 内部生效</p>
     <textarea style="min-height:180px">小番茄 → 圣女果
 白菜一筐 → 大白菜 30斤，备注按筐
 今晚到 → 默认入库日期为当日</textarea>
