@@ -181,6 +181,20 @@ button {
   flex-direction: column;
 }
 
+.main-workspace {
+  min-height: 0;
+  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+}
+
+.canvas-column {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
 .topbar {
   height: 56px;
   padding: 0 20px;
@@ -216,6 +230,26 @@ button {
   white-space: nowrap;
   min-width: 0;
   overflow-x: auto;
+}
+
+body.project-mode .app-shell {
+  display: block;
+}
+
+body.project-mode .sider {
+  display: none;
+}
+
+body.project-mode .main {
+  min-height: 100vh;
+}
+
+body.project-mode .top-actions {
+  display: none;
+}
+
+body.project-mode .content {
+  margin: 12px 4px;
 }
 
 .user-name {
@@ -331,6 +365,125 @@ button {
   gap: 16px;
   width: 100%;
   max-width: none;
+}
+
+.prd-hero {
+  min-height: 176px;
+  border-radius: 8px;
+  padding: 28px 32px;
+  color: #10233f;
+  background:
+    linear-gradient(135deg, rgba(22, 119, 255, 0.14), rgba(82, 196, 26, 0.12)),
+    #fff;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
+  gap: 24px;
+  align-items: center;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+.prd-hero h1 {
+  margin: 12px 0 8px;
+  font-size: 26px;
+  line-height: 34px;
+  letter-spacing: 0;
+}
+
+.prd-hero p {
+  max-width: 720px;
+  margin: 0;
+  color: var(--secondary);
+  line-height: 1.7;
+}
+
+.prd-hero-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.prd-hero-stats div {
+  min-height: 82px;
+  border: 1px solid rgba(22, 119, 255, 0.12);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.62);
+  display: grid;
+  place-items: center;
+  text-align: center;
+}
+
+.prd-hero-stats strong,
+.prd-hero-stats span {
+  display: block;
+}
+
+.prd-hero-stats strong {
+  color: var(--primary-strong);
+  font-size: 24px;
+  line-height: 28px;
+}
+
+.prd-hero-stats span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.prd-project-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.prd-project-card {
+  min-height: 310px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 20px;
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+}
+
+.prd-project-card:hover {
+  border-color: #91caff;
+  box-shadow: 0 6px 18px rgba(22, 119, 255, 0.12);
+}
+
+.prd-project-top,
+.prd-project-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.prd-project-card h3 {
+  margin: 18px 0 6px;
+  font-size: 17px;
+}
+
+.prd-project-card p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.prd-project-meta {
+  margin-top: 14px;
+  display: grid;
+  gap: 6px;
+  color: var(--secondary);
+  font-size: 12px;
+}
+
+.prd-project-meta b {
+  color: var(--text);
+}
+
+.prd-project-actions {
+  margin-top: auto;
+  padding-top: 18px;
 }
 
 .wide-page {
@@ -604,6 +757,331 @@ button {
 .table-card {
   padding: 12px 16px;
   overflow: hidden;
+}
+
+.annotation-panel {
+  min-width: 0;
+  width: min(380px, calc(100vw - 24px));
+  height: calc(100vh - 56px);
+  position: fixed;
+  right: 0;
+  top: 56px;
+  border-left: 1px solid var(--line);
+  background: #fff;
+  overflow: auto;
+  box-shadow: -12px 0 32px rgba(0, 0, 0, 0.12);
+  transform: translateX(100%);
+  transition: transform 0.18s ease;
+  z-index: 20;
+}
+
+.annotation-panel.is-editing {
+  width: min(860px, calc(100vw - 32px));
+}
+
+body.annotation-open .annotation-panel {
+  transform: translateX(0);
+}
+
+body.project-mode .annotation-panel {
+  display: none;
+}
+
+.annotation-head {
+  min-height: 78px;
+  padding: 16px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.annotation-head strong,
+.annotation-head span {
+  display: block;
+}
+
+.annotation-head strong {
+  margin-top: 4px;
+  font-size: 16px;
+  line-height: 22px;
+}
+
+.annotation-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.annotation-tabs {
+  padding: 10px 12px 0;
+  border-bottom: 1px solid var(--line);
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.annotation-tabs button {
+  height: 34px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--secondary);
+}
+
+.annotation-tabs button.active {
+  color: var(--primary-strong);
+  border-bottom-color: var(--primary-strong);
+  font-weight: 600;
+}
+
+.annotation-body {
+  padding: 16px;
+}
+
+.annotation-panel.is-editing .annotation-body {
+  padding: 20px;
+}
+
+.annotation-section + .annotation-section {
+  margin-top: 18px;
+}
+
+.annotation-section h3 {
+  margin: 0 0 8px;
+  font-size: 14px;
+  line-height: 22px;
+}
+
+.annotation-section p {
+  margin: 0;
+  color: var(--secondary);
+  line-height: 1.7;
+}
+
+.annotation-section ul,
+.timeline-item ul {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--secondary);
+  line-height: 1.7;
+}
+
+.annotation-section li + li,
+.timeline-item li + li {
+  margin-top: 6px;
+}
+
+.timeline {
+  display: grid;
+  gap: 12px;
+}
+
+.timeline-item {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px;
+  background: #fafafa;
+}
+
+.timeline-item strong,
+.timeline-item span {
+  display: block;
+}
+
+.timeline-item strong {
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.timeline-item span {
+  margin: 2px 0 8px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.annotation-change-item p {
+  margin: 8px 0 0;
+  color: var(--secondary);
+  line-height: 1.7;
+}
+
+.annotation-change-foot {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.annotation-change-foot span {
+  margin: 0;
+  color: var(--muted);
+}
+
+.annotation-change-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.annotation-change-fields em {
+  border: 1px solid #91caff;
+  border-radius: 4px;
+  padding: 2px 6px;
+  color: var(--primary-strong);
+  background: #e6f4ff;
+  font-size: 12px;
+  font-style: normal;
+  line-height: 18px;
+}
+
+.empty-block {
+  border: 1px dashed #d9d9d9;
+  border-radius: 8px;
+  padding: 14px;
+  color: var(--muted);
+  background: #fafafa;
+  line-height: 1.6;
+}
+
+.annotation-detail-meta {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.annotation-detail-meta span {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: var(--secondary);
+  background: #fafafa;
+  line-height: 1.5;
+}
+
+.annotation-detail-meta b {
+  display: block;
+  margin-bottom: 2px;
+  color: var(--text);
+}
+
+.annotation-detail-section {
+  margin-top: 18px;
+}
+
+.annotation-detail-section h3,
+.annotation-diff-block h4 {
+  margin: 0 0 10px;
+}
+
+.annotation-detail-section p {
+  margin: 0 0 12px;
+  color: var(--secondary);
+  line-height: 1.7;
+}
+
+.annotation-diff-block {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 14px;
+  background: #fff;
+}
+
+.annotation-diff-block + .annotation-diff-block {
+  margin-top: 12px;
+}
+
+.annotation-diff-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.annotation-diff-grid > div {
+  min-width: 0;
+}
+
+.annotation-diff-grid strong {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--secondary);
+}
+
+.annotation-diff-grid pre {
+  min-height: 120px;
+  max-height: 360px;
+  margin: 0;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 10px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--text);
+  background: #fafafa;
+  line-height: 1.6;
+  font-family: inherit;
+}
+
+.annotation-edit-form {
+  display: grid;
+  gap: 16px;
+}
+
+.annotation-edit-field {
+  display: grid;
+  gap: 8px;
+}
+
+.annotation-edit-field span {
+  color: var(--secondary);
+  font-weight: 500;
+  line-height: 20px;
+}
+
+.annotation-edit-field input,
+.annotation-edit-field textarea {
+  width: 100%;
+  border: 1px solid #d9d9d9;
+  border-radius: 6px;
+  padding: 10px 12px;
+  color: var(--text);
+  background: #fff;
+  outline: 0;
+  font-size: 14px;
+}
+
+.annotation-edit-field input:focus,
+.annotation-edit-field textarea:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(22, 119, 255, 0.1);
+}
+
+.annotation-edit-field textarea {
+  min-height: 160px;
+  resize: vertical;
+  line-height: 1.6;
+}
+
+.annotation-edit-field textarea[data-annotation-size="medium"] {
+  min-height: 180px;
+}
+
+.annotation-edit-field textarea[data-annotation-size="large"] {
+  min-height: 260px;
+}
+
+.annotation-edit-tip {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
 }
 
 .group-board-tabs {
@@ -1575,10 +2053,17 @@ select:focus {
 
 .modal {
   width: min(780px, 100%);
+  max-height: calc(100vh - 48px);
   background: #fff;
   border-radius: 8px;
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18);
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-wide {
+  width: min(1080px, 100%);
 }
 
 .modal-head,
@@ -1600,6 +2085,7 @@ select:focus {
 
 .modal-body {
   padding: 18px;
+  overflow: auto;
 }
 
 .toast {
@@ -1625,6 +2111,15 @@ select:focus {
 }
 
 @media (max-width: 980px) {
+  .main-workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .prd-hero,
+  .prd-project-grid {
+    grid-template-columns: 1fr;
+  }
+
   .topbar {
     height: 56px;
     min-height: 56px;
@@ -1689,6 +2184,23 @@ select:focus {
 }
 
 @media (max-width: 640px) {
+  .prd-hero {
+    padding: 22px 18px;
+  }
+
+  .prd-hero-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .annotation-tabs {
+    grid-template-columns: 1fr;
+  }
+
+  .annotation-detail-meta,
+  .annotation-diff-grid {
+    grid-template-columns: 1fr;
+  }
+
   .sider {
     width: 52px;
     flex-basis: 52px;

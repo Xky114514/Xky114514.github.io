@@ -1,6 +1,10 @@
+const ANNOTATION_STORAGE_KEY = "prd-platform-annotation-overrides";
+const ANNOTATION_FILE = "annotations.json";
+const appShellTemplate = document.getElementById("app").innerHTML;
+
 const state = {
-  route: "home",
-  tabs: [{ key: "home", label: "首页", isHome: true }],
+  route: "projects",
+  tabs: [{ key: "projects", label: "项目库", isHome: true }],
   activeDetailId: "PI-20260701-011",
   chatMode: "customer",
   purchaseChatMode: "supplier",
@@ -8,6 +12,9 @@ const state = {
   settingsTab: "roles",
   reviewTab: "list",
   groupBoardFilter: "all",
+  annotationTab: "overview",
+  annotationEditing: false,
+  annotationOpen: false,
   filters: {
     salesCustomer: "",
     purchaseSupplier: "",
@@ -17,7 +24,8 @@ const state = {
 };
 
 const routes = {
-  home: { label: "首页", module: "home", title: "系统总门户" },
+  projects: { label: "PRD 项目库", module: "projects", title: "PRD 展示平台" },
+  home: { label: "项目首页", module: "home", title: "AI 录单系统" },
   "sales-entry": { label: "销售订单录入", module: "sales", title: "销售 Agent" },
   "sales-review": { label: "销售订单审核", module: "sales", title: "销售 Agent" },
   "sales-customers": { label: "客户管理", module: "sales", title: "销售 Agent" },
@@ -66,6 +74,7 @@ const sideMenus = {
 };
 
 const iconSvg = {
+  folder: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6.5h6l2 2h10V19H3z"/><path d="M3 6.5V5h6l2 2"/></svg>',
   home: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5"/><path d="M9.5 20v-6h5v6"/></svg>',
   sales: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 20V7h14v13"/><path d="M8 7a4 4 0 0 1 8 0"/><path d="M8 12h8"/><path d="M8 16h6"/></svg>',
   purchase: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16l-2 13H6L4 7Z"/><path d="M8 7a4 4 0 0 1 8 0"/><path d="M9 12h6"/><path d="M10 16h4"/></svg>',
@@ -114,6 +123,190 @@ const groups = [
   { name: "直营门店补货群", members: 63, salesBound: "8 个客户", purchaseBound: "-", reviewer: "王明", bot: "禁言", time: "不限", pending: 2 },
 ];
 
+const prdProjects = [
+  {
+    id: "ai-order",
+    name: "AI 录单系统",
+    status: "迭代中",
+    route: "home",
+    version: "V0.3",
+    owner: "管理员",
+    updated: "2026-07-02",
+    desc: "用可交互前端承载销售订单、采购入库、群聊看板、提示词和 AI 记忆等 PRD 内容。",
+    pages: ["首页看板", "销售 Agent", "采购 Agent", "租户设置", "批注面板"],
+  },
+  {
+    id: "next-retail",
+    name: "门店补货移动端 PRD",
+    status: "规划中",
+    route: "projects",
+    version: "待创建",
+    owner: "管理员",
+    updated: "待排期",
+    desc: "预留项目位，后续可把移动端补货流程也接入同一套 PRD 展示平台。",
+    pages: ["项目首页", "补货单", "审批流"],
+  },
+  {
+    id: "next-finance",
+    name: "经营分析看板 PRD",
+    status: "规划中",
+    route: "projects",
+    version: "待创建",
+    owner: "管理员",
+    updated: "待排期",
+    desc: "预留项目位，用于展示指标口径、图表原型、权限和迭代说明。",
+    pages: ["指标总览", "门店排行", "异常预警"],
+  },
+];
+
+let iterationHistory = [
+  {
+    version: "V0.3",
+    date: "2026-07-02",
+    title: "PRD 平台化改造",
+    changes: ["增加 PRD 项目库", "增加全局文字批注与迭代记录面板", "支持右侧批注在前端直接编辑"],
+  },
+  {
+    version: "V0.2",
+    date: "2026-07-02",
+    title: "群聊看板调整",
+    changes: ["增加销售订单/采购入库单筛选", "去掉业务域列", "右侧增加全部汇总入口"],
+  },
+  {
+    version: "V0.1",
+    date: "2026-07-01",
+    title: "AI 录单原型搭建",
+    changes: ["拆分销售 Agent 与采购 Agent", "补齐审核、群聊、提示词、AI 记忆与租户设置页面"],
+  },
+];
+
+let pageAnnotations = {
+  projects: {
+    title: "PRD 项目库",
+    overview: "这是所有前端 PRD 的统一入口。业务方先确认项目范围，开发从这里进入对应原型和页面批注。",
+    dev: ["每个项目卡片都预留 route 字段，后续新增 PRD 时只需要扩展项目数据和对应路由。", "规划中项目当前不跳转真实原型，用 toast 明确提示，避免误以为功能已完成。"],
+    business: ["项目状态用于区分已可评审、迭代中和规划中的 PRD。", "同一平台承载多个项目，方便历史版本、页面说明和业务规则集中管理。"],
+    iteration: ["本次新增项目库，当前 AI 录单系统作为第一个可打开项目。", "点击 AI 录单系统后进入系统首页看板。"],
+  },
+  home: {
+    title: "项目首页",
+    overview: "首页汇总销售、采购双 Agent 的业务入口、任务数据、额度和群聊看板，是业务方评审全局方案的第一页。",
+    dev: ["业务入口卡片通过 data-route 切换路由，不依赖后端接口。", "群聊看板的销售/采购筛选使用 state.groupBoardFilter 控制，后续接接口时保持字段语义一致即可。"],
+    business: ["销售与采购 Agent 的入口相互独立，但首页保留全局汇总，适合管理者查看整体处理情况。", "群聊看板默认展示全部，点击销售订单或采购入库单时只看对应业务域。"],
+    iteration: ["V0.2 调整群聊看板，去掉业务域列，新增筛选标签和全部汇总入口。"],
+  },
+  "sales-entry": {
+    title: "销售订单录入",
+    overview: "销售录入页模拟录单员从客户或群聊进入，对文字、图片、Excel、PDF 订单内容进行 AI 识别。",
+    dev: ["左侧客户/群聊分段切换由 state.chatMode 控制。", "发送消息后会向 chatMessages.sales 追加用户消息和 Agent 响应，便于演示识别链路。"],
+    business: ["录单前必须先确定客户或群聊来源，避免订单归属错误。", "识别结果进入销售订单审核，不在录入页直接完成下单。"],
+    iteration: ["V0.1 完成销售录入核心交互，后续可补充附件预览和异常商品提示。"],
+  },
+  "purchase-entry": {
+    title: "采购入库单录入",
+    overview: "采购录入页模拟仓管或采购从供应商/群聊导入入库信息，由 AI 生成待审核入库单。",
+    dev: ["左侧供应链/群聊分段切换由 state.purchaseChatMode 控制。", "消息发送后进入 purchaseTasks 对应的审核演示流程。"],
+    business: ["入库信息需要识别供应商、商品、数量和仓库。", "异常商品不自动入库，需要进入人工审核。"],
+    iteration: ["V0.1 完成采购入库录入入口，后续可补充到仓时间和批次字段。"],
+  },
+  "sales-review": {
+    title: "销售订单审核",
+    overview: "销售审核页用于查看 AI 识别后的订单任务，支持状态筛选、列表视图和群聊视图。",
+    dev: ["状态筛选使用 state.filters.salesStatus，列表和群聊视图通过 state.reviewTab 切换。", "失败、合单等状态保留独立标签，方便后续接真实审核动作。"],
+    business: ["待处理订单需要人工确认后进入正式订单。", "失败任务需要补充信息或转人工处理。"],
+    iteration: ["V0.1 完成销售审核列表，后续可加入批量审核与合单选择。"],
+  },
+  "purchase-review": {
+    title: "采购入库单审核",
+    overview: "采购审核页集中处理供应商入库任务，确认后可进入采购入库单详情页。",
+    dev: ["采购任务使用 purchaseTasks 数据，详情按钮会路由到 purchase-detail。", "状态筛选使用 state.filters.purchaseStatus，与销售审核保持同构。"],
+    business: ["待处理入库单需要确认商品、数量、仓库和入库员。", "审核完成后才允许执行实际入库确认。"],
+    iteration: ["V0.1 完成采购审核主流程，后续可增加入库差异对账。"],
+  },
+  "purchase-detail": {
+    title: "采购入库单详情",
+    overview: "详情页展示一张采购入库单的原始消息、补充说明和商品明细，适合开发对齐字段级规则。",
+    dev: ["当前 activeDetailId 控制详情数据，明细表格使用静态输入框模拟可编辑状态。", "保存和全部确认入库使用 toast 演示，后续替换为接口提交。"],
+    business: ["入库明细需要逐行确认商品、规格、数量、单位和仓库。", "全部确认入库前，应先处理无法识别或价格异常的行。"],
+    iteration: ["V0.1 完成采购详情结构，后续可补充差异原因和附件下载。"],
+  },
+  "sales-customers": {
+    title: "客户管理",
+    overview: "客户管理页展示客户、地址、联系方式、绑定群聊和同步 SKU 状态。",
+    dev: ["搜索条件写入 state.filters.salesCustomer，查询按钮触发本地过滤。", "表格字段后续可直接映射客户主数据接口。"],
+    business: ["客户绑定群聊后，群聊订单才能正确归属客户。", "SKU 同步数量用于判断客户商品范围是否完整。"],
+    iteration: ["V0.1 完成客户列表和搜索能力。"],
+  },
+  "purchase-suppliers": {
+    title: "供应商管理",
+    overview: "供应商管理页展示供应商分类、联系人、绑定群聊、默认仓库和同步状态。",
+    dev: ["搜索条件写入 state.filters.purchaseSupplier，和客户管理共用 partyPage 模板。", "供应商字段与客户字段保持同类结构，便于复用表格组件。"],
+    business: ["供应商绑定群聊后，群聊入库消息才能自动归属。", "默认仓库帮助 AI 识别缺失仓库信息。"],
+    iteration: ["V0.1 完成供应商列表和搜索能力。"],
+  },
+  "sales-groups": {
+    title: "销售群聊管理",
+    overview: "销售群聊管理页维护销售业务群、绑定客户、审核员、机器人状态和下单时段。",
+    dev: ["销售群通过 purchaseBound === '-' 过滤得到。", "机器人状态用 tag 样式表现，后续可接启停和禁言接口。"],
+    business: ["每个销售群应绑定客户，减少 AI 识别时的归属歧义。", "禁言状态表示机器人不主动响应或不参与群内处理。"],
+    iteration: ["V0.1 完成销售群聊管理列表。"],
+  },
+  "purchase-groups": {
+    title: "采购群聊管理",
+    overview: "采购群聊管理页维护供应商群、绑定供应商、审核员、机器人状态和入库时段。",
+    dev: ["采购群通过 purchaseBound !== '-' 过滤得到。", "与销售群聊管理共用 groupsPage 模板，只切换业务字段。"],
+    business: ["采购群需要绑定供应商，否则无法稳定生成入库单。", "入库时段用于限制机器人处理非工作时间消息。"],
+    iteration: ["V0.1 完成采购群聊管理列表。"],
+  },
+  "sales-prompts": {
+    title: "销售提示词",
+    overview: "销售提示词页用于维护销售订单解析模板和 Agent 规则。",
+    dev: ["promptTab 控制客户提示词和 Agent 提示词两类视图。", "编辑弹窗当前为演示保存，后续接模板版本接口。"],
+    business: ["销售提示词只影响销售订单解析，不影响采购入库。", "特殊客户规则可沉淀为独立模板。"],
+    iteration: ["V0.1 完成销售提示词配置页。"],
+  },
+  "purchase-prompts": {
+    title: "采购提示词",
+    overview: "采购提示词页用于维护供应商入库解析模板和采购 Agent 规则。",
+    dev: ["与销售提示词共用 promptsPage，通过 type 区分文案。", "模板目标对象可扩展到供应商、仓库或品类。"],
+    business: ["采购提示词只影响采购入库识别。", "异常商品、价格和到仓信息应通过提示词明确处理策略。"],
+    iteration: ["V0.1 完成采购提示词配置页。"],
+  },
+  "sales-memory": {
+    title: "销售 AI 记忆",
+    overview: "销售 AI 记忆页展示人工审核后沉淀的别名、偏好和客户规则。",
+    dev: ["记忆列表为静态 rows，查看按钮打开统一 memoryModal。", "后续可按来源、状态和命中次数接入真实数据。"],
+    business: ["记忆应来自人工确认，避免错误规则长期影响销售识别。", "命中次数帮助判断规则是否值得固化。"],
+    iteration: ["V0.1 完成销售记忆列表。"],
+  },
+  "purchase-memory": {
+    title: "采购 AI 记忆",
+    overview: "采购 AI 记忆页展示供应商商品别名、入库偏好和仓库规则。",
+    dev: ["与销售记忆共用 memoryPage，通过 type 切换业务文案。", "后续可以增加记忆审批和过期策略。"],
+    business: ["采购记忆影响入库识别，需要关注供应商、规格和仓库准确性。", "错误记忆应能禁用或回滚。"],
+    iteration: ["V0.1 完成采购记忆列表。"],
+  },
+  settings: {
+    title: "租户公共设置",
+    overview: "租户设置页集中展示角色权限、成员、同步规则和额度配置，是跨 Agent 的公共配置。",
+    dev: ["settingsTab 控制四类设置面板，成员新增使用 operatorModal 演示。", "同步和额度目前为静态卡片，后续接租户配置接口。"],
+    business: ["管理员可管理成员、同步规则和额度阈值。", "额度低于阈值时应限制普通成员继续提交识别任务。"],
+    iteration: ["V0.1 完成租户公共设置框架。"],
+  },
+};
+
+let annotationChangeLogs = {};
+
+applyAnnotationOverrides();
+
+const annotationFieldLabels = {
+  title: "页面标题",
+  overview: "页面说明",
+  dev: "开发批注",
+  business: "业务规则",
+  iterationNote: "本页迭代说明",
+};
+
 const chatMessages = {
   sales: [
     { role: "assistant", text: "已连接销售订单录入 Agent，请选择客户或群聊后发送订单。" },
@@ -128,34 +321,68 @@ const chatMessages = {
 };
 
 function routeTo(key) {
+  if (state.route === "projects" && key !== "projects") {
+    state.tabs = [{ key: "home", label: "首页", isHome: true }];
+  }
   window.location.hash = key;
 }
 
 function getRouteFromHash() {
   const key = window.location.hash.replace(/^#/, "");
   if (routeAliases[key]) return routeAliases[key];
-  return routes[key] ? key : "home";
+  return routes[key] ? key : "projects";
 }
 
 function render() {
+  ensureAppShell();
   state.route = getRouteFromHash();
+  state.annotationEditing = false;
   document.body.classList.toggle("entry-mode", state.route === "sales-entry" || state.route === "purchase-entry" || state.route === "purchase-detail");
+  document.body.classList.toggle("project-mode", state.route === "projects");
+  document.body.classList.toggle("annotation-open", state.annotationOpen && state.route !== "projects");
+  normalizeTabsForRoute();
   ensureTab(state.route);
   renderSideMenu();
   renderTopbar();
   renderTabs();
   renderContent();
+  renderAnnotationPanel();
   bindRouteButtons();
+  bindGlobalInteractions();
+}
+
+function ensureAppShell() {
+  const app = document.getElementById("app");
+  if (!app.querySelector("#sideMenu")) app.innerHTML = appShellTemplate;
+  app.className = "app-shell";
 }
 
 function ensureTab(key) {
   if (state.tabs.some((tab) => tab.key === key)) return;
-  state.tabs.push({ key, label: routes[key].tabLabel || routes[key].label, isHome: key === "home" });
+  state.tabs.push({ key, label: routes[key].tabLabel || routes[key].label, isHome: key === "projects" });
+}
+
+function normalizeTabsForRoute() {
+  if (state.route === "projects") {
+    state.tabs = [{ key: "projects", label: "项目库", isHome: true }];
+    return;
+  }
+  state.tabs = state.tabs.filter((tab) => tab.key !== "projects");
+  if (!state.tabs.length) state.tabs.push({ key: "home", label: "首页", isHome: true });
 }
 
 function bindRouteButtons(root = document) {
   root.querySelectorAll("[data-route]").forEach((el) => {
     el.onclick = () => routeTo(el.dataset.route);
+  });
+}
+
+function bindGlobalInteractions() {
+  document.querySelectorAll("[data-annotation-toggle]").forEach((button) => {
+    button.onclick = () => {
+      state.annotationOpen = !state.annotationOpen;
+      render();
+    };
   });
 }
 
@@ -190,22 +417,26 @@ function renderSideMenu() {
 }
 
 function routeBreadcrumb(route) {
-  if (route.module === "home") return route.title;
+  if (route.module === "projects") return "项目库 / 全部 PRD";
+  if (route.module === "home") return `${route.title} / 项目首页`;
   return `${route.title} / ${route.label}`;
 }
 
 function renderTopbar() {
   const route = routes[state.route];
-  document.querySelector(".tenant strong").textContent = "观麦演示租户";
-  document.querySelector(".user-name").textContent = "管理员 王明";
-  document.querySelector(".top-actions .text-btn.muted").textContent = "退出";
+  document.querySelector(".tenant strong").textContent = "前端 PRD 展示平台";
+  document.querySelector(".user-name").textContent = route.module === "projects" ? "" : "管理员";
+  const actionButton = document.querySelector(".top-actions .text-btn.muted");
+  actionButton.textContent = route.module === "projects" ? "" : "页面批注";
+  if (route.module === "projects") delete actionButton.dataset.annotationToggle;
+  else actionButton.dataset.annotationToggle = "true";
   document.getElementById("moduleHint").textContent = routeBreadcrumb(route);
 }
 
 function renderTabs() {
   document.getElementById("tabbar").innerHTML = state.tabs.map((tab) => `
     <button class="tab ${tab.key === state.route ? "active" : ""}" data-tab="${tab.key}">
-      ${tab.isHome ? "⌂" : tab.label}
+      ${tab.key === "projects" ? "项目库" : tab.isHome ? "⌂" : tab.label}
       ${!tab.isHome && state.tabs.length > 1 ? `<span class="tab-close" data-close="${tab.key}">×</span>` : ""}
     </button>
   `).join("");
@@ -221,7 +452,7 @@ function renderTabs() {
       event.stopPropagation();
       const key = close.dataset.close;
       state.tabs = state.tabs.filter((tab) => tab.key !== key);
-      if (state.route === key) routeTo(state.tabs[state.tabs.length - 1]?.key || "home");
+      if (state.route === key) routeTo(state.tabs[state.tabs.length - 1]?.key || "projects");
       renderTabs();
     };
   });
@@ -229,6 +460,7 @@ function renderTabs() {
 
 function renderContent() {
   const content = document.getElementById("content");
+  if (state.route === "projects") content.innerHTML = projectsPage();
   if (state.route === "home") content.innerHTML = homePage();
   if (state.route === "sales-entry") content.innerHTML = entryPage("sales");
   if (state.route === "purchase-entry") content.innerHTML = entryPage("purchase");
@@ -247,11 +479,502 @@ function renderContent() {
   wirePageInteractions();
 }
 
+function projectsPage() {
+  return `
+    <div class="page">
+      <section class="prd-hero">
+        <div>
+          <span class="pill blue">PRD Platform</span>
+          <h1>用前端原型管理产品需求</h1>
+          <p>每个项目都可以保留交互界面、页面批注、开发说明、业务规则和迭代记录，让开发与业务方在同一处对齐。</p>
+        </div>
+        <div class="prd-hero-stats">
+          <div><strong>${prdProjects.length}</strong><span>PRD 项目</span></div>
+          <div><strong>${iterationHistory.length}</strong><span>迭代记录</span></div>
+          <div><strong>${Object.keys(pageAnnotations).length}</strong><span>已批注页面</span></div>
+        </div>
+      </section>
+
+      <div class="section-title"><h2>项目列表</h2><span class="muted">点击项目进入对应前端 PRD</span></div>
+      <div class="prd-project-grid">
+        ${prdProjects.map((project) => `
+          <article class="prd-project-card">
+            <div class="prd-project-top">
+              <span class="app-icon ${project.id === "ai-order" ? "sales-grad" : "config-grad"}">${project.id === "ai-order" ? "AI" : "PRD"}</span>
+              <span class="tag ${project.status === "迭代中" ? "blue" : "gold"}">${project.status}</span>
+            </div>
+            <h3>${project.name}</h3>
+            <p>${project.desc}</p>
+            <div class="prd-project-meta">
+              <span>版本 <b>${project.version}</b></span>
+              <span>更新 <b>${project.updated}</b></span>
+              <span>${project.owner}</span>
+            </div>
+            <div class="agent-menus">
+              ${project.pages.map((page) => `<span class="pill">${page}</span>`).join("")}
+            </div>
+            <div class="prd-project-actions">
+              ${project.status === "迭代中"
+                ? `<button class="btn primary" data-route="${project.route}">进入录单系统</button>`
+                : `<button class="btn" data-toast="${project.name} 还在规划中，后续可接入新的前端 PRD">预留项目</button>`}
+            </div>
+          </article>
+        `).join("")}
+      </div>
+    </div>
+  `;
+}
+
+function getCurrentAnnotation() {
+  return pageAnnotations[state.route] || {
+    title: routes[state.route]?.label || "页面批注",
+    overview: "该页面尚未配置专属批注，默认展示通用 PRD 说明。",
+    dev: ["新增页面时，请在 pageAnnotations 中补充页面说明、开发批注、业务规则和迭代记录。"],
+    business: ["业务方评审时，请优先确认页面目标、流程边界和字段含义。"],
+    iteration: ["后续迭代需要补充该页面的变更记录。"],
+  };
+}
+
+function renderAnnotationPanel() {
+  const panel = document.getElementById("annotationPanel");
+  if (!panel) return;
+  const annotation = getCurrentAnnotation();
+  panel.classList.toggle("is-editing", state.annotationEditing);
+  const tabs = [
+    { key: "overview", label: "页面说明" },
+    { key: "dev", label: "开发批注" },
+    { key: "business", label: "业务规则" },
+    { key: "iteration", label: "迭代记录" },
+  ];
+  panel.innerHTML = `
+    <div class="annotation-head">
+      <div>
+        <span class="muted">当前页面批注</span>
+        <strong>${escapeHTML(annotation.title)}</strong>
+      </div>
+      <div class="annotation-actions">
+        <span class="tag blue">${iterationHistory[0].version}</span>
+        <button class="text-btn" data-annotation-close>关闭</button>
+        <button class="text-btn" data-annotation-save-file>保存 JSON</button>
+        ${state.annotationEditing
+          ? `<button class="text-btn" data-annotation-cancel>取消</button><button class="btn primary" data-annotation-save>保存</button>`
+          : `<button class="btn" data-annotation-edit>编辑批注</button>`}
+      </div>
+    </div>
+    ${state.annotationEditing ? "" : `
+      <div class="annotation-tabs">
+        ${tabs.map((tab) => `<button class="${state.annotationTab === tab.key ? "active" : ""}" data-annotation-tab="${tab.key}">${tab.label}</button>`).join("")}
+      </div>
+    `}
+    <div class="annotation-body">
+      ${state.annotationEditing ? annotationEditForm(annotation) : annotationContent(annotation)}
+    </div>
+  `;
+  panel.querySelector("[data-annotation-edit]")?.addEventListener("click", () => {
+    state.annotationEditing = true;
+    renderAnnotationPanel();
+  });
+  panel.querySelector("[data-annotation-close]")?.addEventListener("click", () => {
+    state.annotationOpen = false;
+    state.annotationEditing = false;
+    render();
+  });
+  panel.querySelector("[data-annotation-save-file]")?.addEventListener("click", () => {
+    saveAnnotationsFile();
+  });
+  panel.querySelector("[data-annotation-cancel]")?.addEventListener("click", () => {
+    state.annotationEditing = false;
+    renderAnnotationPanel();
+  });
+  panel.querySelector("[data-annotation-save]")?.addEventListener("click", () => {
+    saveCurrentAnnotation(panel);
+  });
+  panel.querySelectorAll("[data-annotation-tab]").forEach((button) => {
+    button.onclick = () => {
+      state.annotationTab = button.dataset.annotationTab;
+      renderAnnotationPanel();
+    };
+  });
+  panel.querySelectorAll("[data-annotation-log]").forEach((button) => {
+    button.onclick = () => openAnnotationChangeDetail(button.dataset.annotationLog);
+  });
+}
+
+function annotationContent(annotation) {
+  if (state.annotationTab === "overview") {
+    return `
+      <section class="annotation-section">
+        <h3>页面目标</h3>
+        <p>${escapeHTML(annotation.overview)}</p>
+      </section>
+      <section class="annotation-section">
+        <h3>评审提示</h3>
+        <ul>
+          <li>业务方重点确认流程是否符合真实作业场景。</li>
+          <li>开发重点确认页面状态、字段含义和后续接口边界。</li>
+        </ul>
+      </section>
+    `;
+  }
+  if (state.annotationTab === "dev") {
+    return annotationList("开发实现要点", annotation.dev);
+  }
+  if (state.annotationTab === "business") {
+    return annotationList("业务确认点", annotation.business);
+  }
+  return annotationTimeline(annotation);
+}
+
+function annotationList(title, items) {
+  return `
+    <section class="annotation-section">
+      <h3>${title}</h3>
+      <ul>${items.map((item) => `<li>${escapeHTML(item)}</li>`).join("")}</ul>
+    </section>
+  `;
+}
+
+function annotationEditForm(annotation) {
+  return `
+    <form class="annotation-edit-form">
+      <label class="annotation-edit-field">
+        <span>页面标题</span>
+        <input data-annotation-field="title" value="${escapeAttribute(annotation.title)}">
+      </label>
+      <label class="annotation-edit-field">
+        <span>页面说明</span>
+        <textarea data-annotation-field="overview" data-annotation-size="medium" rows="8">${escapeHTML(annotation.overview)}</textarea>
+      </label>
+      <label class="annotation-edit-field">
+        <span>开发批注（每行一条）</span>
+        <textarea data-annotation-field="dev" data-annotation-size="large" rows="12">${escapeHTML(annotation.dev.join("\n"))}</textarea>
+      </label>
+      <label class="annotation-edit-field">
+        <span>业务规则（每行一条）</span>
+        <textarea data-annotation-field="business" data-annotation-size="large" rows="12">${escapeHTML(annotation.business.join("\n"))}</textarea>
+      </label>
+      <label class="annotation-edit-field">
+        <span>本次修改说明</span>
+        <textarea data-annotation-field="changeNote" data-annotation-size="large" rows="12" placeholder="写清楚本次为什么改、改了什么。保存后会自动生成一条带时间的修改记录。"></textarea>
+      </label>
+      <p class="annotation-edit-tip">保存会先形成本地草稿，并按当前时间新增一条修改记录；点击“保存 JSON”后选择并覆盖项目里的 annotations.json，再提交到 GitHub，其他人就能看到同一份批注和时间线。</p>
+    </form>
+  `;
+}
+
+function saveCurrentAnnotation(panel) {
+  const readField = (field) => panel.querySelector(`[data-annotation-field="${field}"]`)?.value.trim() || "";
+  const previous = getCurrentAnnotation();
+  const next = {
+    title: readField("title") || routes[state.route]?.label || "页面批注",
+    overview: readField("overview"),
+    dev: splitAnnotationLines(readField("dev")),
+    business: splitAnnotationLines(readField("business")),
+    iteration: previous.iteration || [],
+  };
+  const changeNote = readField("changeNote");
+  appendAnnotationChangeLog(state.route, previous, next, changeNote);
+  pageAnnotations[state.route] = next;
+  const drafts = readAnnotationDrafts();
+  drafts.pageAnnotations[state.route] = next;
+  drafts.annotationChangeLogs = annotationChangeLogs;
+  localStorage.setItem(ANNOTATION_STORAGE_KEY, JSON.stringify(drafts));
+  state.annotationEditing = false;
+  state.annotationTab = "iteration";
+  renderAnnotationPanel();
+  toast("批注已保存为本地草稿，可保存 JSON");
+}
+
+function annotationTimeline(annotation) {
+  const logs = getCurrentAnnotationLogs();
+  const legacyItems = annotation.iteration || [];
+  return `
+    <section class="annotation-section">
+      <h3>本页修改时间线</h3>
+      ${logs.length ? `
+        <div class="timeline">
+          ${logs.map((item) => annotationChangeLogItem(item)).join("")}
+        </div>
+      ` : `
+        <div class="empty-block">暂无带时间的修改记录。下一次保存批注后，这里会自动生成一条记录。</div>
+      `}
+    </section>
+    ${legacyItems.length ? `
+      <section class="annotation-section">
+        <h3>历史迭代说明</h3>
+        <ul>${legacyItems.map((item) => `<li>${escapeHTML(item)}</li>`).join("")}</ul>
+      </section>
+    ` : ""}
+    <section class="annotation-section">
+      <h3>项目迭代记录</h3>
+      <div class="timeline">
+        ${iterationHistory.map((item) => `
+          <article class="timeline-item">
+            <strong>${escapeHTML(item.version)} ${escapeHTML(item.title)}</strong>
+            <span>${escapeHTML(item.date)}</span>
+            <ul>${item.changes.map((change) => `<li>${escapeHTML(change)}</li>`).join("")}</ul>
+          </article>
+        `).join("")}
+      </div>
+    </section>
+  `;
+}
+
+function annotationChangeLogItem(item) {
+  const fields = (item.fields || []).map((field) => annotationFieldLabels[field] || field);
+  const changes = Array.isArray(item.changes) ? item.changes : [];
+  const note = item.note || "更新页面批注";
+  return `
+    <article class="timeline-item annotation-change-item">
+      <strong>${escapeHTML(formatAnnotationTime(item.time))} ${escapeHTML(item.author || "管理员")}</strong>
+      <span>${escapeHTML(item.pageTitle || routes[item.pageKey]?.label || "页面批注")}</span>
+      <div class="annotation-change-fields">
+        ${fields.map((field) => `<em>${escapeHTML(field)}</em>`).join("")}
+      </div>
+      <p>${escapeHTML(note.length > 72 ? `${note.slice(0, 72)}...` : note)}</p>
+      <div class="annotation-change-foot">
+        <span>修改了 ${changes.length || fields.length || 1} 项内容</span>
+        <button class="text-btn" data-annotation-log="${escapeAttribute(item.id)}">查看详情</button>
+      </div>
+    </article>
+  `;
+}
+
+function appendAnnotationChangeLog(pageKey, previous, next, changeNote) {
+  const changes = getAnnotationChanges(previous, next);
+  const fields = changes.map((change) => change.field);
+  if (changeNote && !fields.includes("iterationNote")) fields.push("iterationNote");
+  if (!fields.length) return;
+  const record = {
+    id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    pageKey,
+    pageTitle: next.title,
+    time: new Date().toISOString(),
+    author: "管理员",
+    fields,
+    note: changeNote || "更新页面批注",
+    changes,
+  };
+  annotationChangeLogs[pageKey] = [record, ...(annotationChangeLogs[pageKey] || [])];
+}
+
+function getAnnotationChanges(previous, next) {
+  return ["title", "overview", "dev", "business"]
+    .filter((field) => JSON.stringify(previous[field] || "") !== JSON.stringify(next[field] || ""))
+    .map((field) => ({
+      field,
+      label: annotationFieldLabels[field],
+      before: normalizeAnnotationValue(previous[field]),
+      after: normalizeAnnotationValue(next[field]),
+      beforeSummary: summarizeAnnotationValue(previous[field]),
+      afterSummary: summarizeAnnotationValue(next[field]),
+    }));
+}
+
+function summarizeAnnotationValue(value) {
+  const text = normalizeAnnotationValue(value);
+  return text.length > 80 ? `${text.slice(0, 80)}...` : text || "已清空";
+}
+
+function normalizeAnnotationValue(value) {
+  if (Array.isArray(value)) return value.join("\n");
+  return String(value || "");
+}
+
+function getCurrentAnnotationLogs() {
+  return [...(annotationChangeLogs[state.route] || [])].sort((a, b) => new Date(b.time) - new Date(a.time));
+}
+
+function formatAnnotationTime(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value || "未记录时间";
+  return new Intl.DateTimeFormat("zh-CN", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(date);
+}
+
+function openAnnotationChangeDetail(id) {
+  const item = Object.values(annotationChangeLogs).flat().find((log) => log.id === id);
+  if (!item) {
+    toast("未找到修改记录");
+    return;
+  }
+  openModal("批注修改详情", annotationChangeDetailModal(item), { hideSave: true, wide: true });
+}
+
+function annotationChangeDetailModal(item) {
+  const fields = (item.fields || []).map((field) => annotationFieldLabels[field] || field);
+  const changes = Array.isArray(item.changes) ? item.changes : [];
+  return `
+    <div class="annotation-detail-meta">
+      <span><b>修改时间</b>${escapeHTML(formatAnnotationTime(item.time))}</span>
+      <span><b>修改人</b>${escapeHTML(item.author || "管理员")}</span>
+      <span><b>页面</b>${escapeHTML(item.pageTitle || routes[item.pageKey]?.label || "页面批注")}</span>
+    </div>
+    <section class="annotation-detail-section">
+      <h3>本次修改说明</h3>
+      <p>${escapeHTML(item.note || "更新页面批注")}</p>
+      <div class="annotation-change-fields">
+        ${fields.map((field) => `<em>${escapeHTML(field)}</em>`).join("")}
+      </div>
+    </section>
+    <section class="annotation-detail-section">
+      <h3>字段前后对比</h3>
+      ${changes.length ? changes.map((change) => annotationDiffBlock(change)).join("") : `<div class="empty-block">本条记录没有字段前后对比，可能来自旧版本批注记录。</div>`}
+    </section>
+  `;
+}
+
+function annotationDiffBlock(change) {
+  return `
+    <article class="annotation-diff-block">
+      <h4>${escapeHTML(change.label || annotationFieldLabels[change.field] || change.field)}</h4>
+      <div class="annotation-diff-grid">
+        <div>
+          <strong>修改前</strong>
+          <pre>${escapeHTML(change.before ?? "旧记录未保存修改前内容")}</pre>
+        </div>
+        <div>
+          <strong>修改后</strong>
+          <pre>${escapeHTML(change.after ?? change.afterSummary ?? "旧记录未保存修改后内容")}</pre>
+        </div>
+      </div>
+    </article>
+  `;
+}
+
+async function loadAnnotationsFromFile() {
+  try {
+    const response = await fetch(ANNOTATION_FILE, { cache: "no-store" });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const data = await response.json();
+    hydrateAnnotationData(data);
+  } catch {
+    // 直接用 file:// 打开时，浏览器可能禁止读取旁边的 JSON 文件；此时使用内置批注和本地草稿兜底。
+  }
+  applyAnnotationOverrides();
+}
+
+function hydrateAnnotationData(data) {
+  if (Array.isArray(data?.iterationHistory)) iterationHistory = data.iterationHistory;
+  if (data?.annotationChangeLogs && typeof data.annotationChangeLogs === "object") {
+    annotationChangeLogs = data.annotationChangeLogs;
+  }
+  if (data?.pageAnnotations && typeof data.pageAnnotations === "object") {
+    pageAnnotations = {
+      ...pageAnnotations,
+      ...data.pageAnnotations,
+    };
+  }
+}
+
+function buildAnnotationsFileData() {
+  return {
+    schemaVersion: 1,
+    updatedAt: new Date().toISOString(),
+    iterationHistory,
+    annotationChangeLogs,
+    pageAnnotations,
+  };
+}
+
+async function saveAnnotationsFile() {
+  const data = buildAnnotationsFileData();
+  const content = `${JSON.stringify(data, null, 2)}\n`;
+  if (window.showSaveFilePicker) {
+    try {
+      const handle = await window.showSaveFilePicker({
+        suggestedName: ANNOTATION_FILE,
+        types: [{ description: "JSON 文件", accept: { "application/json": [".json"] } }],
+      });
+      const writable = await handle.createWritable();
+      await writable.write(content);
+      await writable.close();
+      toast("annotations.json 已保存");
+      return;
+    } catch (error) {
+      if (error?.name === "AbortError") return;
+    }
+  }
+  downloadAnnotationsFile(content);
+}
+
+function downloadAnnotationsFile(content) {
+  const blob = new Blob([content], { type: "application/json;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = ANNOTATION_FILE;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+  toast("已生成 annotations.json");
+}
+
+function splitAnnotationLines(value) {
+  return value.split(/\n+/).map((item) => item.trim()).filter(Boolean);
+}
+
+function applyAnnotationOverrides() {
+  const drafts = readAnnotationDrafts();
+  Object.keys(drafts.pageAnnotations).forEach((key) => {
+    if (!pageAnnotations[key]) return;
+    pageAnnotations[key] = {
+      ...pageAnnotations[key],
+      ...drafts.pageAnnotations[key],
+    };
+  });
+  annotationChangeLogs = {
+    ...annotationChangeLogs,
+    ...drafts.annotationChangeLogs,
+  };
+}
+
+function readAnnotationDrafts() {
+  try {
+    const data = JSON.parse(localStorage.getItem(ANNOTATION_STORAGE_KEY) || "{}");
+    if (data.pageAnnotations || data.annotationChangeLogs) {
+      return {
+        pageAnnotations: data.pageAnnotations || {},
+        annotationChangeLogs: data.annotationChangeLogs || {},
+      };
+    }
+    return {
+      pageAnnotations: data,
+      annotationChangeLogs: {},
+    };
+  } catch {
+    return {
+      pageAnnotations: {},
+      annotationChangeLogs: {},
+    };
+  }
+}
+
+function escapeHTML(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function escapeAttribute(value) {
+  return escapeHTML(value).replace(/`/g, "&#96;");
+}
+
 function homePage() {
   return `
     <div class="page">
       <section class="banner">
-        <h1>晚上好，观麦演示租户</h1>
+        <h1>晚上好，演示租户</h1>
         <p>2026年07月01日 星期三。首页聚合双 Agent、全局看板与租户公共设置，提示词和 AI 记忆在各 Agent 内独立维护。</p>
       </section>
 
@@ -319,6 +1042,7 @@ function homePage() {
           <strong>群聊看板</strong>
           <span class="group-board-summary">
             <button class="group-board-all ${state.groupBoardFilter === "all" ? "active" : ""}" data-group-board-filter="all">全部</button>
+            <span class="muted">销售、采购渠道汇总展示</span>
           </span>
         </div>
         <div class="table-scroll">
@@ -513,7 +1237,7 @@ function reviewTable(tasks, type = "sales") {
   if (type === "purchase") return purchaseReviewTable(tasks);
   return `
     <table>
-      <thead><tr><th>状态</th><th>时间</th><th>接单群</th><th>门店/仓库</th><th>原文</th><th class="right">识别商品数</th><th>观麦单号</th><th>审核员</th><th>操作</th></tr></thead>
+      <thead><tr><th>状态</th><th>时间</th><th>接单群</th><th>门店/仓库</th><th>原文</th><th class="right">识别商品数</th><th>系统单号</th><th>审核员</th><th>操作</th></tr></thead>
       <tbody>
         ${tasks.map((task, i) => `
           <tr>
@@ -854,9 +1578,9 @@ function operatorSettings() {
       <div class="toolbar"><div class="stat-strip" style="margin:0"><span>总成员 <b>6</b></span><span class="divider">|</span><span>已启用 <b>6</b></span></div><button class="btn primary" data-modal="operator">新增成员</button></div>
       <div class="table-scroll" style="margin-top:12px">
         <table><thead><tr><th>用户名</th><th>姓名</th><th>角色</th><th>身份标签</th><th>状态</th><th>操作</th></tr></thead><tbody>
-          <tr><td>admin</td><td>王明</td><td><span class="tag blue">管理员</span></td><td>系统管理员</td><td><span class="tag green">启用</span></td><td><button class="text-btn">改密码</button></td></tr>
-          <tr><td>lina</td><td>李娜</td><td><span class="tag">普通成员</span></td><td>录单员</td><td><span class="tag green">启用</span></td><td><button class="text-btn">改密码</button></td></tr>
-          <tr><td>zhaoqian</td><td>赵倩</td><td><span class="tag">普通成员</span></td><td>仓管员</td><td><span class="tag green">启用</span></td><td><button class="text-btn">改密码</button></td></tr>
+          <tr><td>admin</td><td>王明</td><td><span class="tag blue">管理员</span></td><td>系统管理员</td><td><span class="tag green">启用</span></td><td><button class="text-btn">编辑</button></td></tr>
+          <tr><td>lina</td><td>李娜</td><td><span class="tag">普通成员</span></td><td>录单员</td><td><span class="tag green">启用</span></td><td><button class="text-btn">编辑</button></td></tr>
+          <tr><td>zhaoqian</td><td>赵倩</td><td><span class="tag">普通成员</span></td><td>仓管员</td><td><span class="tag green">启用</span></td><td><button class="text-btn">编辑</button></td></tr>
         </tbody></table>
       </div>
     </div>
@@ -866,7 +1590,7 @@ function operatorSettings() {
 function syncSettings() {
   return `
     <div style="margin-top:16px" class="grid two">
-      <div class="card"><h3>观麦数据同步</h3><p>客户、供应商、商品、报价单、入库规格使用同一租户配置池。</p><div class="agent-menus"><span class="pill green">已开启</span><span class="pill">每 30 分钟</span></div></div>
+      <div class="card"><h3>业务数据同步</h3><p>客户、供应商、商品、报价单、入库规格使用同一租户配置池。</p><div class="agent-menus"><span class="pill green">已开启</span><span class="pill">每 30 分钟</span></div></div>
       <div class="card"><h3>渠道群聊同步</h3><p>企业微信、微信渠道群聊统一归集，业务绑定关系按销售/采购隔离。</p><div class="agent-menus"><span class="pill green">已开启</span><span class="pill">全渠道</span></div></div>
     </div>
   `;
@@ -1019,21 +1743,27 @@ function operatorModal() {
   `;
 }
 
-function openModal(title, body) {
+function openModal(title, body, options = {}) {
   document.getElementById("modalRoot").innerHTML = `
     <div class="modal-mask">
-      <div class="modal">
+      <div class="modal ${options.wide ? "modal-wide" : ""}">
         <div class="modal-head"><strong>${title}</strong><button class="text-btn" data-close-modal>×</button></div>
         <div class="modal-body">${body}</div>
-        <div class="modal-foot"><button class="btn" data-close-modal>取消</button><button class="btn primary" data-save-modal>保存</button></div>
+        <div class="modal-foot">
+          <button class="btn" data-close-modal>${options.hideSave ? "关闭" : "取消"}</button>
+          ${options.hideSave ? "" : `<button class="btn primary" data-save-modal>保存</button>`}
+        </div>
       </div>
     </div>
   `;
   document.querySelectorAll("[data-close-modal]").forEach((button) => button.onclick = closeModal);
-  document.querySelector("[data-save-modal]").onclick = () => {
-    closeModal();
-    toast("已保存演示数据");
-  };
+  const saveButton = document.querySelector("[data-save-modal]");
+  if (saveButton) {
+    saveButton.onclick = () => {
+      closeModal();
+      toast("已保存演示数据");
+    };
+  }
 }
 
 function closeModal() {
@@ -1050,5 +1780,5 @@ function toast(message) {
 }
 
 window.addEventListener("hashchange", render);
-if (!window.location.hash) window.location.hash = "home";
-render();
+if (!window.location.hash) window.location.hash = "projects";
+loadAnnotationsFromFile().then(render);

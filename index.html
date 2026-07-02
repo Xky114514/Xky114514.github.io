@@ -3,30 +3,35 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>观麦 AI 录单系统 PRD 原型</title>
+  <title>PRD 前端展示平台</title>
   <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
   <div id="app" class="app-shell">
     <aside class="sider">
-      <button class="brand" data-route="home" title="首页"><span class="brand-mark">AI</span><span class="brand-text">录单中台</span></button>
+      <button class="brand" data-route="projects" title="项目库"><span class="brand-mark">PRD</span><span class="brand-text">PRD 平台</span></button>
       <nav id="sideMenu" class="side-menu" aria-label="模块菜单"></nav>
     </aside>
 
     <main class="main">
       <header class="topbar">
         <div class="tenant">
-          <strong>观麦演示租户</strong>
+          <strong>前端 PRD 展示平台</strong>
           <span id="moduleHint">系统总门户</span>
         </div>
         <div class="top-actions">
           <span class="user-name">管理员 王明</span>
-          <button class="text-btn muted">退出</button>
+          <button class="text-btn muted">批注可编辑</button>
         </div>
       </header>
 
-      <div id="tabbar" class="tabbar"></div>
-      <section id="content" class="content"></section>
+      <div class="main-workspace">
+        <div class="canvas-column">
+          <div id="tabbar" class="tabbar"></div>
+          <section id="content" class="content"></section>
+        </div>
+        <aside id="annotationPanel" class="annotation-panel" aria-label="页面批注"></aside>
+      </div>
     </main>
   </div>
 
