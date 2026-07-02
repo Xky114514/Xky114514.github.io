@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>观麦 AI 录单系统 PRD 原型</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div id="app" class="app-shell">
+    <aside class="sider">
+      <button class="brand" data-route="home" title="首页">AI</button>
+      <nav id="sideMenu" class="side-menu" aria-label="模块菜单"></nav>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="tenant">
+          <strong>观麦演示租户</strong>
+          <span id="moduleHint">系统总门户</span>
+        </div>
+        <div class="top-actions">
+          <button class="text-btn" data-route="home">首页</button>
+          <button class="text-btn" data-route="sales-entry">销售 Agent</button>
+          <button class="text-btn" data-route="purchase-entry">采购 Agent</button>
+          <button class="text-btn" data-route="prompts">AI 配置</button>
+          <span class="user-name">管理员 王明</span>
+          <button class="text-btn muted">退出</button>
+        </div>
+      </header>
+
+      <div id="tabbar" class="tabbar"></div>
+      <section id="content" class="content"></section>
+    </main>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <div id="modalRoot"></div>
+
+  <script src="./app.js"></script>
+</body>
+</html>
