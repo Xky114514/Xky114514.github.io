@@ -18,8 +18,6 @@ const state = {
   settingsTab: "roles",
   reviewTab: "list",
   groupBoardFilter: "all",
-  purchaseHomeTaskType: "order",
-  purchaseHomeGroupType: "order",
   annotationTab: "overview",
   annotationEditing: false,
   annotationOpen: false,
@@ -73,6 +71,8 @@ const routeAliases = {
   "purchase-inbound-review": "purchase-review",
 };
 
+const hiddenRoutes = new Set(["purchase-decision-screen", "purchase-supplier-groups"]);
+
 const primaryMenus = [
   { key: "home", label: "首页", icon: "home", module: "home" },
   { key: "settings", label: "租户设置", icon: "setting", module: "settings" },
@@ -97,9 +97,7 @@ const sideMenus = {
     { key: "purchase-entry", label: "入库单录入", icon: "edit" },
     { key: "purchase-review", label: "入库单审核", icon: "review" },
     { key: "purchase-statistics", label: "统计", icon: "stats" },
-    { key: "purchase-decision-screen", label: "决策大屏", icon: "dashboard" },
     { key: "purchase-suppliers", label: "供应商管理", icon: "supplier" },
-    { key: "purchase-supplier-groups", label: "供应商分组", icon: "group" },
     { key: "purchase-groups", label: "群聊管理", icon: "group" },
     { key: "purchase-prompts", label: "提示词", icon: "prompt" },
     { key: "purchase-memory", label: "AI 记忆", icon: "memory" },
@@ -125,13 +123,11 @@ const purchaseSideGroups = [
     ],
   },
   { label: "统计", icon: "stats", items: [{ key: "purchase-statistics", label: "统计" }] },
-  { label: "决策大屏", icon: "dashboard", items: [{ key: "purchase-decision-screen", label: "决策大屏" }] },
   {
     label: "供应商与群聊",
     icon: "supplier",
     items: [
       { key: "purchase-suppliers", label: "供应商管理" },
-      { key: "purchase-supplier-groups", label: "供应商分组" },
       { key: "purchase-groups", label: "群聊管理" },
     ],
   },
@@ -294,9 +290,9 @@ let pageAnnotations = {
   "purchase-home": {
     title: "采购首页",
     overview: "采购首页作为采购录单工作台，展示采购各菜单快捷入口、今日任务和群聊看板。",
-    dev: ["路由为 purchase-home，采购录单卡片和采购侧首页图标均进入该页。", "今日任务和群聊看板分别使用 purchaseHomeTaskType、purchaseHomeGroupType 在采购单/入库单之间切换。", "页面不展示录单额度卡片，额度仍回到租户级公共配置查看。"],
-    business: ["采购录单首页聚焦采购单和入库单业务处理入口。", "今日任务和群聊看板必须支持按采购单/入库单筛选，方便采购员和入库员分别查看。"],
-    iteration: ["2026-07-03 新增采购录单首页，包含快捷入口、今日任务和群聊看板。"],
+    dev: ["路由为 purchase-home，采购录单卡片和采购侧首页图标均进入该页。", "今日任务保留采购单、入库单卡片，群聊看板改为按群聊聚合的表格。", "页面不展示录单额度卡片，额度仍回到租户级公共配置查看。"],
+    business: ["采购录单首页聚焦采购单和入库单业务处理入口。", "群聊看板按今日活跃群展示待处理、已完成、失败数量，方便操作员快速判断群聊状态。"],
+    iteration: ["2026-07-03 新增采购录单首页，包含快捷入口、今日任务和群聊看板。", "2026-07-03 群聊看板调整为单表格样式。"],
   },
   "sales-statistics": {
     title: "销售统计",
@@ -314,9 +310,9 @@ let pageAnnotations = {
   },
   "purchase-statistics": {
     title: "采购统计",
-    overview: "采购统计页用于查看采购录单内采购员、入库员和供应商单据识别表现。",
+    overview: "采购统计页用于查看采购录单内操作员和供应商单据识别表现。",
     dev: ["统计页归属采购录单左侧菜单，路由为 purchase-statistics。", "当前数据为静态演示表格，后续可按日期范围、角色和操作员维度接入真实绩效接口。"],
-    business: ["业务方重点确认采购绩效指标口径是否满足采购员和入库员管理。", "导出 Excel 为前端演示按钮，后续需要明确导出字段和权限。"],
+    business: ["业务方重点确认采购绩效指标口径是否满足操作员管理。", "导出 Excel 为前端演示按钮，后续需要明确导出字段和权限。"],
     iteration: ["V0.6 将统计从全局入口移动到采购录单内。"],
   },
   "purchase-decision-screen": {
@@ -342,7 +338,7 @@ let pageAnnotations = {
   },
   "purchase-order-entry": {
     title: "采购单录入",
-    overview: "采购单录入页模拟采购员手写单、微信截图或采购内部群消息导入，由 AI 生成待审核采购单。",
+    overview: "采购单录入页模拟操作员手写单、微信截图或采购内部群消息导入，由 AI 生成待审核采购单。",
     dev: ["左侧供应商/采购单群分段切换由 state.purchaseOrderChatMode 控制。", "群聊列表只展示标记为采购单录入的采购群。"],
     business: ["采购单一期重点识别供应商、商品名称和采购数量，价格字段默认不作为必填项。", "采购单可作为后续仓库收货依据，但本期不做与入库单的自动匹配。"],
     iteration: ["V0.7 新增采购单录入入口。"],
@@ -358,12 +354,12 @@ let pageAnnotations = {
     title: "入库单审核",
     overview: "入库单审核页集中处理供应商实际到货和送货单识别任务，确认后可进入入库单详情页。",
     dev: ["入库任务使用 purchaseTasks 数据，详情按钮会路由到 purchase-detail。", "状态筛选使用 state.filters.purchaseStatus，与销售审核保持同构。"],
-    business: ["待处理入库单需要确认商品、入库数、价格和入库员。", "审核完成后才允许执行实际入库确认。"],
+    business: ["待处理入库单需要确认商品、入库数、价格和操作员。", "审核完成后才允许执行实际入库确认。"],
     iteration: ["V0.7 将入库单审核保留为独立入口。"],
   },
   "purchase-order-review": {
     title: "采购单审核",
-    overview: "采购单审核页集中处理采购员手写单、微信截图和采购内部群生成的采购单任务。",
+    overview: "采购单审核页集中处理操作员手写单、微信截图和采购内部群生成的采购单任务。",
     dev: ["采购单任务使用 purchaseOrderTasks 数据。", "状态筛选使用 state.filters.purchaseOrderStatus，群聊视图只展示采购单录入群。"],
     business: ["待处理采购单需要确认供应商、商品和采购数量。", "采购单可作为收货依据，但一期不自动生成或匹配入库单。"],
     iteration: ["V0.7 新增采购单审核入口。"],
@@ -372,7 +368,7 @@ let pageAnnotations = {
     title: "采购入库单详情",
     overview: "一期详情页聚焦供应商送货单原始内容、AI 识别结果确认和人工修正入库明细。",
     dev: ["当前 activeDetailId 控制详情数据，明细表格使用静态输入框模拟可编辑状态。", "页面只保留手动选择采购单入口，不提供自动关联逻辑。", "保存修正和确认入库使用 toast 演示，后续替换为接口提交。"],
-    business: ["入库员确认供应商、商品名称、入库数、入库单价、入库金额和备注即可。", "一期不展示复杂关联信息或完整 ERP 单据字段。"],
+    business: ["操作员确认供应商、商品名称、入库数、入库单价、入库金额和备注即可。", "一期不展示复杂关联信息或完整 ERP 单据字段。"],
     iteration: ["V0.5 按一期范围瘦身采购详情页，删除复杂对账与自动关联展示。"],
   },
   "sales-customers": {
@@ -398,9 +394,9 @@ let pageAnnotations = {
   },
   "purchase-supplier-groups": {
     title: "供应商分组",
-    overview: "供应商分组页用于把采购员与供应商、供应商群聊建立分组关系，便于采购任务进入对应人员的处理范围。",
-    dev: ["供应商分组属于采购录单二级菜单，路由为 purchase-supplier-groups。", "列表中的采购员字段使用下拉控件，操作列统一展示编辑和删除。", "新建分组弹窗展示人员、分组名称、群聊和供应商选择区，当前为静态前端原型。"],
-    business: ["一个供应商分组可以绑定采购员、多个供应商和多个供应商群聊。", "列表中各行操作展示需要一致，避免最后一行只显示查看造成行为口径不一致。"],
+    overview: "供应商分组页用于把操作员与供应商、供应商群聊建立分组关系，便于采购任务进入对应人员的处理范围。",
+    dev: ["供应商分组属于采购录单二级菜单，路由为 purchase-supplier-groups。", "列表中的操作员字段使用下拉控件，操作列统一展示编辑和删除。", "新建分组弹窗展示人员、分组名称、群聊和供应商选择区，当前为静态前端原型。"],
+    business: ["一个供应商分组可以绑定操作员、多个供应商和多个供应商群聊。", "列表中各行操作展示需要一致，避免最后一行只显示查看造成行为口径不一致。"],
     iteration: ["2026-07-03 统一供应商分组操作列，所有行展示编辑和删除。"],
   },
   "sales-groups": {
@@ -412,10 +408,10 @@ let pageAnnotations = {
   },
   "purchase-groups": {
     title: "采购群聊管理",
-    overview: "采购群聊管理页维护采购单群和入库单群，绑定供应商、处理人、机器人状态和生效时段。",
-    dev: ["采购群通过 purchaseBound !== '-' 过滤得到，并使用 purchaseDocType 标记采购单录入或入库单录入。", "与销售群聊管理共用 groupsPage 模板，只切换业务字段和群聊类型列。"],
-    business: ["一期通过群聊类型区分采购单和入库单来源，避免同一群混发两类票据。", "若同一群后续需要承载两类单据，再考虑按成员 ID 或消息特征识别。"],
-    iteration: ["V0.7 增加采购群聊类型标签。"],
+    overview: "采购群聊管理页维护采购单群和入库单群，展示群聊类型、信道类型、绑定供应商数量和操作员。",
+    dev: ["采购群通过 purchaseBound !== '-' 过滤得到，并使用 purchaseDocType 标记采购单录入或入库单录入。", "筛选栏展示群聊类型、操作员和群聊名称搜索；列表按群聊名称、群聊类型、信道类型、绑定供应商、成员数、操作员、发言、采购时段和操作展示。"],
+    business: ["绑定供应商在列表中只展示数量，详情或供应商管理再查看完整明细。", "操作列保留详情并新增删除入口，便于表达群聊维护闭环。"],
+    iteration: ["2026-07-03 调整采购群聊管理筛选项和列表字段顺序。"],
   },
   "sales-prompts": {
     title: "销售提示词",
@@ -427,9 +423,9 @@ let pageAnnotations = {
   "purchase-prompts": {
     title: "采购提示词",
     overview: "采购提示词页用于维护采购单和入库单两类解析模板，并按单据类型隔离规则。",
-    dev: ["与销售提示词共用 promptsPage，通过 purchaseDocTab 区分采购单和入库单。", "模板目标对象可扩展到供应商、群聊或品类。"],
+    dev: ["与销售提示词共用 promptsPage，通过 purchaseDocTab 区分采购单和入库单。", "提示词工具栏隐藏导入模板和 AI 预识别，只保留搜索和新建模板。"],
     business: ["采购单提示词重点识别供应商、商品和采购数量，价格默认非必填。", "入库单提示词重点识别供应商、商品、入库数量、入库单价和备注。"],
-    iteration: ["V0.7 增加采购单/入库单提示词切换。"],
+    iteration: ["2026-07-03 去掉导入模板和 AI 预识别入口。"],
   },
   "sales-memory": {
     title: "销售 AI 记忆",
@@ -455,9 +451,9 @@ let pageAnnotations = {
   "purchase-agent-settings": {
     title: "采购设置",
     overview: "采购设置页承载采购单/入库单机器人的启停、回复设置和识别边界。",
-    dev: ["路由为 purchase-agent-settings，归属采购录单左侧菜单。", "当前表单为静态演示，后续可拆接机器人配置和回复模板接口。"],
+    dev: ["路由为 purchase-agent-settings，归属采购录单左侧菜单。", "采购侧隐藏通知设置，仅保留机器人管理和回复设置。"],
     business: ["采购机器人、回复设置、提示词和 AI 记忆只影响采购入库链路。"],
-    iteration: ["V0.5 新增 Agent 内独立设置入口。"],
+    iteration: ["2026-07-03 隐藏采购设置中的通知设置标签。"],
   },
   settings: {
     title: "租户公共设置",
@@ -470,7 +466,7 @@ let pageAnnotations = {
     title: "成员管理",
     overview: "成员管理页是租户级公共配置，用于维护两个 Agent 共用的操作人员、角色和启用状态。",
     dev: ["路由为 tenant-members，从首页成员管理卡片进入。", "新增成员弹窗复用 operatorModal，字段包含姓名、用户名、密码和成员角色。"],
-    business: ["新增按钮文案统一为新增成员。", "成员角色可选录单员、采购员、入库员，作为后续业务分工和权限配置基础。"],
+    business: ["新增按钮文案统一为新增成员。", "成员统一按操作员管理，作为后续业务分工和权限配置基础。"],
     iteration: ["2026-07-03 将成员管理从首页公共配置卡片拆出独立页面，并补充新增成员弹窗。"],
   },
   "tenant-quota": {
@@ -522,6 +518,7 @@ function routeTo(key) {
 function getRouteFromHash() {
   const key = window.location.hash.replace(/^#/, "");
   if (routeAliases[key]) return routeAliases[key];
+  if (hiddenRoutes.has(key)) return "purchase-home";
   return routes[key] ? key : "projects";
 }
 
@@ -560,7 +557,7 @@ function normalizeTabsForRoute() {
     state.tabs = [{ key: "projects", label: "项目库", isHome: true }];
     return;
   }
-  state.tabs = state.tabs.filter((tab) => tab.key !== "projects");
+  state.tabs = state.tabs.filter((tab) => tab.key !== "projects" && !hiddenRoutes.has(tab.key));
   if (!state.tabs.length) state.tabs.push({ key: "home", label: "首页", isHome: true });
 }
 
@@ -594,7 +591,8 @@ function renderSideMenu() {
   const globalMenuItems = route.module === "settings" && state.route !== "settings"
     ? [
         { key: "home", label: "首页", icon: "home", module: "home" },
-        { key: state.route, label: route.label, icon: "setting", module: "settings" },
+        { key: "tenant-quota", label: "额度管理", icon: "setting", module: "settings" },
+        { key: "tenant-members", label: "成员管理", icon: "group", module: "settings" },
       ]
     : primaryMenus;
   const globalHtml = !["sales", "purchase"].includes(route.module) ? `
@@ -702,7 +700,7 @@ function renderTopbar() {
   actionButton.textContent = route.module === "projects" ? "" : "页面批注";
   if (route.module === "projects") delete actionButton.dataset.annotationToggle;
   else actionButton.dataset.annotationToggle = "true";
-  document.getElementById("moduleHint").textContent = routeBreadcrumb(route);
+  document.getElementById("moduleHint").textContent = "";
 }
 
 function renderTabs() {
@@ -1300,15 +1298,6 @@ function homePage() {
             </div>
           </div>
         </section>
-        <section class="card">
-          <div class="card-header"><h3>额度资产</h3><button class="text-btn" data-route="tenant-quota">额度管理</button></div>
-          <div class="metric-row global-metric-row">
-            <div class="metric"><span class="metric-value" style="color:var(--primary)">10k</span><span class="metric-label">总额度</span></div>
-            <div class="metric"><span class="metric-value" style="color:var(--success)">3.8k</span><span class="metric-label">剩余</span></div>
-            <div class="metric"><span class="metric-value" style="color:var(--warning)">20%</span><span class="metric-label">预警阈值</span></div>
-            <div class="metric"><span class="metric-value" style="color:var(--danger)">5%</span><span class="metric-label">限制阈值</span></div>
-          </div>
-        </section>
       </div>
 
       <div class="section-title"><h2>全局入口</h2></div>
@@ -1329,20 +1318,23 @@ function configCard(route, icon, title, desc) {
 }
 
 function purchaseHomePage() {
-  const taskType = state.purchaseHomeTaskType || "order";
-  const groupType = state.purchaseHomeGroupType || "order";
-  const tasks = taskType === "order" ? purchaseOrderTasks : purchaseTasks;
-  const groupRows = groups.filter((group) => getGroupDomain(group) === "purchase" && getPurchaseDocType(group) === groupType);
-  const pendingCount = tasks.filter((task) => task.status === "待处理").length;
-  const finishedCount = tasks.filter((task) => task.status === "已完成").length;
-  const failedCount = tasks.filter((task) => task.status === "失败").length;
+  const orderGroups = groups.filter((group) => getGroupDomain(group) === "purchase" && getPurchaseDocType(group) === "order");
+  const inboundGroups = groups.filter((group) => getGroupDomain(group) === "purchase" && getPurchaseDocType(group) === "inbound");
+  const taskCards = [
+    { label: "采购单", route: "purchase-order-review", groups: orderGroups, tasks: purchaseOrderTasks, tone: "blue" },
+    { label: "入库单", route: "purchase-review", groups: inboundGroups, tasks: purchaseTasks, tone: "green" },
+  ].map((card) => ({
+    ...card,
+    pending: card.tasks.filter((task) => task.status === "待处理").length,
+    finished: card.tasks.filter((task) => task.status === "已完成").length,
+    failed: card.tasks.filter((task) => task.status === "失败").length,
+  }));
   const shortcutItems = [
     { route: "purchase-order-entry", icon: "edit", label: "采购单录入" },
     { route: "purchase-order-review", icon: "review", label: "采购单审核" },
     { route: "purchase-entry", icon: "edit", label: "入库单录入" },
     { route: "purchase-review", icon: "review", label: "入库单审核" },
     { route: "purchase-suppliers", icon: "supplier", label: "供应商" },
-    { route: "purchase-supplier-groups", icon: "group", label: "供应商分组" },
     { route: "purchase-groups", icon: "group", label: "群聊管理" },
     { route: "purchase-prompts", icon: "prompt", label: "提示词" },
     { route: "purchase-memory", icon: "memory", label: "AI 记忆" },
@@ -1367,52 +1359,65 @@ function purchaseHomePage() {
       </section>
 
       <section class="table-card purchase-home-card">
-        <div class="card-header">
-          <h3>今日任务</h3>
-          <div class="segmented">
-            <button class="${taskType === "order" ? "active" : ""}" data-purchase-home-task="order">采购单</button>
-            <button class="${taskType === "inbound" ? "active" : ""}" data-purchase-home-task="inbound">入库单</button>
-          </div>
+        <div class="card-header purchase-task-head">
+          <h3><span class="task-clock" aria-hidden="true"></span>今日任务</h3>
         </div>
-        <div class="purchase-task-summary">
-          <button data-route="${taskType === "order" ? "purchase-order-review" : "purchase-review"}"><strong class="gold-text">${pendingCount}</strong><span>待处理</span></button>
-          <button data-route="${taskType === "order" ? "purchase-order-review" : "purchase-review"}"><strong class="green-text">${finishedCount}</strong><span>已完成</span></button>
-          <button data-route="${taskType === "order" ? "purchase-order-review" : "purchase-review"}"><strong class="red-text">${failedCount}</strong><span>失败</span></button>
-          <button data-route="purchase-groups"><strong class="blue-text">${groupRows.length}</strong><span>活跃群</span></button>
-        </div>
-        <div class="table-scroll purchase-home-table">
-          ${taskMiniTable(tasks)}
+        <div class="purchase-home-card-grid">
+          ${taskCards.map((card) => `
+            <article class="purchase-home-mini-card">
+              <div class="mini-card-title">
+                <span class="tag ${card.tone}">${card.label}</span>
+                <button class="text-btn blue-text" data-route="${card.route}">去处理 ›</button>
+              </div>
+              <div class="purchase-task-summary mini">
+                <button data-route="${card.route}"><strong class="gold-text">${card.pending}</strong><span>待处理 ›</span></button>
+                <button data-route="${card.route}"><strong class="green-text">${card.finished}</strong><span>已完成</span></button>
+                <button data-route="${card.route}"><strong class="red-text">${card.failed}</strong><span>失败 ›</span></button>
+                <button data-route="purchase-groups"><strong class="blue-text">${card.groups.length}</strong><span>活跃群</span></button>
+              </div>
+            </article>
+          `).join("")}
         </div>
       </section>
 
-      <section class="table-card purchase-home-card">
-        <div class="card-header">
-          <h3>群聊看板</h3>
-          <div class="segmented">
-            <button class="${groupType === "order" ? "active" : ""}" data-purchase-home-group="order">采购单</button>
-            <button class="${groupType === "inbound" ? "active" : ""}" data-purchase-home-group="inbound">入库单</button>
-          </div>
+      <section class="table-card purchase-home-card purchase-group-board">
+        <div class="purchase-group-board-head">
+          <h3>${iconSvg.group}<span>群聊看板</span><em>今日 ${purchaseActiveGroupRows().length} 个群活跃</em></h3>
+          <button class="text-btn blue-text" data-route="purchase-groups">› 全部</button>
         </div>
-        <div class="table-scroll">
-          ${purchaseGroupBoardTable(groupRows)}
-        </div>
+        ${purchaseGroupBoardTable()}
       </section>
     </div>
   `;
 }
 
-function purchaseGroupBoardTable(rows) {
+function purchaseActiveGroupRows() {
+  const statusOrder = ["待处理", "已完成", "失败"];
+  const metrics = [...purchaseOrderTasks, ...purchaseTasks].reduce((acc, task) => {
+    if (!acc[task.group]) acc[task.group] = { name: task.group, pending: 0, finished: 0, failed: 0 };
+    if (task.status === "待处理") acc[task.group].pending += 1;
+    if (task.status === "已完成") acc[task.group].finished += 1;
+    if (task.status === "失败") acc[task.group].failed += 1;
+    return acc;
+  }, {});
+  return Object.values(metrics).sort((a, b) => {
+    const aScore = statusOrder.reduce((sum, status) => sum + (status === "待处理" ? a.pending : status === "已完成" ? a.finished : a.failed), 0);
+    const bScore = statusOrder.reduce((sum, status) => sum + (status === "待处理" ? b.pending : status === "已完成" ? b.finished : b.failed), 0);
+    return bScore - aScore || a.name.localeCompare(b.name, "zh-Hans-CN");
+  });
+}
+
+function purchaseGroupBoardTable() {
+  const rows = purchaseActiveGroupRows();
   return `
-    <table>
-      <thead><tr><th>群聊名称</th><th>群聊类型</th><th class="right">成员数</th><th class="right">待处理</th><th>操作员</th><th>机器人</th></tr></thead>
+    <table class="purchase-group-board-table">
+      <thead><tr><th>群聊名称</th><th class="right">待处理</th><th class="right">已完成</th><th class="right">失败</th></tr></thead>
       <tbody>
         ${rows.map((group) => `<tr>
           <td><strong>${group.name}</strong></td>
-          <td><span class="tag ${getPurchaseDocType(group) === "order" ? "blue" : "green"}">${purchaseDocLabel(getPurchaseDocType(group))}</span></td>
-          <td class="right">${group.members}</td>
-          <td class="right"><span class="tag gold">${group.pending}</span></td>
-          <td>${group.reviewer}</td>
-          <td><span class="tag green">${group.bot}</span></td>
+          <td class="right"><span class="board-count gold-text">${group.pending}</span></td>
+          <td class="right"><span class="board-count muted-text">${group.finished}</span></td>
+          <td class="right"><span class="board-count red-text">${group.failed}</span></td>
         </tr>`).join("")}
       </tbody>
     </table>
@@ -1422,17 +1427,13 @@ function purchaseGroupBoardTable(rows) {
 function statisticsPage(type = "sales") {
   const isSales = type === "sales";
   const agentName = isSales ? "销售订单录单" : "采购录单";
-  const purchaseRole = state.purchaseStatsRole;
-  const roleLabel = isSales ? "当前审核员" : purchaseRole === "buyer" ? "采购员" : "入库员";
+  const roleLabel = isSales ? "当前审核员" : "操作员";
   const rows = isSales ? [
     { reviewer: "张三", orders: 2, submits: 2, goods: 8 },
     { reviewer: "系统管理员", orders: 2, submits: 2, goods: 2 },
     { reviewer: "李娜", orders: 7, submits: 7, goods: 26 },
-  ] : purchaseRole === "buyer" ? [
-    { reviewer: "陈林", orders: 6, submits: 6, goods: 20 },
-    { reviewer: "周诚", orders: 4, submits: 4, goods: 12 },
-    { reviewer: "赵倩", orders: 2, submits: 2, goods: 8 },
   ] : [
+    { reviewer: "陈林", orders: 6, submits: 6, goods: 20 },
     { reviewer: "赵倩", orders: 5, submits: 5, goods: 18 },
     { reviewer: "周诚", orders: 4, submits: 4, goods: 12 },
     { reviewer: "系统管理员", orders: 1, submits: 1, goods: 2 },
@@ -1443,7 +1444,7 @@ function statisticsPage(type = "sales") {
         <div class="tabs ops-tabs">
           ${isSales
             ? `<button class="subtab active">审核员绩效</button><button class="subtab">录单员绩效</button>`
-            : `<button class="subtab ${purchaseRole === "buyer" ? "active" : ""}" data-stats-role="buyer">采购员绩效</button><button class="subtab ${purchaseRole === "inbound" ? "active" : ""}" data-stats-role="inbound">入库员绩效</button>`}
+            : `<button class="subtab active">操作员绩效</button>`}
         </div>
       </section>
 
@@ -1478,30 +1479,23 @@ function statisticsPage(type = "sales") {
 function decisionScreenPage(type = "sales") {
   const isSales = type === "sales";
   const agentName = isSales ? "销售订单录单" : "采购录单";
-  const purchaseRole = state.purchaseDecisionRole;
-  const roleLabel = isSales ? "接单员" : purchaseRole === "buyer" ? "采购员" : "入库员";
-  const orderWord = isSales ? "订单" : purchaseRole === "buyer" ? "采购单" : "入库单";
-  const purchaseMetrics = purchaseRole === "buyer"
-    ? { today: "6", consumed: "6", savedWorker: "全职采购员", activeGroups: "2 / 5", groupDesc: "采购群 / 绑定群", submitRatio: "4 / 6", memory: "1" }
-    : { today: "8", consumed: "8", savedWorker: "全职入库员", activeGroups: "1 / 4", groupDesc: "入库群 / 绑定群", submitRatio: "5 / 8", memory: "0" };
+  const roleLabel = isSales ? "接单员" : "操作员";
+  const orderWord = isSales ? "订单" : "单据";
+  const purchaseMetrics = { today: "14", consumed: "14", savedWorker: "全职操作员", activeGroups: "3 / 5", groupDesc: "单据群 / 绑定群", submitRatio: "9 / 14", memory: "1" };
   const modalityRows = [
-    { title: isSales ? "纯文本下单" : purchaseRole === "buyer" ? "纯文本采购" : "纯文本入库", orders: 4, manual: 0, rate: "100%" },
-    { title: isSales ? "图片下单" : purchaseRole === "buyer" ? "采购单图片" : "送货单图片", orders: 1, manual: 0, rate: "100%" },
-    { title: isSales ? "文件下单" : purchaseRole === "buyer" ? "采购单文件" : "送货单文件", orders: 0, manual: 0, rate: "-" },
+    { title: isSales ? "纯文本下单" : "纯文本单据", orders: 4, manual: 0, rate: "100%" },
+    { title: isSales ? "图片下单" : "单据图片", orders: 1, manual: 0, rate: "100%" },
+    { title: isSales ? "文件下单" : "单据文件", orders: 0, manual: 0, rate: "-" },
     { title: "其他类型", orders: 0, manual: 0, rate: "-" },
   ];
   const errorRows = isSales ? [
     ["d6ef90f3...", "text", "观麦大学", 1, 1, "0 / 1"],
     ["d456761e...", "text", "观麦大学", 2, 2, "0 / 2"],
     ["0476729a...", "image", "张三小学第二食堂", 3, 3, "0 / 3"],
-  ] : purchaseRole === "buyer" ? [
+  ] : [
     ["PO-20260701-201", "text", "海盛水产", 2, 2, "0 / 2"],
     ["PO-20260701-217", "text", "春田蔬菜基地", 2, 2, "0 / 2"],
-    ["PO-20260701-233", "image", "岭南肉禽", 2, 1, "1 / 2"],
-  ] : [
     ["PI-20260701-011", "text", "海盛水产", 2, 2, "0 / 2"],
-    ["PI-20260701-012", "image", "春田蔬菜基地", 2, 2, "0 / 2"],
-    ["PI-20260701-013", "text", "岭南肉禽", 2, 1, "1 / 2"],
   ];
   return `
     <div class="page wide-page decision-page">
@@ -1511,7 +1505,7 @@ function decisionScreenPage(type = "sales") {
           <p>聚焦${agentName}内部识别质量、异常诊断与${roleLabel}效能</p>
         </div>
         <div class="decision-range">
-          ${!isSales ? `<label class="decision-role-select"><span>人员类型</span><select data-decision-role><option value="buyer" ${purchaseRole === "buyer" ? "selected" : ""}>采购员</option><option value="inbound" ${purchaseRole === "inbound" ? "selected" : ""}>入库员</option></select></label>` : ""}
+          ${!isSales ? `<label class="decision-role-select"><span>人员类型</span><select><option>操作员</option></select></label>` : ""}
           <span>时间范围</span><button class="active">今日实时</button><button>昨日</button><button>近 7 天</button><button>近 30 天</button><button>自定义</button>
         </div>
       </div>
@@ -1596,6 +1590,17 @@ function getPurchaseDocType(group) {
 
 function purchaseDocLabel(docType) {
   return docType === "order" ? "采购单录入" : "入库单录入";
+}
+
+function getGroupChannel(group, index = 0) {
+  if (group.channel) return group.channel;
+  if (group.name.includes("邮件")) return "邮件";
+  return ["企微", "个微", "邮件"][index % 3];
+}
+
+function getBoundCount(value) {
+  const match = String(value || "").match(/\d+/);
+  return match ? match[0] : "-";
 }
 
 function groupBoardTable(domain = "all") {
@@ -1735,11 +1740,16 @@ function reviewPage(type) {
   const title = isSales ? "销售订单审核" : isPurchaseOrder ? "采购单审核" : "入库单审核";
   const taskRows = isSales ? salesTasks : isPurchaseOrder ? purchaseOrderTasks : purchaseTasks;
   const tasks = filterTasks(taskRows, getStatus(type));
-  const dateLabel = isSales ? "下单日期" : isPurchaseOrder ? "采购日期" : "入库日期";
-  const ownerLabel = isSales ? "审核员" : isPurchaseOrder ? "录单员" : "入库员";
+  const dateLabel = isSales ? "下单日期" : isPurchaseOrder ? "采购时间" : "入库时间";
+  const ownerLabel = isSales ? "审核员" : "操作员";
   const partyFilter = isSales || isPurchaseOrder
     ? `<label class="field compact"><span>${isSales ? "门店" : "供应商"}</span><select><option>全部</option><option>${isSales ? tasks[0]?.store || "天河鲜食店" : tasks[0]?.supplier || "海盛水产"}</option></select></label>`
     : "";
+  const purchaseFilters = !isSales ? `
+        <label class="field compact"><span>群聊</span><select><option>全部</option><option>${tasks[0]?.group || "采购内部下单群"}</option></select></label>
+        <label class="field compact"><span>${ownerLabel}</span><select><option>全部</option><option>陈林</option><option>赵倩</option><option>周诚</option></select></label>
+        <label class="field compact"><span>供应商</span><select><option>全部</option><option>${tasks[0]?.supplier || "海盛水产"}</option></select></label>
+  ` : "";
   const showGroupTab = isSales;
   return `
     <div class="page wide-page">
@@ -1756,8 +1766,8 @@ function reviewPage(type) {
           ${["all", "待处理", "已完成", "失败", "合单"].map((status) => `<option value="${status}" ${getStatus(type) === status ? "selected" : ""}>${status === "all" ? "全部状态" : status}</option>`).join("")}
         </select></label>
         <label class="field compact"><span>${dateLabel}</span><input value="2026-07-01"></label>
-        ${partyFilter}
-        <label class="field compact"><span>${ownerLabel}</span><select><option>全部</option><option>李娜</option><option>赵倩</option><option>周诚</option></select></label>
+        ${isSales ? partyFilter : purchaseFilters}
+        ${isSales ? `<label class="field compact"><span>${ownerLabel}</span><select><option>全部</option><option>李娜</option><option>赵倩</option><option>周诚</option></select></label>` : ""}
         <button class="btn" data-reset-filter="${type}">重置</button>
       </section>
       <section class="table-card">
@@ -1813,20 +1823,20 @@ function reviewTable(tasks, type = "sales") {
 
 function reviewerSelect(current, options = ["李娜", "赵倩", "周诚", "陈林", "系统管理员"]) {
   const list = [current, ...options.filter((item) => item !== current)];
-  return `<select class="table-select" aria-label="选择审核员">${list.map((item) => `<option ${item === current ? "selected" : ""}>${item}</option>`).join("")}</select>`;
+  return `<select class="table-select" aria-label="选择操作员">${list.map((item) => `<option ${item === current ? "selected" : ""}>${item}</option>`).join("")}</select>`;
 }
 
 function purchaseOrderReviewTable(tasks) {
   return `
     <table class="review-table">
-      <thead><tr><th>状态</th><th>时间</th><th>供应商</th><th>群聊</th><th>原文</th><th class="right">识别商品数</th><th>录单员</th><th>操作</th></tr></thead>
+      <thead><tr><th>状态</th><th>时间</th><th>群聊</th><th>供应商</th><th>原文</th><th class="right">商品数</th><th>操作员</th><th>操作</th></tr></thead>
       <tbody>
         ${tasks.map((task, i) => `
           <tr>
             <td>${statusTag(task.status)}</td>
             <td>07-01 ${String(8 + i).padStart(2, "0")}:32:18</td>
-            <td>${task.supplier}</td>
             <td>${task.group}</td>
+            <td>${task.supplier}</td>
             <td>${task.raw}</td>
             <td class="right">${task.items || "-"}</td>
             <td>${reviewerSelect(task.auditor)}</td>
@@ -1841,14 +1851,14 @@ function purchaseOrderReviewTable(tasks) {
 function purchaseReviewTable(tasks) {
   return `
     <table class="review-table">
-      <thead><tr><th>状态</th><th>时间</th><th>供应商</th><th>群聊</th><th>原文</th><th class="right">识别商品数</th><th>入库员</th><th>操作</th></tr></thead>
+      <thead><tr><th>状态</th><th>时间</th><th>群聊</th><th>供应商</th><th>原文</th><th class="right">商品数</th><th>操作员</th><th>操作</th></tr></thead>
       <tbody>
         ${tasks.map((task, i) => `
           <tr>
             <td>${statusTag(task.status)}</td>
             <td>07-01 ${String(8 + i).padStart(2, "0")}:32:18</td>
-            <td>${task.supplier}</td>
             <td>${task.group}</td>
+            <td>${task.supplier}</td>
             <td>${task.raw}</td>
             <td class="right">${task.items || "-"}</td>
             <td>${reviewerSelect(task.auditor)}</td>
@@ -1866,38 +1876,35 @@ function statusTag(status) {
 }
 
 const purchaseDetailItems = [
-  { raw: "鲈鱼 80 条", name: "鲜活鲈鱼", qty: "80 条", price: "18.50", amount: "1480.00", remark: "到仓复称" },
-  { raw: "基围虾 120 斤", name: "基围虾", qty: "120 斤", price: "39.00", amount: "4680.00", remark: "冰鲜称重" },
-  { raw: "云南生菜 400 斤", name: "云南生菜", qty: "400 斤", price: "3.20", amount: "1280.00", remark: "" },
-  { raw: "油麦菜 260 斤", name: "油麦菜", qty: "260 斤", price: "3.80", amount: "988.00", remark: "" },
-  { raw: "鸡腿 30 件", name: "冻鸡腿", qty: "30 件", price: "126.00", amount: "3780.00", remark: "按件入库" },
-  { raw: "猪五花 18 件", name: "猪五花", qty: "18 件", price: "238.00", amount: "4284.00", remark: "按件入库" },
+  { raw: "鲈鱼 80 条", name: "鲜活鲈鱼", qty: "80 条", purchaseQty: 82, receivedQty: 80, unit: "条", price: "18.50", amount: "1480.00", remark: "到仓复称", spu: "鲜活鲈鱼", code: "SPU-P-1001" },
+  { raw: "基围虾 120 斤", name: "基围虾", qty: "120 斤", purchaseQty: 120, receivedQty: 120, unit: "斤", price: "39.00", amount: "4680.00", remark: "冰鲜称重", spu: "基围虾", code: "SPU-P-1002" },
+  { raw: "云南生菜 400 斤", name: "云南生菜", qty: "400 斤", purchaseQty: 410, receivedQty: 400, unit: "斤", price: "3.20", amount: "1280.00", remark: "", spu: "云南生菜", code: "SPU-V-2031" },
+  { raw: "油麦菜 260 斤", name: "油麦菜", qty: "260 斤", purchaseQty: 260, receivedQty: 256, unit: "斤", price: "3.80", amount: "988.00", remark: "", spu: "油麦菜", code: "SPU-V-2032" },
+  { raw: "鸡腿 30 件", name: "冻鸡腿", qty: "30 件", purchaseQty: 30, receivedQty: 30, unit: "件", price: "126.00", amount: "3780.00", remark: "按件入库", spu: "冻鸡腿", code: "SPU-M-3018" },
+  { raw: "猪五花 18 件", name: "猪五花", qty: "18 件", purchaseQty: 20, receivedQty: 18, unit: "件", price: "238.00", amount: "4284.00", remark: "按件入库", spu: "猪五花", code: "SPU-M-3021" },
 ];
 
 function purchaseDetailPage() {
   const task = [...purchaseOrderTasks, ...purchaseTasks].find((item) => item.id === state.activeDetailId) || purchaseTasks[0];
   const isPurchaseOrder = task.id.startsWith("PO-");
   const supplierOptions = [task.supplier, ...suppliers.map((supplier) => supplier.name).filter((name) => name !== task.supplier)];
-  const detailTitle = isPurchaseOrder ? "采购单详情" : "采购入库单详情";
-  const confirmText = isPurchaseOrder ? "确认采购单" : "确认入库";
+  const detailTitle = isPurchaseOrder ? "采购单详情" : "入库单详情";
+  const confirmText = "确认采购单";
   const confirmToast = isPurchaseOrder ? "采购单已确认" : "采购入库单已确认入库";
   const detailKindLabel = isPurchaseOrder ? "采购单" : "入库单";
-  const qtyLabel = isPurchaseOrder ? "采购数量" : "入库数";
+  const qtyLabel = isPurchaseOrder ? "数量/单位" : "入库数/单位";
   const priceLabel = "入库单价";
   const amountLabel = "入库金额";
   const remarkLabel = isPurchaseOrder ? "采购备注" : "备注";
+  const totalPurchaseQty = purchaseDetailItems.reduce((sum, item) => sum + item.purchaseQty, 0);
+  const totalReceivedQty = purchaseDetailItems.reduce((sum, item) => sum + item.receivedQty, 0);
+  const totalDiffQty = totalPurchaseQty - totalReceivedQty;
+  const totalDiffRate = totalPurchaseQty ? `${((totalDiffQty / totalPurchaseQty) * 100).toFixed(1)}%` : "0.0%";
   const detailLineActions = `
     <div class="detail-line-actions">
-      <button class="btn" data-toast="已打开${detailKindLabel}自定义字段配置">自定义字段</button>
-      <button class="btn" data-toast="已打开新建商品">新建商品</button>
       <button class="btn danger" data-toast="已删除选中的${detailKindLabel}商品">删除</button>
-      <span class="detail-more-wrap">
-        <button class="btn detail-more-btn">更多</button>
-        <span class="detail-more-menu">
-          <button class="text-btn" data-toast="已提交为补录单">提交为补录单</button>
-        </span>
-      </span>
       <button class="btn" data-toast="${detailKindLabel}明细已保存">保存</button>
+      <button class="btn primary" data-toast="${confirmToast}">${confirmText}</button>
     </div>
   `;
   const rowActions = `
@@ -1914,7 +1921,7 @@ function purchaseDetailPage() {
       <aside class="detail-source">
         <div class="detail-tabs">
           <button class="active">基本信息</button>
-          <button>群聊消息</button>
+          <button><small class="source-locator">定位来源</small>群聊消息</button>
         </div>
         <div class="detail-source-section">
           <div class="detail-section-title"><span></span><strong>原始文件</strong><span></span></div>
@@ -1932,8 +1939,8 @@ ${isPurchaseOrder ? "采购日期：2026-07-02" : "到货时间：今晚 20:00 �
 供应商：${task.supplier}
 
 --- ${detailKindLabel}补充说明 ---
-${isPurchaseOrder ? "采购数量以原始输入为准，价格缺失时可留空待采购员确认。" : "需到仓复称，破损和缺货请在备注中标记。"}
-${isPurchaseOrder ? "价格缺失时留待录单员确认，不自动关联其他单据。" : "价格按本周采购入库价执行，异常商品进入人工确认。"}</pre>
+${isPurchaseOrder ? "采购数量以原始输入为准，价格缺失时可留空待操作员确认。" : "需到仓复称，破损和缺货请在备注中标记。"}
+${isPurchaseOrder ? "价格缺失时留待操作员确认，不自动关联其他单据。" : "价格按本周采购入库价执行，异常商品进入人工确认。"}</pre>
         </div>
       </aside>
 
@@ -1943,13 +1950,9 @@ ${isPurchaseOrder ? "价格缺失时留待录单员确认，不自动关联其�
             <h2>${detailTitle} <span class="tag gold">${task.status}</span></h2>
             <div class="detail-meta">
               <span>供应商：${task.supplier}</span>
-              <span>${isPurchaseOrder ? "录单员" : "入库员"}：${task.auditor}</span>
+              <span>操作员：${task.auditor}</span>
               <span>来源群聊：${task.group}</span>
             </div>
-          </div>
-          <div class="detail-actions">
-            <button class="btn">保存修正</button>
-            <button class="btn primary" data-toast="${confirmToast}">${confirmText}</button>
           </div>
         </div>
 
@@ -1964,18 +1967,25 @@ ${isPurchaseOrder ? "价格缺失时留待录单员确认，不自动关联其�
             <label>供应商 <select>${supplierOptions.map((name) => `<option>${name}</option>`).join("")}</select></label>
             <label class="wide">${remarkLabel} <input value="${isPurchaseOrder ? "价格待确认" : "到仓复称，异常短缺请备注"}"></label>
           </div>
+          ${!isPurchaseOrder ? `
+            <div class="inbound-summary-row">
+              <span>总采购数 <b>${totalPurchaseQty}</b></span>
+              <span>总实收数 <b>${totalReceivedQty}</b></span>
+              <span>总差异百分比 <b class="${totalDiffQty ? "red-text" : "green-text"}">${totalDiffRate}</b></span>
+            </div>
+          ` : ""}
           <div class="purchase-table-wrap">
             <table class="purchase-detail-table simple-purchase-table">
               <thead>
                 ${isPurchaseOrder
-                  ? `<tr><th>商品名称</th><th>${qtyLabel}</th><th>${remarkLabel}</th><th class="operation-col">操作</th></tr>`
-                  : `<tr><th>原始输入</th><th>商品名称</th><th>${qtyLabel}</th><th>${priceLabel}</th><th>${amountLabel}</th><th>${remarkLabel}</th><th class="operation-col">操作</th></tr>`}
+                  ? `<tr><th>序号</th><th>识别文本</th><th>商品名称</th><th>${qtyLabel}</th><th>${remarkLabel}</th><th>SPU 名称</th><th>商品编码</th><th class="operation-col">操作</th></tr>`
+                  : `<tr><th>序号</th><th>识别文本</th><th>商品名称</th><th>采购数</th><th>实收数</th><th>差异</th><th>${qtyLabel}</th><th>${priceLabel}</th><th>${amountLabel}</th><th>${remarkLabel}</th><th>SPU 名称</th><th>商品编码</th><th class="operation-col">操作</th></tr>`}
               </thead>
               <tbody>
-                ${purchaseDetailItems.map((item) => `
+                ${purchaseDetailItems.map((item, index) => `
                   ${isPurchaseOrder
-                    ? `<tr><td><input value="${item.name}"></td><td><input class="qty-input" value="${item.qty}"></td><td><input class="remark-input" value="${item.remark || "按采购计划确认"}"></td><td class="detail-row-actions">${rowActions}</td></tr>`
-                    : `<tr><td>${item.raw}</td><td><input value="${item.name}"></td><td><input class="qty-input" value="${item.qty}"></td><td>¥ <input class="price-input" value="${item.price}"></td><td>¥${item.amount}</td><td><input class="remark-input" value="${item.remark}"></td><td class="detail-row-actions">${rowActions}</td></tr>`}
+                    ? `<tr><td><b>${index + 1}</b></td><td>${item.raw}</td><td><input value="${item.name}"></td><td><input class="qty-input" value="${item.qty}"></td><td><input class="remark-input" value="${item.remark || "按采购计划确认"}"></td><td>${item.spu}</td><td><code>${item.code}</code></td><td class="detail-row-actions">${rowActions}</td></tr>`
+                    : `<tr><td><b>${index + 1}</b></td><td>${item.raw}</td><td><input value="${item.name}"></td><td>${item.purchaseQty} ${item.unit}</td><td>${item.receivedQty} ${item.unit}</td><td><span class="${item.purchaseQty - item.receivedQty ? "red-text" : "green-text"}">${item.purchaseQty - item.receivedQty} ${item.unit}</span></td><td><input class="qty-input" value="${item.qty}"></td><td>¥ <input class="price-input" value="${item.price}"></td><td>¥${item.amount}</td><td><input class="remark-input" value="${item.remark}"></td><td>${item.spu}</td><td><code>${item.code}</code></td><td class="detail-row-actions">${rowActions}</td></tr>`}
                 `).join("")}
               </tbody>
             </table>
@@ -2042,7 +2052,7 @@ function priorityTags(items = ["采购备注", "SPU备注", "合并"]) {
 function partyGroupPage(type) {
   const isSales = type === "sales";
   const partyLabel = isSales ? "客户" : "供应商";
-  const ownerLabel = isSales ? "审核员" : "采购员";
+  const ownerLabel = isSales ? "审核员" : "操作员";
   const modalType = isSales ? "customer-group" : "supplier-group";
   const rows = isSales ? [
     { name: "王五的客群", owner: "王五", groups: 1, parties: 0, editable: false },
@@ -2082,7 +2092,7 @@ function partyGroupPage(type) {
 function groupBindingModal(type) {
   const isSales = type === "customer-group";
   const partyLabel = isSales ? "客户" : "供应商";
-  const ownerLabel = isSales ? "审核员" : "采购员";
+  const ownerLabel = isSales ? "审核员" : "操作员";
   const partyRows = isSales ? customers : suppliers;
   const groupRows = groups.filter((group) => isSales ? group.purchaseBound === "-" : group.purchaseBound !== "-");
   return `
@@ -2111,7 +2121,7 @@ function groupPickPanel(title, rows, placeholder, desc = "") {
 
 function operatorSelect(current) {
   const options = [current, "赵倩", "周诚", "陈林", "李娜", "系统管理员"].filter((item, index, list) => item && list.indexOf(item) === index);
-  return `<select class="table-select group-owner-select" aria-label="选择采购员">${options.map((item) => `<option ${item === current ? "selected" : ""}>${item}</option>`).join("")}</select>`;
+  return `<select class="table-select group-owner-select" aria-label="选择操作员">${options.map((item) => `<option ${item === current ? "selected" : ""}>${item}</option>`).join("")}</select>`;
 }
 
 function groupsPage(type) {
@@ -2119,16 +2129,28 @@ function groupsPage(type) {
   const rows = groups.filter((row) => isSales ? row.purchaseBound === "-" : row.purchaseBound !== "-");
   const orderGroupCount = rows.filter((row) => getPurchaseDocType(row) === "order").length;
   const inboundGroupCount = rows.filter((row) => getPurchaseDocType(row) === "inbound").length;
+  const operatorOptions = [...new Set(rows.map((row) => row.reviewer).filter(Boolean))];
   return `
     <div class="page wide-page">
       ${!isSales ? `
         <section class="filters purchase-group-filter-bar">
           <label class="field compact"><span>群聊类型</span><select><option>全部</option><option>采购单录入</option><option>入库单录入</option></select></label>
+          <label class="field compact"><span>操作员</span><select><option>全部</option>${operatorOptions.map((name) => `<option>${name}</option>`).join("")}</select></label>
           <label class="field group-search-field"><input placeholder="搜索群聊名称"></label>
         </section>
       ` : ""}
       <section class="table-card">
-        <div class="toolbar"><strong>${isSales ? "销售群聊管理" : "采购群聊管理"}</strong><button class="btn" data-toast="群聊数据已刷新">刷新</button></div>
+        <div class="toolbar">
+          <strong>${isSales ? "销售群聊管理" : "采购群聊管理"}</strong>
+          <div class="group-toolbar-actions">
+            ${!isSales ? `
+              <button class="btn danger" data-toast="已选择批量删除群聊">批量删除</button>
+              <button class="btn" data-toast="已打开群聊迁移配置">群聊迁移</button>
+              <button class="btn" data-toast="已打开新增邮件群">新增邮件群</button>
+            ` : ""}
+            <button class="btn" data-toast="群聊数据已刷新">刷新</button>
+          </div>
+        </div>
         <div class="stat-strip">
           <span>总群聊 <b>${rows.length}</b></span><span class="divider">|</span>
           <span>${isSales ? "已绑客户" : "已绑供应商"} <b>${rows.length}</b></span><span class="divider">|</span>
@@ -2136,10 +2158,27 @@ function groupsPage(type) {
           <span>已禁言 <b>${rows.filter((row) => row.bot === "禁言").length}</b></span>
         </div>
         <div class="table-scroll">
-          <table>
-            <thead><tr><th>群聊名称</th><th class="right">成员数</th>${!isSales ? "<th>群聊类型</th>" : ""}<th>${isSales ? "绑定客户" : "绑定供应商"}</th><th>操作员</th><th>机器人发言</th><th>下单时段</th><th>操作</th></tr></thead>
-            <tbody>${rows.map((row) => `<tr><td><strong>${row.name}</strong></td><td class="right">${row.members}</td>${!isSales ? `<td><span class="tag ${getPurchaseDocType(row) === "order" ? "blue" : "green"}">${purchaseDocLabel(getPurchaseDocType(row))}</span></td>` : ""}<td>${isSales ? row.salesBound : row.purchaseBound}</td><td>${row.reviewer}</td><td><span class="tag ${row.bot === "正常" ? "green" : ""}">${row.bot}</span></td><td>${row.time}</td><td><button class="text-btn" data-group-detail="${escapeAttribute(row.name)}">详情</button></td></tr>`).join("")}</tbody>
-          </table>
+          ${isSales ? `
+            <table>
+              <thead><tr><th>群聊名称</th><th class="right">成员数</th><th>绑定客户</th><th>操作员</th><th>机器人发言</th><th>下单时段</th><th>操作</th></tr></thead>
+              <tbody>${rows.map((row) => `<tr><td><strong>${row.name}</strong></td><td class="right">${row.members}</td><td>${row.salesBound}</td><td>${row.reviewer}</td><td><span class="tag ${row.bot === "正常" ? "green" : ""}">${row.bot}</span></td><td>${row.time}</td><td><button class="text-btn" data-group-detail="${escapeAttribute(row.name)}">详情</button></td></tr>`).join("")}</tbody>
+            </table>
+          ` : `
+            <table>
+              <thead><tr><th>群聊名称</th><th>群聊类型</th><th>信道类型</th><th class="right">绑定供应商</th><th class="right">成员数</th><th>操作员</th><th>发言</th><th>采购时段</th><th>操作</th></tr></thead>
+              <tbody>${rows.map((row, index) => `<tr>
+                <td><strong>${row.name}</strong></td>
+                <td><span class="tag ${getPurchaseDocType(row) === "order" ? "blue" : "green"}">${purchaseDocLabel(getPurchaseDocType(row))}</span></td>
+                <td><span class="tag">${getGroupChannel(row, index)}</span></td>
+                <td class="right"><span class="count-badge green">${getBoundCount(row.purchaseBound)}</span></td>
+                <td class="right">${row.members}</td>
+                <td>${row.reviewer}</td>
+                <td><span class="tag ${row.bot === "正常" ? "green" : ""}">${row.bot}</span></td>
+                <td>${row.time}</td>
+                <td><button class="text-btn" data-group-detail="${escapeAttribute(row.name)}">详情</button><button class="text-btn danger-text" data-toast="演示环境未实际删除群聊">删除</button></td>
+              </tr>`).join("")}</tbody>
+            </table>
+          `}
         </div>
       </section>
     </div>
@@ -2167,23 +2206,45 @@ function groupDetailModal(group) {
   const linkedSuppliers = suppliers.slice(0, group.purchaseBound === "-" ? 1 : 3);
   const members = [
     { name: "吴经理", wx: "wx_hs_001", role: "供应商", supplier: "海盛水产" },
-    { name: group.reviewer, wx: `wx_${group.reviewer}`, role: getPurchaseDocType(group) === "order" ? "采购员" : "入库员", supplier: "未绑定" },
-    { name: "陈林", wx: "wx_buyer_chen", role: "采购员", supplier: "春田蔬菜基地" },
-    { name: "赵倩", wx: "wx_inbound_zhao", role: "入库员", supplier: "海盛水产" },
+    { name: group.reviewer, wx: `wx_${group.reviewer}`, role: "操作员", supplier: "未绑定" },
+    { name: "陈林", wx: "wx_buyer_chen", role: "操作员", supplier: "春田蔬菜基地" },
+    { name: "赵倩", wx: "wx_inbound_zhao", role: "操作员", supplier: "海盛水产" },
   ];
-  const rules = [
-    { category: "水产海鲜", merge: "可合并", split: "按供应商拆分" },
-    { category: "蔬菜", merge: "可合并", split: "按到货日期拆分" },
-    { category: "肉禽冻品", merge: "不可合并", split: "按温区拆分" },
-  ];
+  const ownerLabel = "操作员";
   return `
     <div class="group-detail">
+      <div class="group-detail-overview">
+        <div class="group-detail-title">
+          <strong>${group.name}</strong>
+          <span class="tag ${group.bot === "正常" ? "green" : ""}">${group.bot}</span>
+        </div>
+        <button class="btn" data-toast="群聊详情已刷新">刷新</button>
+      </div>
+      <div class="group-detail-metrics">
+        <div class="group-detail-metric">
+          <span>成员数</span>
+          <strong>${group.members}</strong>
+          <i>${iconSvg.group}</i>
+        </div>
+        <div class="group-detail-metric">
+          <span>绑定供应商</span>
+          <strong>${linkedSuppliers.length}</strong>
+          <i>${iconSvg.supplier || iconSvg.group}</i>
+        </div>
+      </div>
+      <div class="group-detail-config">
+        <label><span>机器人发言</span><em class="tag ${group.bot === "正常" ? "blue" : ""}">${group.bot}</em></label>
+        <label><span>下单时段</span><input value="${group.time}" readonly></label>
+        <label><span>${ownerLabel}</span><select><option>${group.reviewer}</option><option>赵倩</option><option>周诚</option><option>陈林</option></select></label>
+      </div>
       <div class="tabs group-detail-tabs">
         <button class="subtab active" data-group-detail-tab="suppliers">供应商列表</button>
         <button class="subtab" data-group-detail-tab="members">群成员</button>
-        <button class="subtab" data-group-detail-tab="rules">拆单规则</button>
       </div>
       <section class="group-detail-panel active" data-group-detail-panel="suppliers">
+        <div class="group-detail-panel-head">
+          <button class="btn" data-toast="已打开供应商管理">供应商管理</button>
+        </div>
         <table>
           <thead><tr><th>供应商名称</th><th>供应商 ID</th><th>操作</th></tr></thead>
           <tbody>${linkedSuppliers.map((supplier) => `<tr><td><strong>${supplier.name}</strong></td><td><code>${supplier.id}</code></td><td><button class="text-btn danger-text" data-toast="演示环境未实际删除供应商">删除</button></td></tr>`).join("")}</tbody>
@@ -2192,13 +2253,7 @@ function groupDetailModal(group) {
       <section class="group-detail-panel" data-group-detail-panel="members">
         <table>
           <thead><tr><th>成员名称</th><th>微信号</th><th>身份类型</th><th>绑定供应商</th></tr></thead>
-          <tbody>${members.map((member) => `<tr><td><strong>${member.name}</strong></td><td>${member.wx}</td><td><span class="tag ${member.role === "供应商" ? "green" : member.role === "采购员" ? "blue" : "gold"}">${member.role}</span></td><td><select class="table-select"><option>${member.supplier}</option>${suppliers.map((supplier) => `<option>${supplier.name}</option>`).join("")}</select></td></tr>`).join("")}</tbody>
-        </table>
-      </section>
-      <section class="group-detail-panel" data-group-detail-panel="rules">
-        <table>
-          <thead><tr><th>商品品类</th><th>订单可合并</th><th>订单可拆分</th><th>操作</th></tr></thead>
-          <tbody>${rules.map((rule) => `<tr><td><strong>${rule.category}</strong></td><td><select class="table-select"><option>${rule.merge}</option><option>可合并</option><option>不可合并</option></select></td><td><select class="table-select"><option>${rule.split}</option><option>按供应商拆分</option><option>按品类拆分</option><option>按温区拆分</option></select></td><td><button class="text-btn" data-toast="拆单规则已保存">保存</button></td></tr>`).join("")}</tbody>
+          <tbody>${members.map((member) => `<tr><td><strong>${member.name}</strong></td><td>${member.wx}</td><td><span class="tag ${member.role === "供应商" ? "green" : "blue"}">${member.role}</span></td><td><select class="table-select"><option>${member.supplier}</option>${suppliers.map((supplier) => `<option>${supplier.name}</option>`).join("")}</select></td></tr>`).join("")}</tbody>
         </table>
       </section>
     </div>
@@ -2236,8 +2291,6 @@ function promptTemplateManager(type, docType, scope) {
         <div class="prompt-total">总模板 <b>${isSystem ? 8 : 21}</b></div>
         <div class="prompt-actions">
           <label class="prompt-search"><input placeholder="${searchLabel}"></label>
-          <button class="btn" data-modal="prompt-import">${iconSvg.config} 导入模板</button>
-          <button class="btn" data-modal="prompt-ai">${iconSvg.prompt} AI 预识别</button>
           <button class="btn primary" data-modal="prompt-edit">新建模板</button>
         </div>
       </div>
@@ -2411,15 +2464,16 @@ function purchaseGroupMemoryTable(rows) {
 function agentSettingsPage(type) {
   const isSales = type === "sales";
   const agentName = isSales ? "销售订单录单" : "采购录单";
+  const activeTab = isSales ? state.agentSettingsTab : state.agentSettingsTab === "reply" ? "reply" : "robots";
   return `
     <div class="page wide-page">
       <section class="settings-workbench">
         <div class="tabs settings-tabs">
-          <button class="subtab ${state.agentSettingsTab === "robots" ? "active" : ""}" data-agent-settings-tab="robots">机器人管理</button>
-          <button class="subtab ${state.agentSettingsTab === "reply" ? "active" : ""}" data-agent-settings-tab="reply">回复设置</button>
-          <button class="subtab ${state.agentSettingsTab === "notice" ? "active" : ""}" data-agent-settings-tab="notice">通知设置</button>
+          <button class="subtab ${activeTab === "robots" ? "active" : ""}" data-agent-settings-tab="robots">机器人管理</button>
+          <button class="subtab ${activeTab === "reply" ? "active" : ""}" data-agent-settings-tab="reply">回复设置</button>
+          ${isSales ? `<button class="subtab ${activeTab === "notice" ? "active" : ""}" data-agent-settings-tab="notice">通知设置</button>` : ""}
         </div>
-        ${state.agentSettingsTab === "robots" ? agentRobotSettings(agentName, isSales) : state.agentSettingsTab === "reply" ? agentReplySettings(agentName, isSales) : agentNoticeSettings(agentName, isSales)}
+        ${activeTab === "robots" ? agentRobotSettings(agentName, isSales) : activeTab === "reply" ? agentReplySettings(agentName, isSales) : agentNoticeSettings(agentName, isSales)}
       </section>
     </div>
   `;
@@ -2582,7 +2636,7 @@ function quotaManagementPage() {
           <h3>期间消耗合计</h3>
           <div class="quota-period-grid">
             <div><span class="muted">扣额行数</span><strong>0</strong></div>
-            <div><span class="muted">提交订单数</span><strong>0</strong></div>
+            <div><span class="muted">提交单据数</span><strong>0</strong></div>
           </div>
         </section>
         <section class="quota-section">
@@ -2592,8 +2646,8 @@ function quotaManagementPage() {
           </div>
           <div class="table-scroll">
             <table>
-              <thead><tr><th>提交时间</th><th>任务 ID</th><th>订单号</th><th>审核员</th><th>客户</th><th>扣额行数</th><th>订单行数</th><th>状态</th></tr></thead>
-              <tbody><tr><td colspan="8"><div class="quota-empty">暂无数据</div></td></tr></tbody>
+              <thead><tr><th>提交时间</th><th>任务 ID</th><th>操作员</th><th>供应商</th><th>扣额行数</th><th>订单行数</th><th>状态</th></tr></thead>
+              <tbody><tr><td colspan="7"><div class="quota-empty">暂无数据</div></td></tr></tbody>
             </table>
           </div>
         </section>
@@ -2618,8 +2672,8 @@ function operatorSettings() {
       <div class="table-scroll" style="margin-top:12px">
         <table><thead><tr><th>用户名</th><th>姓名</th><th>角色</th><th>身份标签</th><th>状态</th><th>操作</th></tr></thead><tbody>
           <tr><td>admin</td><td>王明</td><td><span class="tag blue">管理员</span></td><td>系统管理员</td><td><span class="tag green">启用</span></td><td><button class="text-btn">编辑</button></td></tr>
-          <tr><td>lina</td><td>李娜</td><td><span class="tag">普通成员</span></td><td>录单员</td><td><span class="tag green">启用</span></td><td><button class="text-btn">编辑</button></td></tr>
-          <tr><td>zhaoqian</td><td>赵倩</td><td><span class="tag">普通成员</span></td><td>仓管员</td><td><span class="tag green">启用</span></td><td><button class="text-btn">编辑</button></td></tr>
+          <tr><td>lina</td><td>李娜</td><td><span class="tag">普通成员</span></td><td>操作员</td><td><span class="tag green">启用</span></td><td><button class="text-btn">编辑</button></td></tr>
+          <tr><td>zhaoqian</td><td>赵倩</td><td><span class="tag">普通成员</span></td><td>操作员</td><td><span class="tag green">启用</span></td><td><button class="text-btn">编辑</button></td></tr>
         </tbody></table>
       </div>
     </div>
@@ -2717,18 +2771,6 @@ function wirePageInteractions() {
       renderContent();
     };
   });
-  document.querySelectorAll("[data-purchase-home-task]").forEach((button) => {
-    button.onclick = () => {
-      state.purchaseHomeTaskType = button.dataset.purchaseHomeTask;
-      renderContent();
-    };
-  });
-  document.querySelectorAll("[data-purchase-home-group]").forEach((button) => {
-    button.onclick = () => {
-      state.purchaseHomeGroupType = button.dataset.purchaseHomeGroup;
-      renderContent();
-    };
-  });
   document.querySelectorAll("[data-prompt-tab]").forEach((button) => {
     button.onclick = () => {
       state.promptTab = button.dataset.promptTab;
@@ -2818,6 +2860,10 @@ function openModalByType(type, button) {
   }
   if (type === "prompt-edit") {
     openModal("编辑 Prompt 模板", promptEditModal(), { wide: true, hideFooter: true });
+    return;
+  }
+  if (type === "manual-product") {
+    openModal("手动建品并加入报价单", manualProductModal(), { hideFooter: true });
     return;
   }
   if (type === "operator") {
@@ -2939,6 +2985,70 @@ function promptEditModal() {
         <small>此内容将追加到系统基础 Prompt 之后，不会覆盖核心解析逻辑</small>
       </label>
       <div class="prompt-edit-footer"><button class="btn" data-close-modal>取消</button><button class="btn primary" data-toast="Prompt 模板已保存">保存</button></div>
+    </div>
+  `;
+}
+
+function manualProductModal() {
+  return `
+    <div class="manual-product-modal">
+      <label class="product-field required full">
+        <span>目标报价单</span>
+        <select><option>默认报价单</option><option>采购默认报价单</option><option>入库补录报价单</option></select>
+      </label>
+      <label class="product-field required">
+        <span>商品销售名称</span>
+        <input placeholder="例：大白菜">
+      </label>
+      <label class="product-field full">
+        <span>关联 SPU（可选）<em>?</em></span>
+        <select><option>输入关键词搜索 SPU</option><option>大白菜</option><option>鲜五花肉</option></select>
+      </label>
+      <div class="product-form-grid">
+        <label class="product-field required">
+          <span>所属品类 <em>?</em></span>
+          <select><option>菌菇</option><option>蔬菜</option><option>水产</option><option>肉禽冻品</option></select>
+        </label>
+        <label class="product-field required">
+          <span>销售单价</span>
+          <input value="￥ 1.0">
+        </label>
+        <label class="product-field required">
+          <span>销售单位</span>
+          <input value="斤">
+        </label>
+        <label class="product-field">
+          <span>最小下单数量 <em>?</em></span>
+          <input value="1.0">
+        </label>
+        <label class="product-field">
+          <span>是否记重 <em>?</em></span>
+          <select><option>不记重</option><option>记重</option></select>
+        </label>
+        <label class="product-field">
+          <span>是否上架 <em>?</em></span>
+          <select><option>上架</option><option>下架</option></select>
+        </label>
+      </div>
+      <div class="product-spec-section">
+        <label class="product-field required full">
+          <span>采购规格</span>
+          <button class="btn primary" type="button" data-toast="已加载采购规格">加载采购规格</button>
+        </label>
+        <p>先选品类后点「按品类加载采购规格」获取该品类下规格与 SPU。供应商由二级分类 id 决定，选完品类后自动按品类加载并选中供应商。</p>
+        <label class="product-field required full">
+          <span>选择采购规格 <em>?</em></span>
+          <select><option>请先点击「按品类加载采购规格」</option><option>斤装</option><option>件装</option></select>
+        </label>
+        <label class="product-field full">
+          <span>选择供应商 <em>?</em></span>
+          <select><option>lcfcs (A1234)</option><option>海盛水产 (S20011)</option><option>春田蔬菜基地 (S20018)</option></select>
+        </label>
+      </div>
+      <div class="product-modal-footer">
+        <button class="btn" data-close-modal>取消</button>
+        <button class="btn primary" data-toast="新商品已加入明细">确定</button>
+      </div>
     </div>
   `;
 }
@@ -3069,7 +3179,7 @@ function operatorModal() {
       <label class="field required"><span>姓名：</span><input placeholder="请输入姓名" autofocus></label>
       <label class="field required"><span>用户名：</span><input value="aiceshi"></label>
       <label class="field required"><span>密码：</span><span class="password-input"><input type="password" value="123456"><button class="text-btn" type="button">⊘</button></span></label>
-      <label class="field required"><span>成员角色：</span><select><option>录单员</option><option>采购员</option><option>入库员</option></select></label>
+      <label class="field required"><span>成员角色：</span><select><option>操作员</option></select></label>
     </div>
   `;
 }
