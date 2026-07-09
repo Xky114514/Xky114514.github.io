@@ -15,6 +15,8 @@ const state = {
   purchaseDecisionRole: "buyer",
   memoryScope: "party",
   agentSettingsTab: "robots",
+  purchaseCalcPriorityLevel: "default",
+  purchaseCustomCalcPriority: "采购数优先",
   settingsTab: "roles",
   reviewTab: "list",
   groupBoardFilter: "all",
@@ -43,11 +45,11 @@ const routes = {
   "sales-groups": { label: "销售群聊管理", module: "sales", title: "销售订单录单" },
   "purchase-order-entry": { label: "采购单录入", module: "purchase", title: "采购录单" },
   "purchase-order-review": { label: "采购单审核", module: "purchase", title: "采购录单" },
-  "purchase-entry": { label: "入库单录入", module: "purchase", title: "采购录单" },
-  "purchase-review": { label: "入库单审核", module: "purchase", title: "采购录单" },
+  "purchase-entry": { label: "采购入库单录入", module: "purchase", title: "采购录单" },
+  "purchase-review": { label: "采购入库单审核", module: "purchase", title: "采购录单" },
   "purchase-statistics": { label: "统计", tabLabel: "采购统计", module: "purchase", title: "采购录单" },
   "purchase-decision-screen": { label: "决策大屏", tabLabel: "采购决策大屏", module: "purchase", title: "采购录单" },
-  "purchase-detail": { label: "审核详情", module: "purchase", title: "采购录单" },
+  "purchase-detail": { label: "采购入库单详情", module: "purchase", title: "采购录单" },
   "purchase-suppliers": { label: "供应商管理", module: "purchase", title: "采购录单" },
   "purchase-supplier-groups": { label: "供应商分组", module: "purchase", title: "采购录单" },
   "purchase-groups": { label: "采购群聊管理", module: "purchase", title: "采购录单" },
@@ -94,8 +96,8 @@ const sideMenus = {
   purchase: [
     { key: "purchase-order-entry", label: "采购单录入", icon: "edit" },
     { key: "purchase-order-review", label: "采购单审核", icon: "review" },
-    { key: "purchase-entry", label: "入库单录入", icon: "edit" },
-    { key: "purchase-review", label: "入库单审核", icon: "review" },
+    { key: "purchase-entry", label: "采购入库单录入", icon: "edit" },
+    { key: "purchase-review", label: "采购入库单审核", icon: "review" },
     { key: "purchase-statistics", label: "统计", icon: "stats" },
     { key: "purchase-suppliers", label: "供应商管理", icon: "supplier" },
     { key: "purchase-groups", label: "群聊管理", icon: "group" },
@@ -115,11 +117,11 @@ const purchaseSideGroups = [
     ],
   },
   {
-    label: "入库单",
+    label: "采购入库单",
     icon: "purchase",
     items: [
-      { key: "purchase-entry", label: "入库单录入" },
-      { key: "purchase-review", label: "入库单审核" },
+      { key: "purchase-entry", label: "采购入库单录入" },
+      { key: "purchase-review", label: "采购入库单审核" },
     ],
   },
   { label: "统计", icon: "stats", items: [{ key: "purchase-statistics", label: "统计" }] },
@@ -168,15 +170,330 @@ const salesTasks = [
 ];
 
 const purchaseTasks = [
-  { id: "PI-20260701-011", status: "待处理", supplier: "海盛水产", group: "海鲜供应商对接群", store: "中心仓", raw: "鲈鱼 80 条，基围虾 120 斤，今晚到仓", items: 2, order: "-", auditor: "赵倩" },
-  { id: "PI-20260701-012", status: "已完成", supplier: "春田蔬菜基地", group: "蔬菜供应商入库群", store: "一号冷库", raw: "云南生菜 400 斤，油麦菜 260 斤", items: 2, order: "GM-IN-7712", auditor: "周诚" },
-  { id: "PI-20260701-013", status: "待处理", supplier: "岭南肉禽", group: "肉禽采购群", store: "二号冷库", raw: "鸡腿 30 件，猪五花 18 件", items: 2, order: "-", auditor: "赵倩" },
+  {
+    id: "PI-20260701-010",
+    scenario: "未关联采购单",
+    status: "待审核",
+    supplier: "北仓调味品",
+    group: "干调供应商入库群",
+    store: "干货仓",
+    raw: "临采到货：生抽 20 箱，白砂糖 10 袋，采购单还未同步",
+    items: 2,
+    order: "-",
+    auditor: "陈林",
+    warehouse: "干货仓",
+    arrivalDate: "2026-07-01",
+    deliveryNo: "DN-BC-0701-TEMP",
+    buyer: "陈林",
+    linkedPurchaseOrderIds: [],
+    gmInboundNo: "",
+    canSubmit: true,
+    permission: "可操作",
+    detailItems: [
+      { category: "干调", raw: "生抽 20 箱", name: "生抽", qty: "20 箱", purchaseQty: 20, receivedQty: 20, unit: "箱", price: "42.00", amount: "840.00", remark: "采购单待同步", spu: "生抽", code: "SPU-D-4101" },
+      { category: "干调", raw: "白砂糖 10 袋", name: "白砂糖", qty: "10 袋", purchaseQty: 10, receivedQty: 10, unit: "袋", price: "86.00", amount: "860.00", remark: "采购单待同步", spu: "白砂糖", code: "SPU-D-4102" },
+    ],
+  },
+  {
+    id: "PI-20260701-011",
+    scenario: "单采购单无其它采购入库单",
+    status: "待审核",
+    supplier: "岭南肉禽",
+    group: "肉禽采购群",
+    store: "二号冷库",
+    raw: "鸡腿 30 件，猪五花 18 件，明早到仓",
+    items: 2,
+    order: "-",
+    auditor: "赵倩",
+    warehouse: "二号冷库",
+    arrivalDate: "2026-07-01",
+    deliveryNo: "DN-LN-0701",
+    buyer: "赵倩",
+    linkedPurchaseOrderIds: ["GM-PO-8818"],
+    gmInboundNo: "",
+    canSubmit: true,
+    permission: "可操作",
+    detailItems: [
+      { category: "肉禽冻品", raw: "鸡腿 30 件", name: "冻鸡腿", qty: "30 件", purchaseQty: 30, receivedQty: 30, unit: "件", price: "126.00", amount: "3780.00", remark: "按件入库", spu: "冻鸡腿", code: "SPU-M-3018" },
+      { category: "肉禽冻品", raw: "猪五花 18 件", name: "猪五花", qty: "18 件", purchaseQty: 18, receivedQty: 18, unit: "件", price: "238.00", amount: "4284.00", remark: "按件入库", spu: "猪五花", code: "SPU-M-3021" },
+    ],
+  },
+  {
+    id: "PI-20260701-012",
+    scenario: "已有入库确认只读",
+    status: "已确认入库",
+    supplier: "春田蔬菜基地",
+    group: "蔬菜供应商入库群",
+    store: "一号冷库",
+    raw: "第一批到仓：云南生菜 220 斤，油麦菜 160 斤",
+    items: 2,
+    order: "GM-IN-7712",
+    auditor: "周诚",
+    warehouse: "一号冷库",
+    arrivalDate: "2026-07-01",
+    deliveryNo: "DN-CT-0701-A1",
+    buyer: "周诚",
+    linkedPurchaseOrderIds: ["GM-PO-7712"],
+    gmInboundNo: "GM-IN-7712",
+    canSubmit: false,
+    permission: "可查看",
+    detailItems: [
+      { category: "蔬菜", raw: "云南生菜 220 斤", name: "云南生菜", qty: "220 斤", purchaseQty: 400, receivedQty: 220, unit: "斤", price: "3.20", amount: "704.00", remark: "第一批已确认", spu: "云南生菜", code: "SPU-V-2031" },
+      { category: "蔬菜", raw: "油麦菜 160 斤", name: "油麦菜", qty: "160 斤", purchaseQty: 300, receivedQty: 160, unit: "斤", price: "3.80", amount: "608.00", remark: "第一批已确认", spu: "油麦菜", code: "SPU-V-2032" },
+    ],
+  },
+  {
+    id: "PI-20260701-014",
+    scenario: "分批送货：已有确认历史",
+    status: "待审核",
+    supplier: "春田蔬菜基地",
+    group: "蔬菜供应商入库群",
+    store: "一号冷库",
+    raw: "第二批到仓：云南生菜 180 斤，油麦菜 100 斤，剩余明天补",
+    items: 2,
+    order: "-",
+    auditor: "周诚",
+    warehouse: "一号冷库",
+    arrivalDate: "2026-07-01",
+    deliveryNo: "DN-CT-0701-B2",
+    buyer: "周诚",
+    linkedPurchaseOrderIds: ["GM-PO-7712"],
+    gmInboundNo: "",
+    canSubmit: true,
+    permission: "可操作",
+    detailItems: [
+      { category: "蔬菜", raw: "云南生菜 180 斤", name: "云南生菜", qty: "180 斤", purchaseQty: 400, receivedQty: 180, unit: "斤", price: "3.20", amount: "576.00", remark: "第二批到仓", spu: "云南生菜", code: "SPU-V-2031" },
+      { category: "蔬菜", raw: "油麦菜 100 斤", name: "油麦菜", qty: "100 斤", purchaseQty: 300, receivedQty: 100, unit: "斤", price: "3.80", amount: "380.00", remark: "分批送货", spu: "油麦菜", code: "SPU-V-2032" },
+    ],
+  },
+  {
+    id: "PI-20260701-015",
+    scenario: "分批+合并混合",
+    status: "待审核",
+    supplier: "海盛水产",
+    group: "海鲜供应商对接群",
+    store: "中心仓",
+    raw: "合并送货：8801 和 8820 一起到，鲈鱼 162 条，基围虾 240 斤",
+    items: 2,
+    order: "-",
+    auditor: "赵倩",
+    warehouse: "中心仓",
+    arrivalDate: "2026-07-01",
+    deliveryNo: "DN-HS-0701-MERGE",
+    buyer: "陈林",
+    linkedPurchaseOrderIds: ["GM-PO-8801", "GM-PO-8820"],
+    gmInboundNo: "",
+    canSubmit: true,
+    permission: "可操作",
+    detailItems: [
+      { category: "水产海鲜", raw: "鲈鱼 162 条", name: "鲜活鲈鱼", qty: "162 条", purchaseQty: 162, receivedQty: 162, unit: "条", price: "18.50", amount: "2997.00", remark: "两张采购单合并送货", spu: "鲜活鲈鱼", code: "SPU-P-1001" },
+      { category: "水产海鲜", raw: "基围虾 240 斤", name: "基围虾", qty: "240 斤", purchaseQty: 240, receivedQty: 240, unit: "斤", price: "39.00", amount: "9360.00", remark: "两张采购单合并送货", spu: "基围虾", code: "SPU-P-1002" },
+    ],
+  },
+  {
+    id: "PI-20260701-016",
+    scenario: "采购单已关闭",
+    status: "待审核",
+    supplier: "北仓调味品",
+    group: "干调供应商入库群",
+    store: "干货仓",
+    raw: "生抽 95 箱，白砂糖 50 袋；关联采购单已被采购关闭",
+    items: 2,
+    order: "-",
+    auditor: "陈林",
+    warehouse: "干货仓",
+    arrivalDate: "2026-07-01",
+    deliveryNo: "DN-BC-0701",
+    buyer: "陈林",
+    linkedPurchaseOrderIds: ["GM-PO-8833"],
+    gmInboundNo: "",
+    canSubmit: true,
+    permission: "可操作",
+    detailItems: [
+      { category: "干调", raw: "生抽 95 箱", name: "生抽", qty: "95 箱", purchaseQty: 100, receivedQty: 95, unit: "箱", price: "42.00", amount: "3990.00", remark: "采购单已关闭，需重新关联", spu: "生抽", code: "SPU-D-4101" },
+      { category: "干调", raw: "白砂糖 50 袋", name: "白砂糖", qty: "50 袋", purchaseQty: 50, receivedQty: 50, unit: "袋", price: "86.00", amount: "4300.00", remark: "采购单已关闭，需重新关联", spu: "白砂糖", code: "SPU-D-4102" },
+    ],
+  },
+  {
+    id: "PI-20260701-017",
+    scenario: "同采购单入库暂存联动",
+    status: "入库暂存",
+    supplier: "海盛水产",
+    group: "海鲜供应商对接群",
+    store: "中心仓",
+    raw: "补充到仓：鲈鱼 20 条，基围虾 30 斤",
+    items: 2,
+    order: "-",
+    auditor: "赵倩",
+    warehouse: "中心仓",
+    arrivalDate: "2026-07-01",
+    deliveryNo: "DN-HS-0701-SUP",
+    buyer: "陈林",
+    linkedPurchaseOrderIds: ["GM-PO-8801"],
+    gmInboundNo: "",
+    canSubmit: true,
+    permission: "可操作",
+    detailItems: [
+      { category: "水产海鲜", raw: "鲈鱼 20 条", name: "鲜活鲈鱼", qty: "20 条", purchaseQty: 82, receivedQty: 20, unit: "条", price: "18.50", amount: "370.00", remark: "同采购单另一张入库暂存采购入库单", spu: "鲜活鲈鱼", code: "SPU-P-1001" },
+      { category: "水产海鲜", raw: "基围虾 30 斤", name: "基围虾", qty: "30 斤", purchaseQty: 120, receivedQty: 30, unit: "斤", price: "39.00", amount: "1170.00", remark: "同采购单另一张入库暂存采购入库单", spu: "基围虾", code: "SPU-P-1002" },
+    ],
+  },
+  {
+    id: "PI-20260701-018",
+    scenario: "含待审核关联单",
+    status: "待审核",
+    supplier: "春田蔬菜基地",
+    group: "蔬菜供应商入库群",
+    store: "一号冷库",
+    raw: "夜间补货：小白菜 80 斤，菜心 60 斤",
+    items: 2,
+    order: "-",
+    auditor: "周诚",
+    warehouse: "一号冷库",
+    arrivalDate: "2026-07-01",
+    deliveryNo: "DN-CT-0701-N1",
+    buyer: "周诚",
+    linkedPurchaseOrderIds: ["GM-PO-8844"],
+    gmInboundNo: "",
+    canSubmit: true,
+    permission: "可操作",
+    detailItems: [
+      { category: "蔬菜", raw: "小白菜 80 斤", name: "小白菜", qty: "80 斤", purchaseQty: 120, receivedQty: 80, unit: "斤", price: "2.60", amount: "208.00", remark: "当前单据待审核", spu: "小白菜", code: "SPU-V-2041" },
+      { category: "蔬菜", raw: "菜心 60 斤", name: "菜心", qty: "60 斤", purchaseQty: 90, receivedQty: 60, unit: "斤", price: "4.20", amount: "252.00", remark: "当前单据待审核", spu: "菜心", code: "SPU-V-2042" },
+    ],
+  },
+  {
+    id: "PI-20260701-019",
+    scenario: "同采购单入库暂存待联动",
+    status: "入库暂存",
+    supplier: "春田蔬菜基地",
+    group: "蔬菜供应商入库群",
+    store: "一号冷库",
+    raw: "同采购单补到：小白菜 40 斤，菜心 30 斤",
+    items: 2,
+    order: "-",
+    auditor: "周诚",
+    warehouse: "一号冷库",
+    arrivalDate: "2026-07-01",
+    deliveryNo: "DN-CT-0701-N2",
+    buyer: "周诚",
+    linkedPurchaseOrderIds: ["GM-PO-8844"],
+    gmInboundNo: "",
+    canSubmit: true,
+    permission: "可操作",
+    detailItems: [
+      { category: "蔬菜", raw: "小白菜 40 斤", name: "小白菜", qty: "40 斤", purchaseQty: 120, receivedQty: 40, unit: "斤", price: "2.60", amount: "104.00", remark: "同采购单入库暂存", spu: "小白菜", code: "SPU-V-2041" },
+      { category: "蔬菜", raw: "菜心 30 斤", name: "菜心", qty: "30 斤", purchaseQty: 90, receivedQty: 30, unit: "斤", price: "4.20", amount: "126.00", remark: "同采购单入库暂存", spu: "菜心", code: "SPU-V-2042" },
+    ],
+  },
 ];
 
 const purchaseOrderTasks = [
   { id: "PO-20260701-201", status: "待处理", supplier: "海盛水产", group: "采购内部下单群", raw: "明天采购：鲈鱼 100 条，基围虾 100 斤", items: 2, order: "-", auditor: "陈林" },
-  { id: "PO-20260701-217", status: "已完成", supplier: "春田蔬菜基地", group: "蔬菜采购群", raw: "云南生菜 400 斤，油麦菜 280 斤", items: 2, order: "GM-PO-7712", auditor: "周诚" },
-  { id: "PO-20260701-233", status: "待处理", supplier: "岭南肉禽", group: "采购内部下单群", raw: "冻鸡腿 30 件，猪五花 18 件，明早到", items: 2, order: "-", auditor: "赵倩" },
+  { id: "PO-20260701-217", status: "已完成", supplier: "春田蔬菜基地", group: "蔬菜采购群", raw: "云南生菜 400 斤，油麦菜 280 斤", items: 2, order: "GM-PO-7712", auditor: "周诚", gmOrderId: "GM-PO-7712" },
+  { id: "PO-20260701-233", status: "已完成", supplier: "岭南肉禽", group: "采购内部下单群", raw: "冻鸡腿 30 件，猪五花 18 件，明早到", items: 2, order: "GM-PO-8818", auditor: "赵倩", gmOrderId: "GM-PO-8818" },
+];
+
+const guanmaiPurchaseOrders = [
+  {
+    id: "GM-PO-8801",
+    source: "观麦系统录入",
+    gmStatus: "未提交",
+    supplier: "海盛水产",
+    orderDate: "2026-07-02",
+    categorySummary: "水产海鲜",
+    linkedInboundIds: ["PI-20260630-031", "PI-20260701-015", "PI-20260701-017"],
+    items: [
+      { name: "鲜活鲈鱼", category: "水产海鲜", qty: 82, unit: "条" },
+      { name: "基围虾", category: "水产海鲜", qty: 120, unit: "斤" },
+    ],
+  },
+  {
+    id: "GM-PO-7712",
+    source: "AI确认回传",
+    aiTaskId: "PO-20260701-217",
+    gmStatus: "未提交",
+    supplier: "春田蔬菜基地",
+    orderDate: "2026-07-01",
+    categorySummary: "蔬菜",
+    linkedInboundIds: ["PI-20260630-008", "PI-20260701-012", "PI-20260701-014"],
+    items: [
+      { name: "云南生菜", category: "蔬菜", qty: 400, unit: "斤" },
+      { name: "油麦菜", category: "蔬菜", qty: 300, unit: "斤" },
+    ],
+  },
+  {
+    id: "GM-PO-8818",
+    source: "AI确认回传",
+    aiTaskId: "PO-20260701-233",
+    gmStatus: "未提交",
+    supplier: "岭南肉禽",
+    orderDate: "2026-07-02",
+    categorySummary: "肉禽冻品",
+    linkedInboundIds: ["PI-20260701-011"],
+    items: [
+      { name: "冻鸡腿", category: "肉禽冻品", qty: 30, unit: "件" },
+      { name: "猪五花", category: "肉禽冻品", qty: 18, unit: "件" },
+    ],
+  },
+  {
+    id: "GM-PO-8820",
+    source: "观麦系统录入",
+    gmStatus: "未提交",
+    supplier: "海盛水产",
+    orderDate: "2026-07-03",
+    categorySummary: "水产海鲜",
+    linkedInboundIds: ["PI-20260701-015"],
+    items: [
+      { name: "鲜活鲈鱼", category: "水产海鲜", qty: 80, unit: "条" },
+      { name: "基围虾", category: "水产海鲜", qty: 120, unit: "斤" },
+    ],
+  },
+  {
+    id: "GM-PO-8833",
+    source: "观麦系统录入",
+    gmStatus: "已关闭",
+    supplier: "北仓调味品",
+    orderDate: "2026-07-03",
+    categorySummary: "干调",
+    linkedInboundIds: ["PI-20260701-016"],
+    closedReason: "采购侧已关闭，不允许继续关联入库",
+    items: [
+      { name: "生抽", category: "干调", qty: 100, unit: "箱" },
+      { name: "白砂糖", category: "干调", qty: 50, unit: "袋" },
+    ],
+  },
+  {
+    id: "GM-PO-8844",
+    source: "观麦系统录入",
+    gmStatus: "未提交",
+    supplier: "春田蔬菜基地",
+    orderDate: "2026-07-03",
+    categorySummary: "蔬菜",
+    linkedInboundIds: ["PI-20260701-018", "PI-20260701-019"],
+    items: [
+      { name: "小白菜", category: "蔬菜", qty: 120, unit: "斤" },
+      { name: "菜心", category: "蔬菜", qty: 90, unit: "斤" },
+    ],
+  },
+  {
+    id: "GM-PO-8855",
+    source: "观麦系统录入",
+    gmStatus: "未提交",
+    supplier: "北仓调味品",
+    orderDate: "2026-07-03",
+    categorySummary: "干调",
+    linkedInboundIds: [],
+    items: [
+      { name: "生抽", category: "干调", qty: 20, unit: "箱" },
+      { name: "白砂糖", category: "干调", qty: 10, unit: "袋" },
+    ],
+  },
+];
+
+const historicalInboundRecords = [
+  { id: "PI-20260630-008", status: "已确认入库", supplier: "春田蔬菜基地", warehouse: "一号冷库", arrivalDate: "2026-06-30", operator: "周诚", raw: "首批到仓：云南生菜 120 斤，油麦菜 40 斤", gmInboundNo: "GM-IN-7688", permission: "可查看", linkedPurchaseOrderIds: ["GM-PO-7712"], items: [{ name: "云南生菜", receivedQty: 120, unit: "斤" }, { name: "油麦菜", receivedQty: 40, unit: "斤" }] },
+  { id: "PI-20260630-031", status: "已确认入库", supplier: "海盛水产", warehouse: "中心仓", arrivalDate: "2026-06-30", operator: "赵倩", raw: "首批到仓：鲈鱼 62 条，基围虾 90 斤", gmInboundNo: "GM-IN-7631", permission: "可查看", linkedPurchaseOrderIds: ["GM-PO-8801"], items: [{ name: "鲜活鲈鱼", receivedQty: 62, unit: "条" }, { name: "基围虾", receivedQty: 90, unit: "斤" }] },
 ];
 
 const customers = [
@@ -243,8 +560,8 @@ let iterationHistory = [
   {
     version: "V0.7",
     date: "2026-07-02",
-    title: "采购单与入库单双链路",
-    changes: ["采购录单增加采购单录入与采购单审核", "群聊管理增加采购单/入库单类型标签", "提示词和 AI 记忆按采购单/入库单区分"],
+    title: "采购单与采购入库单双链路",
+    changes: ["采购录单增加采购单录入与采购单审核", "群聊管理增加采购单/采购入库单类型标签", "提示词和 AI 记忆按采购单/采购入库单区分"],
   },
   {
     version: "V0.5",
@@ -290,9 +607,9 @@ let pageAnnotations = {
   "purchase-home": {
     title: "采购首页",
     overview: "采购首页作为采购录单工作台，展示采购各菜单快捷入口、今日任务和群聊看板。",
-    dev: ["路由为 purchase-home，采购录单卡片和采购侧首页图标均进入该页。", "今日任务保留采购单、入库单卡片，群聊看板改为按群聊聚合的表格。", "页面不展示录单额度卡片，额度仍回到租户级公共配置查看。"],
-    business: ["采购录单首页聚焦采购单和入库单业务处理入口。", "群聊看板按今日活跃群展示待处理、已完成、失败数量，方便操作员快速判断群聊状态。"],
-    iteration: ["2026-07-03 新增采购录单首页，包含快捷入口、今日任务和群聊看板。", "2026-07-03 群聊看板调整为单表格样式。"],
+    dev: ["路由为 purchase-home，采购录单卡片和采购侧首页图标均进入该页。", "今日任务保留采购单、采购入库单卡片，群聊看板按采购单和采购入库单分别展示表格。", "页面不展示录单额度卡片，额度仍回到租户级公共配置查看。"],
+    business: ["采购录单首页聚焦采购单和采购入库单业务处理入口。", "群聊看板按今日活跃群展示待处理、已完成、失败数量，并区分采购单群和采购入库单群。"],
+    iteration: ["2026-07-03 新增采购录单首页，包含快捷入口、今日任务和群聊看板。", "2026-07-09 群聊看板命名统一为采购单和采购入库单两类表格。"],
   },
   "sales-statistics": {
     title: "销售统计",
@@ -330,17 +647,17 @@ let pageAnnotations = {
     iteration: ["V0.1 完成销售录入核心交互，后续可补充附件预览和异常商品提示。"],
   },
   "purchase-entry": {
-    title: "入库单录入",
-    overview: "入库单录入页模拟仓管从供应商、供应商群或送货单图片导入实际收货信息，由 AI 生成待审核入库单。",
-    dev: ["左侧供应商/入库单群分段切换由 state.purchaseChatMode 控制。", "群聊列表只展示标记为入库单录入的采购群。"],
-    business: ["入库单需要识别供应商、商品、入库数量、入库单价和备注。", "一期与采购单分开录入，不自动混合识别两类单据。"],
-    iteration: ["V0.7 将入库单录入从采购单录入中拆出独立入口。"],
+    title: "采购入库单录入",
+    overview: "采购入库单录入页模拟仓管从供应商、供应商群或送货单图片导入实际收货信息，由 AI 生成待审核采购入库单。",
+    dev: ["左侧供应商/采购入库单群分段切换由 state.purchaseChatMode 控制。", "群聊列表只展示标记为采购入库单录入的采购群。"],
+    business: ["采购入库单需要识别供应商、商品、识别到货数、入库单价和备注。", "一期与采购单分开录入，不自动混合识别两类单据。"],
+    iteration: ["V0.7 将采购入库单录入从采购单录入中拆出独立入口。", "2026-07-09 统一采购入库单命名并拆清识别到货数与实收数。"],
   },
   "purchase-order-entry": {
     title: "采购单录入",
     overview: "采购单录入页模拟操作员手写单、微信截图或采购内部群消息导入，由 AI 生成待审核采购单。",
     dev: ["左侧供应商/采购单群分段切换由 state.purchaseOrderChatMode 控制。", "群聊列表只展示标记为采购单录入的采购群。"],
-    business: ["采购单一期重点识别供应商、商品名称和采购数量，价格字段默认不作为必填项。", "采购单可作为后续仓库收货依据，但本期不做与入库单的自动匹配。"],
+    business: ["采购单一期重点识别供应商、商品名称和采购数量，价格字段默认不作为必填项。", "采购单可作为后续仓库收货依据，但本期不做与采购入库单的自动匹配。"],
     iteration: ["V0.7 新增采购单录入入口。"],
   },
   "sales-review": {
@@ -351,25 +668,25 @@ let pageAnnotations = {
     iteration: ["V0.1 完成销售审核列表，后续可加入批量审核与合单选择。"],
   },
   "purchase-review": {
-    title: "入库单审核",
-    overview: "入库单审核页集中处理供应商实际到货和送货单识别任务，确认后可进入入库单详情页。",
-    dev: ["入库任务使用 purchaseTasks 数据，详情按钮会路由到 purchase-detail。", "状态筛选使用 state.filters.purchaseStatus，与销售审核保持同构。"],
-    business: ["待处理入库单需要确认商品、入库数、价格和操作员。", "审核完成后才允许执行实际入库确认。"],
-    iteration: ["V0.7 将入库单审核保留为独立入口。"],
+    title: "采购入库单审核",
+    overview: "采购入库单审核页集中处理供应商实际到货和送货单识别任务，确认后可进入采购入库单详情页。",
+    dev: ["采购入库任务使用 purchaseTasks 数据，详情按钮会路由到 purchase-detail。", "状态筛选使用 state.filters.purchaseStatus，展示待审核、入库暂存和已确认入库。", "审核列表展示流程场景、采购单入库流转状态和确认入库影响提示。"],
+    business: ["确认入库只按采购单关联关系提示，不用数量统计或差异计算做自动决策。", "采购单已有入库确认后仍可继续被其它采购入库单关联，只有采购单关闭时才阻断确认。", "同一采购单下，入库暂存采购入库单可随本次确认联动入库；待审核采购入库单不会随本次提交。"],
+    iteration: ["V0.7 将采购入库单审核保留为独立入口。", "2026-07-09 采购入库审核列表按关联采购单摘要收口展示。", "2026-07-09 补充分批、合并、混合送货下的采购单入库流转状态和确认提示。"],
   },
   "purchase-order-review": {
     title: "采购单审核",
     overview: "采购单审核页集中处理操作员手写单、微信截图和采购内部群生成的采购单任务。",
     dev: ["采购单任务使用 purchaseOrderTasks 数据。", "状态筛选使用 state.filters.purchaseOrderStatus，群聊视图只展示采购单录入群。"],
-    business: ["待处理采购单需要确认供应商、商品和采购数量。", "采购单可作为收货依据，但一期不自动生成或匹配入库单。"],
+    business: ["待处理采购单需要确认供应商、商品和采购数量。", "采购单可作为收货依据，但一期不自动生成或匹配采购入库单。"],
     iteration: ["V0.7 新增采购单审核入口。"],
   },
   "purchase-detail": {
     title: "采购入库单详情",
     overview: "一期详情页聚焦供应商送货单原始内容、AI 识别结果确认和人工修正入库明细。",
-    dev: ["当前 activeDetailId 控制详情数据，明细表格使用静态输入框模拟可编辑状态。", "页面只保留手动选择采购单入口，不提供自动关联逻辑。", "保存修正和确认入库使用 toast 演示，后续替换为接口提交。"],
-    business: ["操作员确认供应商、商品名称、入库数、入库单价、入库金额和备注即可。", "一期不展示复杂关联信息或完整 ERP 单据字段。"],
-    iteration: ["V0.5 按一期范围瘦身采购详情页，删除复杂对账与自动关联展示。"],
+    dev: ["当前 activeDetailId 控制详情数据，明细表格使用静态输入框模拟可编辑状态。", "采购入库单详情展示关联采购单入库流转状态、已有入库确认和未确认联动提示。", "暂存入库和确认入库会更新当前静态任务状态。", "金额按采购设置中的计算优先级取数后乘以单价。"],
+    business: ["操作员确认供应商、商品名称、识别到货数、实收数、单价、金额、备注和关联采购单即可。", "关联采购单确认过入库后不自动关闭，后续仍可继续关联；确认时只提示直接关联采购入库单范围。", "总采购数、总实收数、总差异数和总差异占比只做页面提示，不驱动确认入库流程。"],
+    iteration: ["V0.5 按一期范围瘦身采购详情页，删除复杂对账与自动关联展示。", "2026-07-09 采购入库单详情支持多选关联采购单、历史关联入口和入库暂存。", "2026-07-09 确认入库改为关联关系提示，不按差异计算分支。"],
   },
   "sales-customers": {
     title: "客户管理",
@@ -389,7 +706,7 @@ let pageAnnotations = {
     title: "供应商管理",
     overview: "供应商管理页展示供应商分类、联系人、绑定群聊、默认仓库和同步状态。",
     dev: ["搜索条件写入 state.filters.purchaseSupplier，和客户管理共用 partyPage 模板。", "供应商字段与客户字段保持同类结构，便于复用表格组件。"],
-    business: ["供应商绑定群聊后，采购单和入库单消息才能正确归属。", "默认仓库帮助 AI 识别入库单缺失仓库信息。"],
+    business: ["供应商绑定群聊后，采购单和采购入库单消息才能正确归属。", "默认仓库帮助 AI 识别采购入库单缺失仓库信息。"],
     iteration: ["V0.1 完成供应商列表和搜索能力。"],
   },
   "purchase-supplier-groups": {
@@ -408,8 +725,8 @@ let pageAnnotations = {
   },
   "purchase-groups": {
     title: "采购群聊管理",
-    overview: "采购群聊管理页维护采购单群和入库单群，展示群聊类型、信道类型、绑定供应商数量和操作员。",
-    dev: ["采购群通过 purchaseBound !== '-' 过滤得到，并使用 purchaseDocType 标记采购单录入或入库单录入。", "筛选栏展示群聊类型、操作员和群聊名称搜索；列表按群聊名称、群聊类型、信道类型、绑定供应商、成员数、操作员、发言、采购时段和操作展示。"],
+    overview: "采购群聊管理页维护采购单群和采购入库单群，展示群聊类型、信道类型、绑定供应商数量和操作员。",
+    dev: ["采购群通过 purchaseBound !== '-' 过滤得到，并使用 purchaseDocType 标记采购单录入或采购入库单录入。", "筛选栏展示群聊类型、操作员和群聊名称搜索；列表按群聊名称、群聊类型、信道类型、绑定供应商、成员数、操作员、发言、采购时段和操作展示。"],
     business: ["绑定供应商在列表中只展示数量，详情或供应商管理再查看完整明细。", "操作列保留详情并新增删除入口，便于表达群聊维护闭环。"],
     iteration: ["2026-07-03 调整采购群聊管理筛选项和列表字段顺序。"],
   },
@@ -422,9 +739,9 @@ let pageAnnotations = {
   },
   "purchase-prompts": {
     title: "采购提示词",
-    overview: "采购提示词页用于维护采购单和入库单两类解析模板，并按单据类型隔离规则。",
-    dev: ["与销售提示词共用 promptsPage，通过 purchaseDocTab 区分采购单和入库单。", "提示词工具栏隐藏导入模板和 AI 预识别，只保留搜索和新建模板。"],
-    business: ["采购单提示词重点识别供应商、商品和采购数量，价格默认非必填。", "入库单提示词重点识别供应商、商品、入库数量、入库单价和备注。"],
+    overview: "采购提示词页用于维护采购单和采购入库单两类解析模板，并按单据类型隔离规则。",
+    dev: ["与销售提示词共用 promptsPage，通过 purchaseDocTab 区分采购单和采购入库单。", "提示词工具栏隐藏导入模板和 AI 预识别，只保留搜索和新建模板。"],
+    business: ["采购单提示词重点识别供应商、商品和采购数量，价格默认非必填。", "采购入库单提示词重点识别供应商、商品、识别到货数、入库单价和备注。"],
     iteration: ["2026-07-03 去掉导入模板和 AI 预识别入口。"],
   },
   "sales-memory": {
@@ -436,10 +753,10 @@ let pageAnnotations = {
   },
   "purchase-memory": {
     title: "采购 AI 记忆",
-    overview: "采购 AI 记忆页展示采购单和入库单各自沉淀的供应商别名、商品别名和群聊规则。",
-    dev: ["与销售记忆共用 memoryPage，通过 purchaseDocTab 切换采购单和入库单记忆。", "后续可以增加记忆审批和过期策略。"],
-    business: ["采购单记忆和入库单记忆分开沉淀，避免采购数量规则影响实际入库识别。", "错误记忆应能禁用或回滚。"],
-    iteration: ["V0.7 增加采购单/入库单 AI 记忆切换。"],
+    overview: "采购 AI 记忆页展示采购单和采购入库单各自沉淀的供应商别名、商品别名和群聊规则。",
+    dev: ["与销售记忆共用 memoryPage，通过 purchaseDocTab 切换采购单和采购入库单记忆。", "后续可以增加记忆审批和过期策略。"],
+    business: ["采购单记忆和采购入库单记忆分开沉淀，避免采购数量规则影响实际入库识别。", "错误记忆应能禁用或回滚。"],
+    iteration: ["V0.7 增加采购单/采购入库单 AI 记忆切换。"],
   },
   "sales-agent-settings": {
     title: "销售设置",
@@ -450,10 +767,10 @@ let pageAnnotations = {
   },
   "purchase-agent-settings": {
     title: "采购设置",
-    overview: "采购设置页承载采购单/入库单机器人的启停、回复设置和识别边界。",
-    dev: ["路由为 purchase-agent-settings，归属采购录单左侧菜单。", "采购侧隐藏通知设置，仅保留机器人管理和回复设置。"],
-    business: ["采购机器人、回复设置、提示词和 AI 记忆只影响采购入库链路。"],
-    iteration: ["2026-07-03 隐藏采购设置中的通知设置标签。"],
+    overview: "采购设置页承载采购单/采购入库单机器人的启停、回复设置和识别边界。",
+    dev: ["路由为 purchase-agent-settings，归属采购录单左侧菜单。", "采购侧隐藏通知设置，保留机器人管理、回复设置和计算优先级。"],
+    business: ["采购机器人、回复设置、提示词、AI 记忆和计算优先级只影响采购入库链路。"],
+    iteration: ["2026-07-03 隐藏采购设置中的通知设置标签。", "2026-07-09 新增计算优先级标签页。"],
   },
   settings: {
     title: "租户公共设置",
@@ -465,9 +782,9 @@ let pageAnnotations = {
   "tenant-members": {
     title: "成员管理",
     overview: "成员管理页是租户级公共配置，用于维护两个 Agent 共用的操作人员、角色和启用状态。",
-    dev: ["路由为 tenant-members，从首页成员管理卡片进入。", "新增成员弹窗复用 operatorModal，字段包含姓名、用户名、密码和成员角色。"],
-    business: ["新增按钮文案统一为新增成员。", "成员统一按操作员管理，作为后续业务分工和权限配置基础。"],
-    iteration: ["2026-07-03 将成员管理从首页公共配置卡片拆出独立页面，并补充新增成员弹窗。"],
+    dev: ["路由为 tenant-members，从首页成员管理卡片进入。", "新增成员弹窗复用 operatorModal，字段包含姓名、用户名、密码和成员角色。", "成员角色拆分为订单操作员和采购操作员。"],
+    business: ["新增按钮文案统一为新增成员。", "订单操作员用于销售订单录单链路，采购操作员用于采购录单链路。"],
+    iteration: ["2026-07-03 将成员管理从首页公共配置卡片拆出独立页面，并补充新增成员弹窗。", "2026-07-03 新增成员角色拆分为订单操作员和采购操作员。"],
   },
   "tenant-quota": {
     title: "额度管理",
@@ -499,7 +816,7 @@ const chatMessages = {
   purchase: [
     { role: "assistant", text: "已连接采购入库 Agent，请选择供应商或群聊后发送入库信息。" },
     { role: "user", text: "鲈鱼 80 条，基围虾 120 斤，今晚到中心仓" },
-    { role: "assistant", text: "已识别 2 个采购商品，生成待审核入库单 PI-20260701-011。" },
+    { role: "assistant", text: "已识别 2 个采购商品，生成入库暂存采购入库单 PI-20260701-011。" },
   ],
   "purchase-order": [
     { role: "assistant", text: "已连接采购单录入 Agent，请选择供应商或采购单群后发送采购内容。" },
@@ -513,6 +830,16 @@ function routeTo(key) {
     state.tabs = [{ key: "home", label: "首页", isHome: true }];
   }
   window.location.hash = key;
+}
+
+function openPurchaseDetail(id) {
+  if (!id) return;
+  state.activeDetailId = id;
+  if (state.route === "purchase-detail") {
+    renderContent();
+    return;
+  }
+  routeTo("purchase-detail");
 }
 
 function getRouteFromHash() {
@@ -1322,23 +1649,42 @@ function purchaseHomePage() {
   const inboundGroups = groups.filter((group) => getGroupDomain(group) === "purchase" && getPurchaseDocType(group) === "inbound");
   const taskCards = [
     { label: "采购单", route: "purchase-order-review", groups: orderGroups, tasks: purchaseOrderTasks, tone: "blue" },
-    { label: "入库单", route: "purchase-review", groups: inboundGroups, tasks: purchaseTasks, tone: "green" },
-  ].map((card) => ({
-    ...card,
-    pending: card.tasks.filter((task) => task.status === "待处理").length,
-    finished: card.tasks.filter((task) => task.status === "已完成").length,
-    failed: card.tasks.filter((task) => task.status === "失败").length,
-  }));
+    { label: "采购入库单", route: "purchase-review", groups: inboundGroups, tasks: purchaseTasks, tone: "green" },
+  ].map((card) => {
+    const isInbound = card.label === "采购入库单";
+    return {
+      ...card,
+      firstMetric: {
+        label: isInbound ? "入库暂存" : "待处理",
+        value: card.tasks.filter((task) => task.status === (isInbound ? "入库暂存" : "待处理")).length,
+        tone: isInbound ? "blue-text" : "gold-text",
+      },
+      secondMetric: {
+        label: isInbound ? "待审核" : "已完成",
+        value: card.tasks.filter((task) => task.status === (isInbound ? "待审核" : "已完成")).length,
+        tone: isInbound ? "gold-text" : "green-text",
+      },
+      thirdMetric: {
+        label: isInbound ? "已确认入库" : "失败",
+        value: card.tasks.filter((task) => task.status === (isInbound ? "已确认入库" : "失败")).length,
+        tone: isInbound ? "green-text" : "red-text",
+      },
+    };
+  });
   const shortcutItems = [
     { route: "purchase-order-entry", icon: "edit", label: "采购单录入" },
     { route: "purchase-order-review", icon: "review", label: "采购单审核" },
-    { route: "purchase-entry", icon: "edit", label: "入库单录入" },
-    { route: "purchase-review", icon: "review", label: "入库单审核" },
+    { route: "purchase-entry", icon: "edit", label: "采购入库单录入" },
+    { route: "purchase-review", icon: "review", label: "采购入库单审核" },
     { route: "purchase-suppliers", icon: "supplier", label: "供应商" },
     { route: "purchase-groups", icon: "group", label: "群聊管理" },
     { route: "purchase-prompts", icon: "prompt", label: "提示词" },
     { route: "purchase-memory", icon: "memory", label: "AI 记忆" },
     { route: "purchase-agent-settings", icon: "setting", label: "设置" },
+  ];
+  const syncMetrics = [
+    { label: "已有入库确认采购单", value: guanmaiPurchaseOrders.filter((order) => getPurchaseOrderFlowStatus(order) === "已有入库确认").length, note: "仍可继续关联", tone: "green" },
+    { label: "已关联未确认采购单", value: guanmaiPurchaseOrders.filter((order) => getPurchaseOrderFlowStatus(order) === "已关联未确认").length, note: "按采购入库单状态提示", tone: "blue" },
   ];
 
   return `
@@ -1370,9 +1716,9 @@ function purchaseHomePage() {
                 <button class="text-btn blue-text" data-route="${card.route}">去处理 ›</button>
               </div>
               <div class="purchase-task-summary mini">
-                <button data-route="${card.route}"><strong class="gold-text">${card.pending}</strong><span>待处理 ›</span></button>
-                <button data-route="${card.route}"><strong class="green-text">${card.finished}</strong><span>已完成</span></button>
-                <button data-route="${card.route}"><strong class="red-text">${card.failed}</strong><span>失败 ›</span></button>
+                <button data-route="${card.route}"><strong class="${card.firstMetric.tone}">${card.firstMetric.value}</strong><span>${card.firstMetric.label} ›</span></button>
+                <button data-route="${card.route}"><strong class="${card.secondMetric.tone}">${card.secondMetric.value}</strong><span>${card.secondMetric.label}</span></button>
+                <button data-route="${card.route}"><strong class="${card.thirdMetric.tone}">${card.thirdMetric.value}</strong><span>${card.thirdMetric.label} ›</span></button>
                 <button data-route="purchase-groups"><strong class="blue-text">${card.groups.length}</strong><span>活跃群</span></button>
               </div>
             </article>
@@ -1380,38 +1726,81 @@ function purchaseHomePage() {
         </div>
       </section>
 
-      <section class="table-card purchase-home-card purchase-group-board">
-        <div class="purchase-group-board-head">
-          <h3>${iconSvg.group}<span>群聊看板</span><em>今日 ${purchaseActiveGroupRows().length} 个群活跃</em></h3>
-          <button class="text-btn blue-text" data-route="purchase-groups">› 全部</button>
+      <section class="table-card purchase-home-card purchase-sync-card">
+        <div class="card-header">
+          <h3>跨系统同步看板</h3>
         </div>
-        ${purchaseGroupBoardTable()}
+        <div class="sync-metric-grid">
+          ${syncMetrics.map((item) => `
+            <div class="sync-metric ${item.tone}">
+              <strong>${item.value}</strong>
+              <span>${item.label}</span>
+              <em>${item.note}</em>
+            </div>
+          `).join("")}
+        </div>
+        <div class="purchase-table-wrap sync-table-wrap">
+          <table class="purchase-group-board-table sync-order-table">
+            <thead><tr><th>采购单号</th><th>来源</th><th>供应商</th><th>观麦业务状态 <span class="help-icon" title="观麦系统中未提交的采购单会同步至录单系统">?</span></th><th>采购单入库状态</th><th>入库确认提示</th></tr></thead>
+            <tbody>
+              ${guanmaiPurchaseOrders.map((order) => {
+                const inboundStatus = getPurchaseOrderFlowStatus(order);
+                return `
+                  <tr>
+                    <td><strong>${order.id}</strong></td>
+                    <td>${order.source}</td>
+                    <td>${order.supplier}</td>
+                    <td>${purchaseOrderStatusPill(order)}</td>
+                    <td>${statusTag(inboundStatus)} ${inboundStatus === "未关联" ? "" : `<button class="text-btn" data-view-linked-inbounds="${order.id}">详情</button>`}</td>
+                    <td>${purchaseOrderFlowNotice(order)}</td>
+                  </tr>
+                `;
+              }).join("")}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="table-card purchase-home-card purchase-group-board-section">
+        <div class="card-header">
+          <h3>群聊看板</h3>
+        </div>
+        <div class="purchase-home-card-grid">
+          ${taskCards.map((card) => `
+            <article class="purchase-home-mini-card group-board-card">
+              <div class="purchase-group-board-head">
+                <h3>${iconSvg.group}<span>${card.label}群聊看板</span><em>今日 ${purchaseActiveGroupRows(card.tasks).length} 个群活跃</em></h3>
+                <button class="text-btn blue-text" data-route="purchase-groups">› 全部</button>
+              </div>
+              ${purchaseGroupBoardTable(card.tasks)}
+            </article>
+          `).join("")}
+        </div>
       </section>
     </div>
   `;
 }
 
-function purchaseActiveGroupRows() {
-  const statusOrder = ["待处理", "已完成", "失败"];
-  const metrics = [...purchaseOrderTasks, ...purchaseTasks].reduce((acc, task) => {
+function purchaseActiveGroupRows(tasks = [...purchaseOrderTasks, ...purchaseTasks]) {
+  const metrics = tasks.reduce((acc, task) => {
     if (!acc[task.group]) acc[task.group] = { name: task.group, pending: 0, finished: 0, failed: 0 };
-    if (task.status === "待处理") acc[task.group].pending += 1;
-    if (task.status === "已完成") acc[task.group].finished += 1;
+    if (["待处理", "待审核", "入库暂存"].includes(task.status)) acc[task.group].pending += 1;
+    if (["已完成", "已提交", "已确认入库"].includes(task.status)) acc[task.group].finished += 1;
     if (task.status === "失败") acc[task.group].failed += 1;
     return acc;
   }, {});
   return Object.values(metrics).sort((a, b) => {
-    const aScore = statusOrder.reduce((sum, status) => sum + (status === "待处理" ? a.pending : status === "已完成" ? a.finished : a.failed), 0);
-    const bScore = statusOrder.reduce((sum, status) => sum + (status === "待处理" ? b.pending : status === "已完成" ? b.finished : b.failed), 0);
+    const aScore = a.pending + a.finished + a.failed;
+    const bScore = b.pending + b.finished + b.failed;
     return bScore - aScore || a.name.localeCompare(b.name, "zh-Hans-CN");
   });
 }
 
-function purchaseGroupBoardTable() {
-  const rows = purchaseActiveGroupRows();
+function purchaseGroupBoardTable(tasks) {
+  const rows = purchaseActiveGroupRows(tasks);
   return `
     <table class="purchase-group-board-table">
-      <thead><tr><th>群聊名称</th><th class="right">待处理</th><th class="right">已完成</th><th class="right">失败</th></tr></thead>
+      <thead><tr><th>群聊名称</th><th class="right">待办</th><th class="right">完成</th><th class="right">异常</th></tr></thead>
       <tbody>
         ${rows.map((group) => `<tr>
           <td><strong>${group.name}</strong></td>
@@ -1589,7 +1978,7 @@ function getPurchaseDocType(group) {
 }
 
 function purchaseDocLabel(docType) {
-  return docType === "order" ? "采购单录入" : "入库单录入";
+  return docType === "order" ? "采购单录入" : "采购入库单录入";
 }
 
 function getGroupChannel(group, index = 0) {
@@ -1626,8 +2015,8 @@ function entryPage(type) {
   const isSales = type === "sales";
   const isPurchaseOrder = type === "purchase-order";
   const mode = isSales ? state.chatMode : isPurchaseOrder ? state.purchaseOrderChatMode : state.purchaseChatMode;
-  const title = isSales ? "销售订单录入" : isPurchaseOrder ? "采购单录入" : "入库单录入";
-  const workspaceTitle = isSales ? "AI 录单" : isPurchaseOrder ? "AI 采购" : "AI 入库";
+  const title = isSales ? "销售订单录入" : isPurchaseOrder ? "采购单录入" : "采购入库单录入";
+  const workspaceTitle = isSales ? "AI 录单" : isPurchaseOrder ? "AI 采购" : "AI 采购入库";
   const firstTabLabel = isSales ? "客户" : "供应链";
   const firstMode = isSales ? "customer" : "supplier";
   const searchPlaceholder = mode === "group"
@@ -1640,15 +2029,15 @@ function entryPage(type) {
     ? "选择客户，发送文字 / 图片 / Excel / PDF"
     : isPurchaseOrder
       ? "选择供应商或采购单群，发送手写单 / 图片 / 微信截图"
-      : "选择供应商或入库单群，发送文字 / 图片 / Excel / PDF";
-  const emptySub = isSales ? "AI 自动识别商品信息并生成订单" : isPurchaseOrder ? "AI 自动识别商品和采购数量并生成采购单" : "AI 自动识别商品、数量和价格并生成入库单";
+      : "选择供应商或采购入库单群，发送文字 / 图片 / Excel / PDF";
+  const emptySub = isSales ? "AI 自动识别商品信息并生成订单" : isPurchaseOrder ? "AI 自动识别商品和采购数量并生成采购单" : "AI 自动识别商品、到货数量和价格并生成采购入库单";
   const inputPlaceholder = mode === "group"
     ? "请先在左侧选择群聊..."
     : isSales
       ? "请先在左侧选择客户或群聊..."
       : isPurchaseOrder
         ? "请先选择供应商或采购单群..."
-        : "请先选择供应商或入库单群...";
+        : "请先选择供应商或采购入库单群...";
   return `
     <div class="entry-workspace">
       <aside class="entry-list-panel">
@@ -1737,9 +2126,19 @@ function taskMiniTable(tasks) {
 function reviewPage(type) {
   const isSales = type === "sales";
   const isPurchaseOrder = type === "purchase-order";
-  const title = isSales ? "销售订单审核" : isPurchaseOrder ? "采购单审核" : "入库单审核";
+  const title = isSales ? "销售订单审核" : isPurchaseOrder ? "采购单审核" : "采购入库单审核";
   const taskRows = isSales ? salesTasks : isPurchaseOrder ? purchaseOrderTasks : purchaseTasks;
   const tasks = filterTasks(taskRows, getStatus(type));
+  const statusOptions = isSales
+    ? ["all", "待处理", "已完成", "失败", "合单"]
+    : isPurchaseOrder
+      ? ["all", "待处理", "已完成", "失败"]
+      : ["all", "待审核", "入库暂存", "已确认入库"];
+  const alertText = isSales
+    ? `当前有 ${tasks.filter((task) => task.status === "失败").length} 个识别失败的单据待人工处理。`
+    : isPurchaseOrder
+      ? "采购单确认后自动回传到观麦系统，并在观麦中保持未提交状态，供后续采购入库单关联。"
+      : "采购入库单关联采购单后可确认入库；其它入库暂存的采购入库单可联动入库，待审核单据不随本次提交。";
   const dateLabel = isSales ? "下单日期" : isPurchaseOrder ? "采购时间" : "入库时间";
   const ownerLabel = isSales ? "审核员" : "操作员";
   const partyFilter = isSales || isPurchaseOrder
@@ -1760,10 +2159,10 @@ function reviewPage(type) {
           <button class="btn" data-toast="列表已刷新">刷新</button>
         </div>
       </div>
-      <div class="alert">当前有 ${tasks.filter((task) => task.status === "失败").length} 个识别失败的单据待人工处理。</div>
+      <div class="alert">${alertText}</div>
       <section class="filters">
         <label class="field compact"><span>状态</span><select data-status-filter="${type}">
-          ${["all", "待处理", "已完成", "失败", "合单"].map((status) => `<option value="${status}" ${getStatus(type) === status ? "selected" : ""}>${status === "all" ? "全部状态" : status}</option>`).join("")}
+          ${statusOptions.map((status) => `<option value="${status}" ${getStatus(type) === status ? "selected" : ""}>${status === "all" ? "全部状态" : status}</option>`).join("")}
         </select></label>
         <label class="field compact"><span>${dateLabel}</span><input value="2026-07-01"></label>
         ${isSales ? partyFilter : purchaseFilters}
@@ -1826,6 +2225,282 @@ function reviewerSelect(current, options = ["李娜", "赵倩", "周诚", "陈�
   return `<select class="table-select" aria-label="选择操作员">${list.map((item) => `<option ${item === current ? "selected" : ""}>${item}</option>`).join("")}</select>`;
 }
 
+function formatPurchaseAmount(quantity, price) {
+  return ((Number(quantity) || 0) * (Number(price) || 0)).toFixed(2);
+}
+
+function getPurchaseCalcPriorityLabel() {
+  return state.purchaseCalcPriorityLevel === "custom" ? state.purchaseCustomCalcPriority : "实收数优先";
+}
+
+function getPurchaseAmountBaseQty(purchaseQty, receivedQty) {
+  const purchase = Number(purchaseQty) || 0;
+  const received = Number(receivedQty) || 0;
+  const priority = getPurchaseCalcPriorityLabel();
+  if (priority === "采购数优先") return purchase;
+  if (priority === "取两者最小值") return Math.min(purchase, received);
+  return received;
+}
+
+function formatInboundAmount(purchaseQty, receivedQty, price) {
+  return formatPurchaseAmount(getPurchaseAmountBaseQty(purchaseQty, receivedQty), price);
+}
+
+function isGuanmaiOrderLinkable(order) {
+  return order?.gmStatus === "未提交" && !order.closed;
+}
+
+function getGuanmaiOrderById(id) {
+  return guanmaiPurchaseOrders.find((order) => order.id === id);
+}
+
+function getGuanmaiOrderByTask(task) {
+  return guanmaiPurchaseOrders.find((order) => order.id === task?.gmOrderId || order.aiTaskId === task?.id || order.id === task?.order);
+}
+
+function getInboundRecordById(id) {
+  return purchaseTasks.find((task) => task.id === id) || historicalInboundRecords.find((record) => record.id === id);
+}
+
+function getAllInboundRecords() {
+  return [...purchaseTasks, ...historicalInboundRecords];
+}
+
+function getLinkedPurchaseOrderIds(task) {
+  if (!task) return [];
+  const ids = Array.isArray(task.linkedPurchaseOrderIds) ? task.linkedPurchaseOrderIds : task.linkedPurchaseOrderId ? [task.linkedPurchaseOrderId] : [];
+  return [...new Set(ids.filter(Boolean))];
+}
+
+function setLinkedPurchaseOrderIds(task, ids) {
+  if (!task) return;
+  task.linkedPurchaseOrderIds = [...new Set(ids.filter(Boolean))];
+  task.linkedPurchaseOrderId = task.linkedPurchaseOrderIds[0] || "";
+}
+
+function getLinkedPurchaseOrders(task) {
+  return getLinkedPurchaseOrderIds(task).map(getGuanmaiOrderById).filter(Boolean);
+}
+
+function getLinkedPurchaseOrder(task) {
+  return getLinkedPurchaseOrders(task)[0];
+}
+
+function getPurchaseDetailItems(task) {
+  if (Array.isArray(task?.detailItems) && task.detailItems.length) return task.detailItems;
+  if (Array.isArray(task?.items) && task.items.length) {
+    return task.items.map((item) => ({
+      category: item.category || "",
+      raw: `${item.name} ${item.receivedQty || item.qty || 0} ${item.unit || ""}`.trim(),
+      name: item.name,
+      qty: `${item.receivedQty || item.qty || 0} ${item.unit || ""}`.trim(),
+      purchaseQty: Number(item.purchaseQty ?? item.receivedQty ?? item.qty) || 0,
+      receivedQty: Number(item.receivedQty ?? item.qty) || 0,
+      unit: item.unit || "",
+      price: item.price || "0.00",
+      amount: item.amount || "0.00",
+      remark: item.remark || "",
+      spu: item.spu || item.name,
+      code: item.code || "-",
+    }));
+  }
+  const rows = purchaseDetailItems.filter((item) => item.supplier === task?.supplier);
+  return rows.length ? rows : purchaseDetailItems;
+}
+
+function inboundRawText(inbound) {
+  if (!inbound) return "-";
+  const fallbackRaw = getInboundComparisonItems(inbound).map((item) => `${item.name} ${item.receivedQty}${item.unit}`).join("、");
+  return inbound.raw || fallbackRaw || "-";
+}
+
+function getOrderAssociationStatus(order) {
+  return order?.linkedInboundIds?.length ? "已关联" : "未关联";
+}
+
+function isInboundConfirmed(record) {
+  return ["已确认入库", "已提交", "同步成功", "历史已确认"].includes(record?.status);
+}
+
+function isInboundBatchConfirmable(record) {
+  return ["入库暂存", "已审核待提交"].includes(record?.status);
+}
+
+function isPurchaseOrderClosed(order) {
+  return order?.gmStatus === "已关闭" || order?.closed;
+}
+
+function getInboundRecordsForOrder(order) {
+  return (order?.linkedInboundIds || []).map(getInboundRecordById).filter(Boolean);
+}
+
+function getPurchaseOrderFlowStatus(order) {
+  if (!order) return "未关联";
+  if (isPurchaseOrderClosed(order)) return "已关闭不可再关联";
+  const records = getInboundRecordsForOrder(order);
+  if (!records.length) return "未关联";
+  return records.some(isInboundConfirmed) ? "已有入库确认" : "已关联未确认";
+}
+
+function getLinkedInboundStatus(order) {
+  const ids = order?.linkedInboundIds || [];
+  if (!ids.length) return "未关联";
+  const tasks = ids.map(getInboundRecordById).filter(Boolean);
+  if (!tasks.length) return "已有入库确认";
+  if (tasks.some((task) => task.status === "同步失败")) return "同步失败";
+  return tasks.every(isInboundConfirmed) ? "已有入库确认" : "已关联未确认";
+}
+
+function getOtherLinkedInboundIds(order, inboundId) {
+  return (order?.linkedInboundIds || []).filter((id) => id !== inboundId);
+}
+
+function uniqueInboundIds(ids) {
+  return [...new Set(ids.filter(Boolean))];
+}
+
+function ensureOrderInboundLink(order, inboundId) {
+  if (!order || !inboundId) return;
+  if (!order.linkedInboundIds.includes(inboundId)) order.linkedInboundIds.push(inboundId);
+}
+
+function removeOrderInboundLink(order, inboundId) {
+  if (!order || !inboundId) return;
+  order.linkedInboundIds = order.linkedInboundIds.filter((id) => id !== inboundId);
+}
+
+function togglePurchaseOrderLink(task, order) {
+  if (!task || !order) return;
+  const ids = getLinkedPurchaseOrderIds(task);
+  if (ids.includes(order.id)) {
+    setLinkedPurchaseOrderIds(task, ids.filter((id) => id !== order.id));
+    removeOrderInboundLink(order, task.id);
+    return;
+  }
+  setLinkedPurchaseOrderIds(task, [...ids, order.id]);
+  ensureOrderInboundLink(order, task.id);
+}
+
+function getInboundConfirmationContext(task) {
+  const orders = getLinkedPurchaseOrders(task);
+  const closedOrders = orders.filter(isPurchaseOrderClosed);
+  const otherInboundIds = uniqueInboundIds(orders.flatMap((order) => getOtherLinkedInboundIds(order, task?.id)));
+  const otherRecords = otherInboundIds.map((id) => getInboundRecordById(id) || { id, status: "历史已确认", supplier: task?.supplier, permission: "可查看" });
+  const confirmedRecords = otherRecords.filter(isInboundConfirmed);
+  const batchConfirmRecords = otherRecords.filter(isInboundBatchConfirmable);
+  const reviewPendingRecords = otherRecords.filter((record) => !isInboundConfirmed(record) && !isInboundBatchConfirmable(record));
+  return {
+    orders,
+    closedOrders,
+    otherRecords,
+    confirmedRecords,
+    batchConfirmRecords,
+    reviewPendingRecords,
+    hasOtherInbounds: otherRecords.length > 0,
+    hasConfirmedHistory: confirmedRecords.length > 0,
+    hasBatchConfirmRecords: batchConfirmRecords.length > 0,
+    hasReviewPendingRecords: reviewPendingRecords.length > 0,
+  };
+}
+
+function purchaseOrderStatusTags(orders) {
+  if (!orders.length) return statusTag("未关联");
+  return orders.map((order) => `${order.id} ${statusTag(getPurchaseOrderFlowStatus(order))}`).join("<br>");
+}
+
+function purchaseOrderFlowNotice(order) {
+  if (isPurchaseOrderClosed(order)) return "采购单已关闭，不允许继续关联或确认入库";
+  const records = getInboundRecordsForOrder(order);
+  if (!records.length) return "可被新的采购入库单关联";
+  const hasConfirmed = records.some(isInboundConfirmed);
+  const hasBatchConfirmable = records.some(isInboundBatchConfirmable);
+  const hasReviewPending = records.some((record) => !isInboundConfirmed(record) && !isInboundBatchConfirmable(record));
+  if (hasConfirmed && hasBatchConfirmable) return "已有入库确认，仍有入库暂存采购入库单可联动";
+  if (hasConfirmed && hasReviewPending) return "已有入库确认，仍有待审核采购入库单需单独审核";
+  if (hasConfirmed) return "已有入库确认，后续采购入库单仍可继续关联";
+  if (hasBatchConfirmable) return "已有入库暂存采购入库单，确认时会提示联动入库";
+  return "已有关联待审核采购入库单，本次不自动提交";
+}
+
+function inboundConfirmImpactText(task) {
+  const context = getInboundConfirmationContext(task);
+  if (!context.orders.length) return "需先关联采购单";
+  if (context.closedOrders.length) return "关联采购单已关闭";
+  if (context.hasBatchConfirmRecords && context.hasReviewPendingRecords) return "入库暂存采购入库单会联动，待审核单不提交";
+  if (context.hasBatchConfirmRecords) return "确认后，其它入库暂存采购入库单也会一起入库";
+  if (context.hasReviewPendingRecords) return "存在其它待审核采购入库单，本次不联动提交";
+  if (context.hasConfirmedHistory) return "已有入库确认，本次仅确认当前采购入库单";
+  return "仅确认当前采购入库单";
+}
+
+function getInboundTaskById(id) {
+  return purchaseTasks.find((task) => task.id === id);
+}
+
+function getInboundComparisonItems(record) {
+  if (!record) return [];
+  if (Array.isArray(record.items)) {
+    return record.items.map((item) => ({
+      name: item.name,
+      category: item.category || "",
+      receivedQty: Number(item.receivedQty) || 0,
+      unit: item.unit,
+      sourceInboundId: record.id,
+    }));
+  }
+  return getPurchaseDetailItems(record).map((item) => ({
+    name: item.name,
+    category: item.category,
+    receivedQty: Number(item.receivedQty) || 0,
+    unit: item.unit,
+    sourceInboundId: record.id,
+  }));
+}
+
+
+function linkedInboundLabel(id) {
+  const task = getInboundTaskById(id);
+  if (!task) return `${id}（历史采购入库单）`;
+  return `${id}（${task.status}）`;
+}
+
+function submitCurrentInbound(task, order) {
+  submitCurrentInboundForOrders(task, order ? [order] : []);
+}
+
+function submitCurrentInboundForOrders(task, orders) {
+  if (!task || !orders?.length) return;
+  task.status = "已确认入库";
+  task.gmInboundNo = task.gmInboundNo || `GM-IN-${task.id.slice(-3)}${String(Date.now()).slice(-2)}`;
+  task.order = task.gmInboundNo;
+  orders.forEach((order) => ensureOrderInboundLink(order, task.id));
+}
+
+function submitPendingLinkedInboundsForOrders(task, orders) {
+  if (!task || !orders?.length) return;
+  orders.forEach((order) => {
+    ensureOrderInboundLink(order, task.id);
+    order.linkedInboundIds.forEach((id) => {
+      const inboundTask = getInboundTaskById(id);
+      if (inboundTask && (inboundTask.id === task.id || isInboundBatchConfirmable(inboundTask))) {
+        inboundTask.status = "已确认入库";
+        inboundTask.gmInboundNo = inboundTask.gmInboundNo || `GM-IN-${inboundTask.id.slice(-3)}${String(Date.now()).slice(-2)}`;
+        inboundTask.order = inboundTask.gmInboundNo;
+      }
+    });
+  });
+}
+
+function saveInboundDraftForOrders(task, orders) {
+  if (!task || !orders?.length) return;
+  task.status = "入库暂存";
+  orders.forEach((order) => ensureOrderInboundLink(order, task.id));
+}
+
+function purchaseOrderStatusPill(order) {
+  return statusTag(order?.gmStatus || "未提交");
+}
+
 function purchaseOrderReviewTable(tasks) {
   return `
     <table class="review-table">
@@ -1851,71 +2526,144 @@ function purchaseOrderReviewTable(tasks) {
 function purchaseReviewTable(tasks) {
   return `
     <table class="review-table">
-      <thead><tr><th>状态</th><th>时间</th><th>群聊</th><th>供应商</th><th>原文</th><th class="right">商品数</th><th>操作员</th><th>操作</th></tr></thead>
+      <thead><tr><th>采购入库单状态</th><th>流程场景</th><th>时间</th><th>群聊</th><th>供应商</th><th>原文</th><th class="right">商品数</th><th>关联采购单</th><th>采购单入库流转状态</th><th>确认入库影响</th><th>操作员</th><th>操作</th></tr></thead>
       <tbody>
-        ${tasks.map((task, i) => `
-          <tr>
-            <td>${statusTag(task.status)}</td>
-            <td>07-01 ${String(8 + i).padStart(2, "0")}:32:18</td>
-            <td>${task.group}</td>
-            <td>${task.supplier}</td>
-            <td>${task.raw}</td>
-            <td class="right">${task.items || "-"}</td>
-            <td>${reviewerSelect(task.auditor)}</td>
-            <td><button class="text-btn" data-detail="${task.id}">查看</button><button class="text-btn" data-toast="已对 ${task.id} 重新执行 AI 识别">重识别</button><button class="text-btn muted" data-toast="演示环境未实际删除">删除</button></td>
-          </tr>
-        `).join("")}
+        ${tasks.map((task, i) => {
+          const linkedOrders = getLinkedPurchaseOrders(task);
+          const impactText = inboundConfirmImpactText(task);
+          return `
+            <tr>
+              <td>${statusTag(task.status)}</td>
+              <td>${task.scenario ? `<span class="tag purple">${task.scenario}</span>` : "-"}</td>
+              <td>07-01 ${String(8 + i).padStart(2, "0")}:32:18</td>
+              <td>${task.group}</td>
+              <td>${task.supplier}</td>
+              <td>${task.raw}</td>
+              <td class="right">${task.items || "-"}</td>
+              <td>${linkedOrders.length ? linkedOrders.map((order) => `<strong>${order.id}</strong>`).join("、") : "未关联"}</td>
+              <td class="wrap-cell">${purchaseOrderStatusTags(linkedOrders)}</td>
+              <td class="wrap-cell">${impactText}</td>
+              <td>${reviewerSelect(task.auditor)}</td>
+              <td><button class="text-btn" data-detail="${task.id}">查看</button><button class="text-btn" data-toast="已对 ${task.id} 重新执行 AI 识别">重识别</button><button class="text-btn muted" data-toast="演示环境未实际删除">删除</button></td>
+            </tr>
+          `;
+        }).join("")}
       </tbody>
     </table>
   `;
 }
 
 function statusTag(status) {
-  const color = status === "待处理" ? "gold" : status === "已完成" ? "green" : status === "失败" ? "red" : "blue";
+  const color = ["待处理", "待审核", "入库暂存", "需人工确认", "已关联未确认"].includes(status)
+    ? "gold"
+    : ["已完成", "已提交", "已确认入库", "未提交", "已关联", "已生成", "已确认", "已有入库确认", "历史已确认", "无差异"].includes(status)
+      ? "green"
+      : ["失败", "已提交到观麦", "同步失败", "商品不一致", "已关闭", "已关闭不可再关联"].includes(status)
+        ? "red"
+        : "blue";
   return `<span class="tag ${color}">${status}</span>`;
 }
 
 const purchaseDetailItems = [
-  { raw: "鲈鱼 80 条", name: "鲜活鲈鱼", qty: "80 条", purchaseQty: 82, receivedQty: 80, unit: "条", price: "18.50", amount: "1480.00", remark: "到仓复称", spu: "鲜活鲈鱼", code: "SPU-P-1001" },
-  { raw: "基围虾 120 斤", name: "基围虾", qty: "120 斤", purchaseQty: 120, receivedQty: 120, unit: "斤", price: "39.00", amount: "4680.00", remark: "冰鲜称重", spu: "基围虾", code: "SPU-P-1002" },
-  { raw: "云南生菜 400 斤", name: "云南生菜", qty: "400 斤", purchaseQty: 410, receivedQty: 400, unit: "斤", price: "3.20", amount: "1280.00", remark: "", spu: "云南生菜", code: "SPU-V-2031" },
-  { raw: "油麦菜 260 斤", name: "油麦菜", qty: "260 斤", purchaseQty: 260, receivedQty: 256, unit: "斤", price: "3.80", amount: "988.00", remark: "", spu: "油麦菜", code: "SPU-V-2032" },
-  { raw: "鸡腿 30 件", name: "冻鸡腿", qty: "30 件", purchaseQty: 30, receivedQty: 30, unit: "件", price: "126.00", amount: "3780.00", remark: "按件入库", spu: "冻鸡腿", code: "SPU-M-3018" },
-  { raw: "猪五花 18 件", name: "猪五花", qty: "18 件", purchaseQty: 20, receivedQty: 18, unit: "件", price: "238.00", amount: "4284.00", remark: "按件入库", spu: "猪五花", code: "SPU-M-3021" },
+  { supplier: "海盛水产", category: "水产海鲜", raw: "鲈鱼 80 条", name: "鲜活鲈鱼", qty: "80 条", purchaseQty: 82, receivedQty: 80, unit: "条", price: "18.50", amount: "1480.00", remark: "到仓复称", spu: "鲜活鲈鱼", code: "SPU-P-1001" },
+  { supplier: "海盛水产", category: "水产海鲜", raw: "基围虾 120 斤", name: "基围虾", qty: "120 斤", purchaseQty: 120, receivedQty: 120, unit: "斤", price: "39.00", amount: "4680.00", remark: "冰鲜称重", spu: "基围虾", code: "SPU-P-1002" },
+  { supplier: "春田蔬菜基地", category: "蔬菜", raw: "云南生菜 400 斤", name: "云南生菜", qty: "400 斤", purchaseQty: 400, receivedQty: 400, unit: "斤", price: "3.20", amount: "1280.00", remark: "", spu: "云南生菜", code: "SPU-V-2031" },
+  { supplier: "春田蔬菜基地", category: "蔬菜", raw: "油麦菜 260 斤", name: "油麦菜", qty: "260 斤", purchaseQty: 280, receivedQty: 256, unit: "斤", price: "3.80", amount: "988.00", remark: "", spu: "油麦菜", code: "SPU-V-2032" },
+  { supplier: "岭南肉禽", category: "肉禽冻品", raw: "鸡腿 30 件", name: "冻鸡腿", qty: "30 件", purchaseQty: 30, receivedQty: 30, unit: "件", price: "126.00", amount: "3780.00", remark: "按件入库", spu: "冻鸡腿", code: "SPU-M-3018" },
+  { supplier: "岭南肉禽", category: "肉禽冻品", raw: "猪五花 18 件", name: "猪五花", qty: "18 件", purchaseQty: 18, receivedQty: 18, unit: "件", price: "238.00", amount: "4284.00", remark: "按件入库", spu: "猪五花", code: "SPU-M-3021" },
 ];
 
+function purchaseOrderSyncSection(task) {
+  return `
+    <section class="purchase-group po-sync-card">
+      <p class="manual-po-note">AI 录单系统确认的采购单会回传到观麦系统，并保持“未提交”状态；只有该状态下才允许后续采购入库单读取并关联。</p>
+    </section>
+  `;
+}
+
+function purchaseAssociationSection(task) {
+  const selectedOrderIds = getLinkedPurchaseOrderIds(task);
+  const eligibleOrders = guanmaiPurchaseOrders.filter((order) => (order.supplier === task.supplier && isGuanmaiOrderLinkable(order)) || selectedOrderIds.includes(order.id));
+  const readonlyAssociation = isInboundConfirmed(task);
+  return `
+    <section class="purchase-group po-association-card">
+      <div class="purchase-group-head">
+        <div><strong>关联采购单</strong><span class="gm-tip">仅观麦未提交可关联</span></div>
+      </div>
+      <div class="purchase-table-wrap po-link-table-wrap">
+        <table class="purchase-group-board-table po-link-table">
+          <thead><tr><th class="check-col">选择</th><th>采购单</th><th>采购单入库流转状态</th><th>关联采购入库单提示</th><th>操作</th></tr></thead>
+          <tbody>
+            ${eligibleOrders.length ? eligibleOrders.map((order) => {
+              const isSelected = selectedOrderIds.includes(order.id);
+              const otherInboundIds = getOtherLinkedInboundIds(order, task.id);
+              const hasOtherInbounds = otherInboundIds.length > 0;
+              const rowDisabled = readonlyAssociation || (!isSelected && !isGuanmaiOrderLinkable(order));
+              return `
+                <tr class="${isSelected ? "selected-row" : ""}">
+                  <td class="check-col"><label class="check-only"><input type="checkbox" ${isSelected ? "checked" : ""} ${rowDisabled ? "disabled" : ""} data-link-po="${order.id}" data-inbound-id="${task.id}"></label></td>
+                  <td>
+                    <div class="po-row-main">
+                      <strong>${order.id}</strong>
+                      <span>${order.source} · ${order.orderDate}</span>
+                      ${isSelected ? `<em>已选</em>` : ""}
+                    </div>
+                  </td>
+                  <td>
+                    <div class="history-cell">
+                      ${statusTag(getPurchaseOrderFlowStatus(order))}
+                    </div>
+                  </td>
+                  <td>
+                    <div class="history-cell">
+                      ${hasOtherInbounds ? `<button class="text-btn" data-view-po-history="${order.id}" data-inbound-id="${task.id}">查看关联采购入库单</button>` : `<span class="tag green">无其它关联采购入库单</span>`}
+                    </div>
+                  </td>
+                  <td><button class="text-btn" data-view-gm-po="${order.id}">详情</button></td>
+                </tr>
+              `;
+            }).join("") : `<tr><td colspan="5"><div class="empty-note">暂无同供应商、观麦业务状态为“未提交”的采购单可关联。</div></td></tr>`}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  `;
+}
+
 function purchaseDetailPage() {
-  const task = [...purchaseOrderTasks, ...purchaseTasks].find((item) => item.id === state.activeDetailId) || purchaseTasks[0];
+  const task = [...purchaseOrderTasks, ...purchaseTasks, ...historicalInboundRecords].find((item) => item.id === state.activeDetailId) || purchaseTasks[0];
   const isPurchaseOrder = task.id.startsWith("PO-");
+  const readonlyDetail = !isPurchaseOrder && isInboundConfirmed(task);
+  const disabledAttr = readonlyDetail ? " disabled" : "";
+  const operationHeader = readonlyDetail ? "" : `<th class="operation-col">操作</th>`;
   const supplierOptions = [task.supplier, ...suppliers.map((supplier) => supplier.name).filter((name) => name !== task.supplier)];
-  const detailTitle = isPurchaseOrder ? "采购单详情" : "入库单详情";
-  const confirmText = "确认采购单";
-  const confirmToast = isPurchaseOrder ? "采购单已确认" : "采购入库单已确认入库";
-  const detailKindLabel = isPurchaseOrder ? "采购单" : "入库单";
-  const qtyLabel = isPurchaseOrder ? "数量/单位" : "入库数/单位";
-  const priceLabel = "入库单价";
-  const amountLabel = "入库金额";
+  const taskOperator = task.auditor || task.operator || "-";
+  const taskGroup = task.group || "历史入库记录";
+  const detailTitle = isPurchaseOrder ? "采购单详情" : "采购入库单详情";
+  const confirmText = isPurchaseOrder ? "确认采购单" : "确认入库";
+  const confirmToast = isPurchaseOrder ? "采购单已确认，并以未提交状态回传观麦系统" : "";
+  const detailKindLabel = isPurchaseOrder ? "采购单" : "采购入库单";
+  const qtyLabel = isPurchaseOrder ? "数量/单位" : "识别到货数/单位";
+  const priceLabel = "单价";
+  const amountLabel = "金额";
   const remarkLabel = isPurchaseOrder ? "采购备注" : "备注";
-  const totalPurchaseQty = purchaseDetailItems.reduce((sum, item) => sum + item.purchaseQty, 0);
-  const totalReceivedQty = purchaseDetailItems.reduce((sum, item) => sum + item.receivedQty, 0);
+  const detailItems = getPurchaseDetailItems(task);
+  const totalPurchaseQty = detailItems.reduce((sum, item) => sum + (Number(item.purchaseQty) || 0), 0);
+  const totalReceivedQty = detailItems.reduce((sum, item) => sum + (Number(item.receivedQty) || 0), 0);
   const totalDiffQty = totalPurchaseQty - totalReceivedQty;
   const totalDiffRate = totalPurchaseQty ? `${((totalDiffQty / totalPurchaseQty) * 100).toFixed(1)}%` : "0.0%";
-  const detailLineActions = `
+  const detailLineActions = readonlyDetail ? "" : `
     <div class="detail-line-actions">
       <button class="btn danger" data-toast="已删除选中的${detailKindLabel}商品">删除</button>
-      <button class="btn" data-toast="${detailKindLabel}明细已保存">保存</button>
-      <button class="btn primary" data-toast="${confirmToast}">${confirmText}</button>
+      <button class="btn" ${isPurchaseOrder ? `data-toast="${detailKindLabel}明细已保存"` : `data-save-inbound-draft="${task.id}"`}>${isPurchaseOrder ? "保存" : "暂存入库"}</button>
+      <button class="btn primary" ${isPurchaseOrder ? `data-toast="${confirmToast}"` : `data-confirm-inbound="${task.id}"`}>${confirmText}</button>
     </div>
   `;
-  const rowActions = `
+  const rowActions = readonlyDetail ? "" : `
     <button class="circle-btn plus" data-toast="已新增一行${detailKindLabel}商品" aria-label="新增${detailKindLabel}商品">+</button>
     <button class="circle-btn minus" data-toast="已删除当前${detailKindLabel}商品" aria-label="删除${detailKindLabel}商品">-</button>
   `;
-  const manualPurchaseSection = isPurchaseOrder ? "" : `
-        <section class="purchase-group manual-po-card manual-po-card-lite">
-          <button class="btn primary" data-toast="请选择需要关联的采购单">手动选择采购单</button>
-        </section>
-  `;
+  const relationSection = isPurchaseOrder ? purchaseOrderSyncSection(task) : purchaseAssociationSection(task);
   return `
     <div class="purchase-detail-page">
       <aside class="detail-source">
@@ -1933,7 +2681,7 @@ function purchaseDetailPage() {
         </div>
         <div class="detail-source-section">
           <div class="detail-section-title"><span></span><strong>原始消息</strong><span></span></div>
-          <pre class="raw-message">--- 2026-07-01 / ${task.group} ---
+          <pre class="raw-message">--- 2026-07-01 / ${taskGroup} ---
 ${task.raw}
 ${isPurchaseOrder ? "采购日期：2026-07-02" : "到货时间：今晚 20:00 前"}
 供应商：${task.supplier}
@@ -1947,50 +2695,72 @@ ${isPurchaseOrder ? "价格缺失时留待操作员确认，不自动关联其�
       <main class="detail-main">
         <div class="detail-header">
           <div>
-            <h2>${detailTitle} <span class="tag gold">${task.status}</span></h2>
+            <h2>${detailTitle} ${statusTag(task.status)}</h2>
             <div class="detail-meta">
               <span>供应商：${task.supplier}</span>
-              <span>操作员：${task.auditor}</span>
-              <span>来源群聊：${task.group}</span>
+              <span>操作员：${taskOperator}</span>
+              <span>来源群聊：${taskGroup}</span>
             </div>
           </div>
         </div>
 
-        ${manualPurchaseSection}
+        ${relationSection}
 
         <section class="purchase-group">
           <div class="purchase-group-head">
             <div><strong>AI 识别${detailKindLabel}明细</strong></div>
             ${detailLineActions}
           </div>
+          ${!isPurchaseOrder ? `
+            <div class="inbound-review-tip">
+              确认入库前请重点核对关联采购单。若关联采购单下还有其它入库暂存采购入库单，提交前系统会再次提示并按直接关联范围一起入库；待审核单据保持不变。
+            </div>
+          ` : ""}
           <div class="purchase-form-row">
-            <label>供应商 <select>${supplierOptions.map((name) => `<option>${name}</option>`).join("")}</select></label>
-            <label class="wide">${remarkLabel} <input value="${isPurchaseOrder ? "价格待确认" : "到仓复称，异常短缺请备注"}"></label>
+            <label>供应商 <select${disabledAttr}>${supplierOptions.map((name) => `<option>${name}</option>`).join("")}</select></label>
+            <label class="wide">${remarkLabel} <input value="${isPurchaseOrder ? "价格待确认" : "到仓复称，异常短缺请备注"}"${disabledAttr}></label>
           </div>
           ${!isPurchaseOrder ? `
             <div class="inbound-summary-row">
               <span>总采购数 <b>${totalPurchaseQty}</b></span>
               <span>总实收数 <b>${totalReceivedQty}</b></span>
-              <span>总差异百分比 <b class="${totalDiffQty ? "red-text" : "green-text"}">${totalDiffRate}</b></span>
+              <span>总差异数 <b class="${totalDiffQty ? "red-text" : "green-text"}">${totalDiffQty}</b></span>
+              <span>总差异占比 <b class="${totalDiffQty ? "red-text" : "green-text"}">${totalDiffRate}</b></span>
             </div>
           ` : ""}
           <div class="purchase-table-wrap">
             <table class="purchase-detail-table simple-purchase-table">
               <thead>
                 ${isPurchaseOrder
-                  ? `<tr><th>序号</th><th>识别文本</th><th>商品名称</th><th>${qtyLabel}</th><th>${remarkLabel}</th><th>SPU 名称</th><th>商品编码</th><th class="operation-col">操作</th></tr>`
-                  : `<tr><th>序号</th><th>识别文本</th><th>商品名称</th><th>采购数</th><th>实收数</th><th>差异</th><th>${qtyLabel}</th><th>${priceLabel}</th><th>${amountLabel}</th><th>${remarkLabel}</th><th>SPU 名称</th><th>商品编码</th><th class="operation-col">操作</th></tr>`}
+                  ? `<tr><th>序号</th><th>识别文本</th><th>商品名称</th><th>${qtyLabel}</th><th>${remarkLabel}</th><th>SPU 名称</th><th>商品编码</th>${operationHeader}</tr>`
+                  : `<tr><th>序号</th><th>识别文本</th><th>商品名称</th><th>采购数</th><th>实收数</th><th>差异</th><th>${qtyLabel}</th><th>${priceLabel}</th><th>${amountLabel}</th><th>${remarkLabel}</th><th>SPU 名称</th><th>商品编码</th>${operationHeader}</tr>`}
               </thead>
               <tbody>
-                ${purchaseDetailItems.map((item, index) => `
-                  ${isPurchaseOrder
-                    ? `<tr><td><b>${index + 1}</b></td><td>${item.raw}</td><td><input value="${item.name}"></td><td><input class="qty-input" value="${item.qty}"></td><td><input class="remark-input" value="${item.remark || "按采购计划确认"}"></td><td>${item.spu}</td><td><code>${item.code}</code></td><td class="detail-row-actions">${rowActions}</td></tr>`
-                    : `<tr><td><b>${index + 1}</b></td><td>${item.raw}</td><td><input value="${item.name}"></td><td>${item.purchaseQty} ${item.unit}</td><td>${item.receivedQty} ${item.unit}</td><td><span class="${item.purchaseQty - item.receivedQty ? "red-text" : "green-text"}">${item.purchaseQty - item.receivedQty} ${item.unit}</span></td><td><input class="qty-input" value="${item.qty}"></td><td>¥ <input class="price-input" value="${item.price}"></td><td>¥${item.amount}</td><td><input class="remark-input" value="${item.remark}"></td><td>${item.spu}</td><td><code>${item.code}</code></td><td class="detail-row-actions">${rowActions}</td></tr>`}
-                `).join("")}
+                ${detailItems.map((item, index) => {
+                  const diffQty = item.purchaseQty - item.receivedQty;
+                  const amount = formatInboundAmount(item.purchaseQty, item.receivedQty, item.price);
+                  return isPurchaseOrder
+                    ? `<tr><td><b>${index + 1}</b></td><td>${item.raw}</td><td><input value="${item.name}"${disabledAttr}></td><td><input class="qty-input" value="${item.qty}"${disabledAttr}></td><td><input class="remark-input" value="${item.remark || "按采购计划确认"}"${disabledAttr}></td><td>${item.spu}</td><td><code>${item.code}</code></td>${readonlyDetail ? "" : `<td class="detail-row-actions">${rowActions}</td>`}</tr>`
+                    : `<tr data-inbound-detail-row data-purchase-qty="${item.purchaseQty}" data-unit="${item.unit}">
+                        <td><b>${index + 1}</b></td>
+                        <td>${item.raw}</td>
+                        <td><input value="${item.name}"${disabledAttr}></td>
+                        <td><span data-purchase-qty>${item.purchaseQty}</span> ${item.unit}</td>
+                        <td><input class="qty-input received-input" data-received-input value="${item.receivedQty}"${disabledAttr}> ${item.unit}</td>
+                        <td><span data-diff-cell class="${diffQty ? "red-text" : "green-text"}">${diffQty} ${item.unit}</span></td>
+                        <td><input class="qty-input" value="${item.qty}"${disabledAttr}></td>
+                        <td>¥ <input class="price-input" data-price-input value="${item.price}"${disabledAttr}></td>
+                        <td><span data-amount-cell>¥${amount}</span></td>
+                        <td><input class="remark-input" value="${item.remark}"${disabledAttr}></td>
+                        <td>${item.spu}</td>
+                        <td><code>${item.code}</code></td>
+                        ${readonlyDetail ? "" : `<td class="detail-row-actions">${rowActions}</td>`}
+                      </tr>`;
+                }).join("")}
               </tbody>
             </table>
           </div>
-          <button class="add-line" data-toast="已新增一行${detailKindLabel}商品">+ 新增${detailKindLabel}商品</button>
+          ${readonlyDetail ? "" : `<button class="add-line" data-toast="已新增一行${detailKindLabel}商品">+ 新增${detailKindLabel}商品</button>`}
         </section>
       </main>
     </div>
@@ -2134,7 +2904,7 @@ function groupsPage(type) {
     <div class="page wide-page">
       ${!isSales ? `
         <section class="filters purchase-group-filter-bar">
-          <label class="field compact"><span>群聊类型</span><select><option>全部</option><option>采购单录入</option><option>入库单录入</option></select></label>
+          <label class="field compact"><span>群聊类型</span><select><option>全部</option><option>采购单录入</option><option>采购入库单录入</option></select></label>
           <label class="field compact"><span>操作员</span><select><option>全部</option>${operatorOptions.map((name) => `<option>${name}</option>`).join("")}</select></label>
           <label class="field group-search-field"><input placeholder="搜索群聊名称"></label>
         </section>
@@ -2154,7 +2924,7 @@ function groupsPage(type) {
         <div class="stat-strip">
           <span>总群聊 <b>${rows.length}</b></span><span class="divider">|</span>
           <span>${isSales ? "已绑客户" : "已绑供应商"} <b>${rows.length}</b></span><span class="divider">|</span>
-          ${!isSales ? `<span>采购单群 <b>${orderGroupCount}</b></span><span class="divider">|</span><span>入库单群 <b>${inboundGroupCount}</b></span><span class="divider">|</span>` : ""}
+          ${!isSales ? `<span>采购单群 <b>${orderGroupCount}</b></span><span class="divider">|</span><span>采购入库单群 <b>${inboundGroupCount}</b></span><span class="divider">|</span>` : ""}
           <span>已禁言 <b>${rows.filter((row) => row.bot === "禁言").length}</b></span>
         </div>
         <div class="table-scroll">
@@ -2264,7 +3034,7 @@ function purchaseDocTabs() {
   return `
     <div class="tabs doc-type-tabs">
       <button class="subtab ${state.purchaseDocTab === "order" ? "active" : ""}" data-purchase-doc-tab="order">采购单</button>
-      <button class="subtab ${state.purchaseDocTab === "inbound" ? "active" : ""}" data-purchase-doc-tab="inbound">入库单</button>
+      <button class="subtab ${state.purchaseDocTab === "inbound" ? "active" : ""}" data-purchase-doc-tab="inbound">采购入库单</button>
     </div>
   `;
 }
@@ -2283,7 +3053,7 @@ function promptTemplateManager(type, docType, scope) {
   const isPurchaseOrder = docType === "order";
   const partyLabel = isSales ? "客户" : "供应商";
   const searchLabel = isSystem ? "搜索模板名称或 ID" : `搜索${partyLabel}名称或 ID`;
-  const docLabel = isSales ? "订单" : isPurchaseOrder ? "采购单" : "入库单";
+  const docLabel = isSales ? "订单" : isPurchaseOrder ? "采购单" : "采购入库单";
   const rows = promptTemplateRows({ isSales, isSystem, isPurchaseOrder, partyLabel, docLabel });
   return `
     <div class="prompt-page-shell">
@@ -2325,7 +3095,7 @@ function promptTemplateManager(type, docType, scope) {
 function promptTemplateRows({ isSales, isSystem, isPurchaseOrder, partyLabel, docLabel }) {
   if (isSystem) {
     const systemType = "系统提示词";
-    const domainLabel = isSales ? "销售订单录单" : isPurchaseOrder ? "采购单 Agent" : "入库单 Agent";
+    const domainLabel = isSales ? "销售订单录单" : isPurchaseOrder ? "采购单 Agent" : "采购入库单 Agent";
     return [
       { name: `默认${docLabel}系统提示词`, type: systemType, typeTone: "blue", bound: domainLabel, enabled: true, preview: `你是${domainLabel}，负责识别商品、数量、业务备注，并按审核规则输出结构化结果...`, updated: "2026-06-27 12:17" },
       { name: `${docLabel}表格解析规则`, type: systemType, typeTone: "blue", bound: "Excel / 图片 / PDF", enabled: true, preview: `优先识别有效表头，忽略合计行，保留${isPurchaseOrder ? "采购备注" : isSales ? "配送备注" : "入库备注"}...`, updated: "2026-06-25 16:50" },
@@ -2334,13 +3104,13 @@ function promptTemplateRows({ isSales, isSystem, isPurchaseOrder, partyLabel, do
     ];
   }
   const defaultTarget = isSales ? "全部客户" : "全部供应商";
-  const specialName = isSales ? "特殊模板格式" : isPurchaseOrder ? "采购单样式识别" : "入库单到货规则";
+  const specialName = isSales ? "特殊模板格式" : isPurchaseOrder ? "采购单样式识别" : "采购入库单到货规则";
   const specialTarget = isSales ? "李四小学、桐乡市振东小学、张三超市、张三水果..." : "海盛水产、春田蔬菜基地、东升冻品、旺角粮油...";
   const preview = isSales
     ? "你是订单解析专家，请严格按照思维链步骤解析订单，确保输出准确、完整、格式统一..."
     : isPurchaseOrder
       ? "你是采购单解析专家，请提取供应商、商品名称、采购数量和采购备注，价格字段无需输出..."
-      : "你是入库单解析专家，请识别供应商、商品、入库数量、到仓备注，异常价格交由人工确认...";
+      : "你是采购入库单解析专家，请识别供应商、商品、识别到货数、到仓备注，异常价格交由人工确认...";
   return [
     { name: specialName, type: `${docLabel}解析`, typeTone: "blue", bound: specialTarget, enabled: true, preview, updated: "2026-06-27 12:17" },
     { name: isSales ? "乌鹏" : "海鲜采购群模板", type: `${docLabel}解析`, typeTone: "blue", bound: isSales ? "城隍阁、容桂渔人码头、桐乡市振东小学..." : "海盛水产、观麦大学、张三超市...", enabled: true, preview: `按${docLabel}业务口径识别商品、数量和备注，保留原始别名用于 AI 记忆沉淀...`, updated: "2026-06-27 11:41" },
@@ -2362,7 +3132,7 @@ function memoryPage(type) {
   ] : isPurchaseOrder ? [
     ["修正记忆", "gold", "海盛水产", "鲈鱼 100 条", "鲜活鲈鱼 100 条，价格待确认", 11, "2026-07-01 09:42"],
     ["采购习惯", "blue", "采购内部下单群", "明天采购", "采购日期默认次日", 8, "2026-06-30 16:18"],
-    ["群级记忆", "green", "蔬菜采购群", "采购群", "默认生成采购单，不生成入库单", 9, "2026-07-01 08:33"],
+    ["群级记忆", "green", "蔬菜采购群", "采购群", "默认生成采购单，不生成采购入库单", 9, "2026-07-01 08:33"],
   ] : [
     ["修正记忆", "gold", "海盛水产", "基围虾 120 斤", "基围虾 120 斤，入中心仓", 19, "2026-07-01 09:42"],
     ["入库习惯", "blue", "春田蔬菜基地", "油麦菜 260", "油麦菜 260 斤，默认一号冷库", 14, "2026-06-30 16:18"],
@@ -2464,16 +3234,18 @@ function purchaseGroupMemoryTable(rows) {
 function agentSettingsPage(type) {
   const isSales = type === "sales";
   const agentName = isSales ? "销售订单录单" : "采购录单";
-  const activeTab = isSales ? state.agentSettingsTab : state.agentSettingsTab === "reply" ? "reply" : "robots";
+  const purchaseTabs = new Set(["robots", "reply", "calc-priority"]);
+  const activeTab = isSales ? state.agentSettingsTab : purchaseTabs.has(state.agentSettingsTab) ? state.agentSettingsTab : "robots";
   return `
     <div class="page wide-page">
       <section class="settings-workbench">
         <div class="tabs settings-tabs">
           <button class="subtab ${activeTab === "robots" ? "active" : ""}" data-agent-settings-tab="robots">机器人管理</button>
           <button class="subtab ${activeTab === "reply" ? "active" : ""}" data-agent-settings-tab="reply">回复设置</button>
+          ${!isSales ? `<button class="subtab ${activeTab === "calc-priority" ? "active" : ""}" data-agent-settings-tab="calc-priority">计算优先级</button>` : ""}
           ${isSales ? `<button class="subtab ${activeTab === "notice" ? "active" : ""}" data-agent-settings-tab="notice">通知设置</button>` : ""}
         </div>
-        ${activeTab === "robots" ? agentRobotSettings(agentName, isSales) : activeTab === "reply" ? agentReplySettings(agentName, isSales) : agentNoticeSettings(agentName, isSales)}
+        ${activeTab === "robots" ? agentRobotSettings(agentName, isSales) : activeTab === "reply" ? agentReplySettings(agentName, isSales) : activeTab === "calc-priority" ? purchaseCalcPrioritySettings() : agentNoticeSettings(agentName, isSales)}
       </section>
     </div>
   `;
@@ -2509,7 +3281,7 @@ function agentReplySettings(agentName, isSales) {
     ]
     : [
       ["采购单已收到", "收到，正在识别采购单", false],
-      ["入库单已收到", "收到，正在识别入库单", false],
+      ["采购入库单已收到", "收到，正在识别采购入库单", false],
       ["整单转换", "收到，已更新单据", false],
       ["提交审核通知", "请核对供应商单据", true],
     ];
@@ -2527,6 +3299,40 @@ function agentReplySettings(agentName, isSales) {
         </section>
       `).join("")}
       <button class="btn primary full-save" data-toast="${agentName} 回复设置已保存">保存</button>
+    </div>
+  `;
+}
+
+function purchaseCalcPrioritySettings() {
+  const customDisabled = state.purchaseCalcPriorityLevel !== "custom";
+  return `
+    <div class="agent-setting-pane">
+      <div class="info-banner">用于采购入库单金额与差异计算。仅可选中一个配置级别；默认设置级固定为实收数优先，不支持修改。</div>
+      <div class="calc-priority-table">
+        <label class="calc-priority-row ${state.purchaseCalcPriorityLevel === "default" ? "active" : ""}">
+          <span class="calc-radio"><input type="radio" name="purchase-calc-priority-level" value="default" ${state.purchaseCalcPriorityLevel === "default" ? "checked" : ""} data-calc-priority-level="default"></span>
+          <span class="calc-level">
+            <strong>默认设置级</strong>
+            <em>系统内置，不可更改</em>
+          </span>
+          <span class="calc-value"><span class="tag blue">实收数优先</span></span>
+          <span class="calc-action muted">固定规则</span>
+        </label>
+        <label class="calc-priority-row ${state.purchaseCalcPriorityLevel === "custom" ? "active" : ""}">
+          <span class="calc-radio"><input type="radio" name="purchase-calc-priority-level" value="custom" ${state.purchaseCalcPriorityLevel === "custom" ? "checked" : ""} data-calc-priority-level="custom"></span>
+          <span class="calc-level">
+            <strong>自定义设置</strong>
+            <em>选中后按自定义规则计算</em>
+          </span>
+          <span class="calc-value">
+            <select data-custom-calc-priority ${customDisabled ? "disabled" : ""}>
+              ${["实收数优先", "采购数优先", "取两者最小值"].map((item) => `<option value="${item}" ${state.purchaseCustomCalcPriority === item ? "selected" : ""}>${item}</option>`).join("")}
+            </select>
+          </span>
+          <span class="calc-action">${customDisabled ? "未启用" : "已启用"}</span>
+        </label>
+      </div>
+      <button class="btn primary full-save" data-toast="采购录单计算优先级已保存">保存</button>
     </div>
   `;
 }
@@ -2567,10 +3373,10 @@ function settingsPage() {
 
 function memberManagementPage() {
   const members = [
-    { username: "0623", name: "0623", role: "操作员", status: "启用", actions: true },
+    { username: "0623", name: "0623", role: "订单操作员", status: "启用", actions: true },
     { username: "aiceshi", name: "系统管理员", role: "管理员", status: "启用", actions: false },
-    { username: "lcf", name: "lcf", role: "操作员", status: "启用", actions: true },
-    { username: "lanxiu", name: "oywj", role: "操作员", status: "启用", actions: true },
+    { username: "lcf", name: "lcf", role: "采购操作员", status: "启用", actions: true },
+    { username: "lanxiu", name: "oywj", role: "采购操作员", status: "启用", actions: true },
   ];
   return `
     <div class="page wide-page tenant-config-page">
@@ -2589,7 +3395,7 @@ function memberManagementPage() {
               ${members.map((member) => `<tr>
                 <td>${member.username}</td>
                 <td>${member.name}</td>
-                <td><span class="tag ${member.role === "管理员" ? "blue" : ""}">${member.role}</span></td>
+                <td><span class="tag ${member.role === "管理员" ? "blue" : member.role === "采购操作员" ? "green" : ""}">${member.role}</span></td>
                 <td><span class="tag green">${member.status}</span></td>
                 <td>${member.actions ? `<button class="text-btn" data-toast="已打开改密码弹窗">改密码</button><button class="text-btn danger-text" data-toast="演示环境未实际删除成员">删除</button>` : ""}</td>
               </tr>`).join("")}
@@ -2698,6 +3504,308 @@ function quotaSettings() {
   `;
 }
 
+function bindPurchaseAssociationActions(root = document) {
+  root.querySelectorAll("[data-link-po]").forEach((button) => {
+    button.onclick = () => {
+      const task = getInboundTaskById(button.dataset.inboundId);
+      const order = getGuanmaiOrderById(button.dataset.linkPo);
+      if (!task || !order) return;
+      const alreadyLinked = getLinkedPurchaseOrderIds(task).includes(order.id);
+      if (!alreadyLinked && !isGuanmaiOrderLinkable(order)) {
+        toast("该采购单在观麦系统中不是未提交状态，不允许关联");
+        return;
+      }
+      togglePurchaseOrderLink(task, order);
+      toast(`${getLinkedPurchaseOrderIds(task).includes(order.id) ? "已关联" : "已取消关联"}采购单 ${order.id}`);
+      renderContent();
+    };
+  });
+
+  root.querySelectorAll("[data-view-po-history]").forEach((button) => {
+    button.onclick = (event) => {
+      event.stopPropagation();
+      const order = getGuanmaiOrderById(button.dataset.viewPoHistory);
+      if (order) openModal(`${order.id} - 历史关联采购入库单`, linkedInboundHistoryModal(order, button.dataset.inboundId), { wide: true, hideFooter: true });
+    };
+  });
+
+  root.querySelectorAll("[data-view-gm-po]").forEach((button) => {
+    button.onclick = (event) => {
+      event.stopPropagation();
+      const order = getGuanmaiOrderById(button.dataset.viewGmPo);
+      if (order) openModal(`${order.id} - 采购单明细`, gmPurchaseOrderDetailModal(order), { wide: true, hideFooter: true });
+    };
+  });
+
+  root.querySelectorAll("[data-view-linked-inbounds]").forEach((button) => {
+    button.onclick = () => {
+      const order = getGuanmaiOrderById(button.dataset.viewLinkedInbounds);
+      if (order) openModal(`${order.id} - 关联采购入库单详情`, linkedInboundDetailModal(order), { wide: true, hideFooter: true });
+    };
+  });
+
+  root.querySelectorAll("[data-save-inbound-draft]").forEach((button) => {
+    button.onclick = () => {
+      const task = getInboundTaskById(button.dataset.saveInboundDraft);
+      if (!task) return;
+      const orders = getLinkedPurchaseOrders(task);
+      if (orders.length) saveInboundDraftForOrders(task, orders);
+      else {
+        task.status = "入库暂存";
+      }
+      toast("已入库暂存，暂不提交观麦");
+      renderContent();
+    };
+  });
+
+  root.querySelectorAll("[data-confirm-inbound]").forEach((button) => {
+    button.onclick = () => handleInboundConfirm(button.dataset.confirmInbound);
+  });
+
+  root.querySelectorAll("[data-temp-hold-inbound]").forEach((button) => {
+    button.onclick = () => {
+      const task = getInboundTaskById(button.dataset.tempHoldInbound);
+      if (!task) return;
+      task.status = "入库暂存";
+      closeModal();
+      toast("已入库暂存，暂不提交观麦");
+      renderContent();
+    };
+  });
+
+  root.querySelectorAll("[data-submit-association]").forEach((button) => {
+    button.onclick = () => handleAssociationSubmit(button);
+  });
+
+}
+
+function handleInboundConfirm(inboundId) {
+  const task = getInboundTaskById(inboundId);
+  if (!task) return;
+  const context = getInboundConfirmationContext(task);
+  if (!context.orders.length) {
+    toast("请先关联采购单，或选择暂存入库");
+    return;
+  }
+  if (context.closedOrders.length) {
+    toast(`关联采购单 ${context.closedOrders.map((order) => order.id).join("、")} 已关闭，不允许确认入库`);
+    return;
+  }
+  if (context.hasOtherInbounds) {
+    openModal("确认入库前核对关联采购入库单", inboundAssociationImpactModal(task, context), { wide: true, hideFooter: true });
+    return;
+  }
+  openModal("确认入库", inboundSingleConfirmModal(task, context), { wide: true, hideFooter: true });
+}
+
+function handleAssociationSubmit(button) {
+  const task = getInboundTaskById(button.dataset.inboundId);
+  const orders = getOrdersFromButton(button);
+  if (!task || !orders.length) return;
+  if (button.dataset.submitAssociation === "draft") {
+    saveInboundDraftForOrders(task, orders);
+    closeModal();
+    toast("已入库暂存，暂不提交观麦");
+    renderContent();
+    return;
+  }
+  if (button.dataset.submitAssociation === "current") {
+    submitCurrentInboundForOrders(task, orders);
+    closeModal();
+    toast("已确认入库，仅当前采购入库单完成入库");
+    renderContent();
+    return;
+  }
+  submitPendingLinkedInboundsForOrders(task, orders);
+  closeModal();
+  toast("已确认入库，直接关联的入库暂存采购入库单已一起入库");
+  renderContent();
+}
+
+function getOrdersFromButton(button) {
+  if (button.dataset.orderIds) return button.dataset.orderIds.split(",").map(getGuanmaiOrderById).filter(Boolean);
+  const order = getGuanmaiOrderById(button.dataset.orderId);
+  return order ? [order] : [];
+}
+
+function inboundSingleConfirmModal(task, context) {
+  const orderIds = context.orders.map((order) => order.id);
+  return `
+    <div class="association-modal decision-modal">
+      <div class="decision-banner success">
+        <strong>请检查是否确认入库？</strong>
+        <p>当前采购入库单关联的采购单没有其它关联采购入库单，本次确认只会处理当前采购入库单。</p>
+      </div>
+      <div class="po-modal-summary">
+        <div><span>当前采购入库单</span><strong>${task.id}</strong></div>
+        <div><span>关联采购单</span><strong>${orderIds.join("、")}</strong></div>
+        <div><span>确认影响</span><strong>仅确认当前采购入库单</strong></div>
+      </div>
+      <div class="decision-actions">
+        <div>
+          <strong>确认后状态</strong>
+          <span>当前采购入库单完成入库，关联采购单入库流转状态变为已有入库确认。</span>
+        </div>
+        <button class="btn" data-close-modal>取消</button>
+        <button class="btn primary" data-submit-association="current" data-inbound-id="${task.id}" data-order-ids="${orderIds.join(",")}">确认入库</button>
+      </div>
+    </div>
+  `;
+}
+
+function inboundAssociationImpactModal(task, context) {
+  const orderIds = context.orders.map((order) => order.id);
+  const shouldBatchConfirm = context.batchConfirmRecords.length > 0;
+  const hasReviewPending = context.reviewPendingRecords.length > 0;
+  return `
+    <div class="association-modal decision-modal">
+      <div class="decision-banner warning">
+        <strong>${shouldBatchConfirm ? "当前关联的采购单还关联了其它入库暂存采购入库单" : hasReviewPending ? "当前关联的采购单还有待审核采购入库单" : "当前关联的采购单已有采购入库单确认入库"}</strong>
+        <p>${shouldBatchConfirm ? "确认后，当前采购入库单和其它入库暂存的直接关联采购入库单会一起入库；待审核单据和已确认入库单保持不变。" : hasReviewPending ? "待审核单据还没有完成审核，不会随着本次确认入库一起提交。本次只处理当前采购入库单。" : "已确认入库的历史单据只作为提示，不会重复入库。本次确认只会处理当前采购入库单。"}</p>
+      </div>
+      <div class="po-modal-summary">
+        <div><span>当前采购入库单</span><strong>${task.id}</strong></div>
+        <div><span>关联采购单</span><strong>${orderIds.join("、")}</strong></div>
+        <div><span>确认影响</span><strong>${shouldBatchConfirm ? "联动入库暂存采购入库单" : "仅确认当前采购入库单"}</strong></div>
+      </div>
+      <section class="linked-history-block">
+        <div class="modal-subtitle">
+          <div>
+            <strong>将一起入库的单据</strong>
+            <span>只包含当前采购入库单，以及当前关联采购单下处于入库暂存状态的直接关联采购入库单</span>
+          </div>
+        </div>
+        ${inboundImpactTable([task, ...context.batchConfirmRecords], "暂无其它可联动采购入库单。")}
+      </section>
+      ${context.reviewPendingRecords.length ? `
+        <section class="linked-history-block">
+          <div class="modal-subtitle">
+            <div>
+              <strong>待审核，保持不变</strong>
+              <span>这些单据需先完成审核，本次不会自动提交入库</span>
+            </div>
+          </div>
+          ${inboundImpactTable(context.reviewPendingRecords, "暂无待审核关联采购入库单。")}
+        </section>
+      ` : ""}
+      ${context.confirmedRecords.length ? `
+        <section class="linked-history-block">
+          <div class="modal-subtitle">
+            <div>
+              <strong>已确认入库，保持不变</strong>
+              <span>这些单据只用于提示已有入库确认历史</span>
+            </div>
+          </div>
+          ${inboundImpactTable(context.confirmedRecords, "暂无已确认入库历史。")}
+        </section>
+      ` : ""}
+      <div class="decision-actions">
+        <div>
+          <strong>${shouldBatchConfirm ? "请确认联动范围" : "请确认当前采购入库单"}</strong>
+          <span>${shouldBatchConfirm ? "系统不会沿其它采购入库单继续扩散关联采购单，待审核单据也不会被本次提交。" : "采购单后续仍可继续被新的采购入库单关联。"}</span>
+        </div>
+        <button class="btn" data-close-modal>放弃确认</button>
+        <button class="btn primary" data-submit-association="${shouldBatchConfirm ? "force" : "current"}" data-inbound-id="${task.id}" data-order-ids="${orderIds.join(",")}">${shouldBatchConfirm ? "确认入库并联动" : "确认入库"}</button>
+      </div>
+    </div>
+  `;
+}
+
+function purchaseOrderItemsTable(order) {
+  return `
+    <div class="purchase-table-wrap modal-table-wrap">
+      <table class="purchase-group-board-table order-items-table">
+        <thead><tr><th>商品</th><th>品类</th><th class="right">采购数量</th></tr></thead>
+        <tbody>${(order.items || []).map((item) => `<tr><td><strong>${item.name}</strong></td><td>${item.category}</td><td class="right">${item.qty} ${item.unit}</td></tr>`).join("")}</tbody>
+      </table>
+    </div>
+  `;
+}
+
+function inboundImpactTable(records, emptyText) {
+  const rows = records.filter(Boolean);
+  if (!rows.length) return `<div class="empty-note">${emptyText}</div>`;
+  return `
+    <div class="purchase-table-wrap modal-table-wrap">
+      <table class="purchase-group-board-table history-inbound-table">
+        <thead><tr><th>采购入库单号</th><th>状态</th><th>入库时间</th><th>供应商</th></tr></thead>
+        <tbody>
+          ${rows.map((inbound) => `
+            <tr>
+              <td><strong>${inbound.id}</strong></td>
+              <td>${statusTag(inbound.status || "待审核")}</td>
+              <td>${inbound.arrivalDate || "-"}</td>
+              <td>${inbound.supplier || "-"}</td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function linkedInboundHistoryTable(order, currentInboundId, includeCurrent = false) {
+  const rows = includeCurrent ? (order.linkedInboundIds || []) : (order.linkedInboundIds || []).filter((id) => id !== currentInboundId);
+  if (!rows.length) return `<div class="empty-note">${includeCurrent ? "暂无关联采购入库单。" : "暂无其它采购入库单关联记录。"}</div>`;
+  return `
+    <div class="purchase-table-wrap modal-table-wrap">
+      <table class="purchase-group-board-table history-inbound-table">
+        <thead><tr><th>采购入库单号</th><th>状态</th><th>入库时间</th><th>供应商</th><th>操作</th></tr></thead>
+        <tbody>
+          ${rows.map((id) => {
+            const inbound = getInboundRecordById(id);
+            if (inbound?.permission === "无权限") {
+              return `<tr><td colspan="5"><span class="tag red">存在无权限查看的关联采购入库单</span></td></tr>`;
+            }
+            return `<tr>
+              <td><strong>${id}</strong></td>
+              <td>${inbound ? statusTag(inbound.status) : "历史已确认"}</td>
+              <td>${inbound?.arrivalDate || "-"}</td>
+              <td>${inbound?.supplier || order.supplier}</td>
+              <td>${inbound ? `<button class="text-btn" data-detail="${inbound.id}">查看</button>` : `<button class="text-btn" data-toast="${id} 为历史记录，当前原型仅展示摘要">查看</button>`}</td>
+            </tr>`;
+          }).join("")}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function linkedInboundHistoryModal(order, currentInboundId) {
+  return `
+    <div class="association-modal">
+      ${linkedInboundHistoryTable(order, currentInboundId)}
+    </div>
+  `;
+}
+
+function linkedInboundDetailModal(order) {
+  return `
+    <div class="association-modal review-modal">
+      <div class="po-modal-summary">
+        <div><span>采购单</span><strong>${order.id}</strong></div>
+        <div><span>供应商</span><strong>${order.supplier}</strong></div>
+        <div><span>关联采购入库单状态</span><strong>${getLinkedInboundStatus(order)}</strong></div>
+      </div>
+      <section class="modal-review-section">
+        <div class="modal-section-title">
+          <strong>全部关联采购入库单</strong>
+          <span>用于查看该采购单下所有采购入库记录</span>
+        </div>
+        ${linkedInboundHistoryTable(order, null, true)}
+      </section>
+    </div>
+  `;
+}
+
+function gmPurchaseOrderDetailModal(order) {
+  return `
+    <div class="association-modal">
+      ${purchaseOrderItemsTable(order)}
+    </div>
+  `;
+}
+
 function wirePageInteractions() {
   bindRouteButtons(document.getElementById("content"));
   document.querySelectorAll("[data-toast]").forEach((el) => {
@@ -2707,8 +3815,7 @@ function wirePageInteractions() {
     el.onclick = () => {
       const id = el.dataset.detail;
       if (id?.startsWith("PI-") || id?.startsWith("PO-")) {
-        state.activeDetailId = id;
-        routeTo("purchase-detail");
+        openPurchaseDetail(id);
         return;
       }
       openModal("单据详情", detailModal(id));
@@ -2734,6 +3841,26 @@ function wirePageInteractions() {
       else state.filters.purchaseStatus = select.value;
       renderContent();
     };
+  });
+  const recalcInboundDetailRows = () => {
+    document.querySelectorAll("[data-inbound-detail-row]").forEach((row) => {
+      const purchaseQty = Number(row.dataset.purchaseQty) || 0;
+      const unit = row.dataset.unit || "";
+      const receivedQty = Number(row.querySelector("[data-received-input]")?.value) || 0;
+      const price = Number(row.querySelector("[data-price-input]")?.value) || 0;
+      const diff = purchaseQty - receivedQty;
+      const diffCell = row.querySelector("[data-diff-cell]");
+      const amountCell = row.querySelector("[data-amount-cell]");
+      if (diffCell) {
+        diffCell.textContent = `${diff} ${unit}`;
+        diffCell.classList.toggle("red-text", diff !== 0);
+        diffCell.classList.toggle("green-text", diff === 0);
+      }
+      if (amountCell) amountCell.textContent = `¥${formatInboundAmount(purchaseQty, receivedQty, price)}`;
+    });
+  };
+  document.querySelectorAll("[data-received-input], [data-price-input]").forEach((input) => {
+    input.oninput = recalcInboundDetailRows;
   });
   document.querySelectorAll("[data-reset-filter]").forEach((button) => {
     button.onclick = () => {
@@ -2813,7 +3940,21 @@ function wirePageInteractions() {
       renderContent();
     };
   });
+  document.querySelectorAll("[data-calc-priority-level]").forEach((input) => {
+    input.onchange = () => {
+      state.purchaseCalcPriorityLevel = input.value;
+      renderContent();
+    };
+  });
+  document.querySelectorAll("[data-custom-calc-priority]").forEach((select) => {
+    select.onchange = () => {
+      state.purchaseCustomCalcPriority = select.value;
+      state.purchaseCalcPriorityLevel = "custom";
+      renderContent();
+    };
+  });
   bindModalLaunchers(document);
+  bindPurchaseAssociationActions(document);
   document.querySelectorAll("[data-group-detail]").forEach((button) => {
     button.onclick = () => {
       const group = groups.find((item) => item.name === button.dataset.groupDetail) || groups[0];
@@ -2882,7 +4023,7 @@ function sendChat(type) {
     return;
   }
   chatMessages[type].push({ role: "user", text: value });
-  chatMessages[type].push({ role: "assistant", text: type === "sales" ? "已解析消息并生成新的待审核销售订单。" : type === "purchase-order" ? "已解析消息并生成新的待审核采购单。" : "已解析消息并生成新的待审核入库单。" });
+  chatMessages[type].push({ role: "assistant", text: type === "sales" ? "已解析消息并生成新的待审核销售订单。" : type === "purchase-order" ? "已解析消息并生成新的待审核采购单。" : "已解析消息并生成新的待审核采购入库单。" });
   input.value = "";
   renderContent();
   toast("消息已发送，Agent 已生成待审核单据");
@@ -2956,7 +4097,7 @@ function promptAiPreviewModal() {
 }
 
 function promptEditModal() {
-  const docLabel = state.purchaseDocTab === "inbound" ? "入库单解析（文本/图片识别）" : "采购单解析（文本/图片识别）";
+  const docLabel = state.purchaseDocTab === "inbound" ? "采购入库单解析（文本/图片识别）" : "采购单解析（文本/图片识别）";
   const tags = ["海盛水产（S20011）", "春田蔬菜基地（S20018）", "岭南肉禽（S20022）", "北仓调味品（S20031）", "观麦大学（S3877821）", "张三超市（S3866322）", "张三水果（S3866320）", "东升冻品（S20041）", "旺角粮油（S20052）"];
   return `
     <div class="prompt-edit-modal">
@@ -3179,7 +4320,7 @@ function operatorModal() {
       <label class="field required"><span>姓名：</span><input placeholder="请输入姓名" autofocus></label>
       <label class="field required"><span>用户名：</span><input value="aiceshi"></label>
       <label class="field required"><span>密码：</span><span class="password-input"><input type="password" value="123456"><button class="text-btn" type="button">⊘</button></span></label>
-      <label class="field required"><span>成员角色：</span><select><option>操作员</option></select></label>
+      <label class="field required"><span>成员角色：</span><select><option>订单操作员</option><option>采购操作员</option></select></label>
     </div>
   `;
 }
@@ -3203,6 +4344,16 @@ function openModal(title, body, options = {}) {
     el.onclick = () => toast(el.dataset.toast);
   });
   bindModalLaunchers(document.getElementById("modalRoot"));
+  bindPurchaseAssociationActions(document.getElementById("modalRoot"));
+  document.querySelectorAll("#modalRoot [data-detail]").forEach((el) => {
+    el.onclick = () => {
+      const id = el.dataset.detail;
+      if (id?.startsWith("PI-") || id?.startsWith("PO-")) {
+        closeModal();
+        openPurchaseDetail(id);
+      }
+    };
+  });
   bindGroupDetailTabs();
   bindMemoryDetailTabs();
   document.querySelectorAll("[data-close-modal]").forEach((button) => button.onclick = closeModal);
