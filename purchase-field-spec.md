@@ -137,60 +137,9 @@ flowchart TD
 | 其它关联单据暂存 | 满足 | 明确提示后随本次确认一起入库 |
 | 采购单关闭 | 满足 | 阻断继续关联和确认入库 |
 
-## 九、开发对接口径建议
 
-后端建议按以下结构返回采购入库单详情：
 
-```json
-{
-  "inboundId": "PI-20260701-011",
-  "status": "待审核",
-  "supplierId": "S3866320",
-  "supplierName": "海盛水产",
-  "operatorName": "陈林",
-  "sourceGroupName": "海鲜供应商对接群",
-  "linkedPurchaseOrderIds": ["GM-PO-8801"],
-  "items": [
-    {
-      "rawText": "鲈鱼 80 条",
-      "productName": "鲜活鲈鱼",
-      "purchaseQty": 82,
-      "receivedQty": 80,
-      "recognizedQtyText": "80 条",
-      "unit": "条",
-      "price": 18.5,
-      "spuName": "鲜活鲈鱼",
-      "productCode": "SPU-P-1001",
-      "remark": "到仓复称"
-    }
-  ],
-  "summary": {
-    "totalPurchaseQty": 82,
-    "totalReceivedQty": 80,
-    "totalDiffQty": 2,
-    "totalDiffRate": 0.0244
-  }
-}
-```
 
-关联采购单建议返回：
-
-```json
-{
-  "purchaseOrderId": "GM-PO-8801",
-  "gmStatus": "未提交",
-  "inboundFlowStatus": "已有入库确认",
-  "linkedInboundRecords": [
-    {
-      "inboundId": "PI-20260630-031",
-      "status": "已确认入库",
-      "arrivalDate": "2026-06-30",
-      "supplierName": "海盛水产",
-      "permission": "可查看"
-    }
-  ]
-}
-```
 
 ## 十、异常说明
 
