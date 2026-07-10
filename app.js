@@ -4175,11 +4175,6 @@ function linkedInboundHistoryModal(order, currentInboundId) {
 function linkedInboundDetailModal(order) {
   return `
     <div class="association-modal review-modal">
-      <div class="po-modal-summary">
-        <div><span>采购单</span><strong>${order.id}</strong></div>
-        <div><span>供应商</span><strong>${order.supplier}</strong></div>
-        <div><span>关联采购入库单状态</span><strong>${getLinkedInboundStatus(order)}</strong></div>
-      </div>
       <section class="modal-review-section">
         <div class="modal-section-title">
           <strong>全部关联采购入库单</strong>
