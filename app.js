@@ -1,5 +1,6 @@
 const ANNOTATION_STORAGE_KEY = "prd-platform-annotation-overrides";
 const ANNOTATION_FILE = "annotations.json";
+const FIELD_SPEC_MARKDOWN_FILE = "./purchase-field-spec.md";
 const appShellTemplate = document.getElementById("app").innerHTML;
 
 const state = {
@@ -34,6 +35,8 @@ const state = {
 
 const routes = {
   projects: { label: "PRD 项目库", module: "projects", title: "PRD 展示平台" },
+  "process-flow": { label: "流程图与说明", module: "projects", title: "流程图与说明" },
+  "field-spec": { label: "字段说明 PRD", module: "projects", title: "字段说明 PRD" },
   home: { label: "项目首页", module: "home", title: "AI 录单系统" },
   "purchase-home": { label: "首页", tabLabel: "采购首页", module: "purchase", title: "采购录单" },
   "sales-entry": { label: "销售订单录入", module: "sales", title: "销售订单录单" },
@@ -316,8 +319,8 @@ const purchaseTasks = [
   },
   {
     id: "PI-20260701-017",
-    scenario: "同采购单入库暂存联动",
-    status: "入库暂存",
+    scenario: "同采购单暂存联动",
+    status: "暂存",
     supplier: "海盛水产",
     group: "海鲜供应商对接群",
     store: "中心仓",
@@ -334,8 +337,8 @@ const purchaseTasks = [
     canSubmit: true,
     permission: "可操作",
     detailItems: [
-      { category: "水产海鲜", raw: "鲈鱼 20 条", name: "鲜活鲈鱼", qty: "20 条", purchaseQty: 82, receivedQty: 20, unit: "条", price: "18.50", amount: "370.00", remark: "同采购单另一张入库暂存采购入库单", spu: "鲜活鲈鱼", code: "SPU-P-1001" },
-      { category: "水产海鲜", raw: "基围虾 30 斤", name: "基围虾", qty: "30 斤", purchaseQty: 120, receivedQty: 30, unit: "斤", price: "39.00", amount: "1170.00", remark: "同采购单另一张入库暂存采购入库单", spu: "基围虾", code: "SPU-P-1002" },
+      { category: "水产海鲜", raw: "鲈鱼 20 条", name: "鲜活鲈鱼", qty: "20 条", purchaseQty: 82, receivedQty: 20, unit: "条", price: "18.50", amount: "370.00", remark: "同采购单另一张暂存采购入库单", spu: "鲜活鲈鱼", code: "SPU-P-1001" },
+      { category: "水产海鲜", raw: "基围虾 30 斤", name: "基围虾", qty: "30 斤", purchaseQty: 120, receivedQty: 30, unit: "斤", price: "39.00", amount: "1170.00", remark: "同采购单另一张暂存采购入库单", spu: "基围虾", code: "SPU-P-1002" },
     ],
   },
   {
@@ -364,8 +367,8 @@ const purchaseTasks = [
   },
   {
     id: "PI-20260701-019",
-    scenario: "同采购单入库暂存待联动",
-    status: "入库暂存",
+    scenario: "同采购单暂存待联动",
+    status: "暂存",
     supplier: "春田蔬菜基地",
     group: "蔬菜供应商入库群",
     store: "一号冷库",
@@ -382,8 +385,8 @@ const purchaseTasks = [
     canSubmit: true,
     permission: "可操作",
     detailItems: [
-      { category: "蔬菜", raw: "小白菜 40 斤", name: "小白菜", qty: "40 斤", purchaseQty: 120, receivedQty: 40, unit: "斤", price: "2.60", amount: "104.00", remark: "同采购单入库暂存", spu: "小白菜", code: "SPU-V-2041" },
-      { category: "蔬菜", raw: "菜心 30 斤", name: "菜心", qty: "30 斤", purchaseQty: 90, receivedQty: 30, unit: "斤", price: "4.20", amount: "126.00", remark: "同采购单入库暂存", spu: "菜心", code: "SPU-V-2042" },
+      { category: "蔬菜", raw: "小白菜 40 斤", name: "小白菜", qty: "40 斤", purchaseQty: 120, receivedQty: 40, unit: "斤", price: "2.60", amount: "104.00", remark: "同采购单暂存", spu: "小白菜", code: "SPU-V-2041" },
+      { category: "蔬菜", raw: "菜心 30 斤", name: "菜心", qty: "30 斤", purchaseQty: 90, receivedQty: 30, unit: "斤", price: "4.20", amount: "126.00", remark: "同采购单暂存", spu: "菜心", code: "SPU-V-2042" },
     ],
   },
 ];
@@ -533,6 +536,34 @@ const prdProjects = [
     pages: ["应用中心", "统计", "决策大屏", "销售订单录单", "采购录单", "批注面板"],
   },
   {
+    id: "process-flow",
+    name: "采购流程图 PRD",
+    status: "迭代中",
+    route: "process-flow",
+    version: "V0.1",
+    owner: "管理员",
+    updated: "2026-07-10",
+    desc: "展示采购单与采购入库单关系、采购单来源与状态、确认入库逻辑三张流程图。",
+    pages: ["关系图", "来源与状态图", "确认入库逻辑图"],
+    actionLabel: "查看流程图",
+    icon: "FLOW",
+    iconTone: "flow-grad",
+  },
+  {
+    id: "field-spec",
+    name: "字段说明 PRD",
+    status: "迭代中",
+    route: "field-spec",
+    version: "V0.1",
+    owner: "管理员",
+    updated: "2026-07-10",
+    desc: "渲染采购录入应用字段口径说明，集中查看业务含义、计算逻辑、关联字段、数据口径和异常说明。",
+    pages: ["字段口径", "状态说明", "计算逻辑", "接口建议"],
+    actionLabel: "查看字段说明",
+    icon: "SPEC",
+    iconTone: "spec-grad",
+  },
+  {
     id: "next-retail",
     name: "门店补货移动端 PRD",
     status: "规划中",
@@ -556,7 +587,123 @@ const prdProjects = [
   },
 ];
 
+const purchaseFlowDiagrams = [
+  {
+    title: "采购单与采购入库单关系图",
+    chart: String.raw`flowchart LR
+  PO["采购单<br/>记录应采购商品、采购数量"] --> REL["关联关系"]
+  IN["采购入库单<br/>记录实际到货、实收数量、单价、备注"] --> REL
+
+  REL --> R1["一张采购单<br/>关联一张入库单"]
+  REL --> R2["一张采购单<br/>关联多张入库单<br/>分批送货"]
+  REL --> R3["一张入库单<br/>关联多张采购单<br/>合并送货"]
+  REL --> R4["多张采购单<br/>关联多张入库单<br/>分批 + 合并"]
+
+  R2 --> CHECK["确认入库前<br/>需要查看历史关联入库单"]
+  R3 --> CHECK
+  R4 --> CHECK
+
+  CHECK --> HUMAN["人工判断<br/>是否合理分批、合并、损耗或重复入库"]`,
+  },
+  {
+    title: "采购单来源与状态图",
+    chart: String.raw`flowchart TD
+  START["采购单来源"] --> GM["观麦系统录入"]
+  START --> AI["AI 录单系统生成"]
+
+  GM --> GM_STATUS["观麦采购单状态：未提交"]
+  AI --> AI_CONFIRM["AI 录单系统确认采购单"]
+  AI_CONFIRM --> AI_BACK["回传到观麦系统"]
+  AI_BACK --> AI_STATUS["观麦采购单状态：未提交"]
+
+  GM_STATUS --> READABLE["AI 录单系统可读取并关联"]
+  AI_STATUS --> READABLE
+
+  READABLE --> LINK["采购入库单可选择关联该采购单"]
+
+  OTHER["观麦采购单状态：非未提交"] --> NOT_READABLE["AI 录单系统不可读取 / 不可关联"]`,
+  },
+  {
+    title: "确认入库逻辑流程图",
+    chart: String.raw`flowchart TD
+    A["进入采购入库单审核详情页"] --> B{"选择操作"}
+
+    B -->|暂存| C["提示：已暂存，暂不提交变更"]
+    C --> Z["流程结束"]
+
+    B -->|确认入库| D{"当前入库单是否已关联采购单"}
+
+    D -->|否| E["提示：请先关联采购单，或暂存"]
+    E --> Z
+
+    D -->|是| F["读取当前入库单关联的所有采购单"]
+
+    F --> G{"是否存在已关闭采购单"}
+
+    G -->|是| G1["提示：存在已关闭采购单，不允许确认入库"]
+    G1 --> Z
+
+    G -->|否| H{"关联采购单中是否存在已确认入库记录"}
+
+    H -->|是| H1["提示：关联采购单已有入库单确认入库，本次仍可继续确认"]
+    H -->|否| H2["无历史确认提示"]
+
+    H1 --> I
+    H2 --> I
+
+    I{"这些采购单是否还关联其它采购入库单"}
+
+    I -->|否| J["二次确认：请检查是否确认？"]
+    J -->|取消| Z
+    J -->|确认| K["仅确认当前采购入库单"]
+    K --> K1["相关采购单状态更新为：已有入库确认"]
+    K1 --> Z
+
+    I -->|是| L["展示其它关联采购入库单"]
+
+    L --> M{"其它关联入库单状态"}
+
+    M -->|已确认入库| M1["仅提示：已确认入库单保持不变"]
+    M -->|待审核| M2["仅提示：待审核单据不会随本次提交"]
+    M -->|暂存 / 已审核待提交| M3["纳入本次可联动入库范围"]
+
+    M1 --> N["汇总本次确认影响范围"]
+    M2 --> N
+    M3 --> N
+
+    N --> O{"是否存在可联动入库单"}
+
+    O -->|否| P["强确认提示：本次只确认当前采购入库单"]
+    P --> P1{"用户是否确认入库"}
+    P1 -->|取消| Z
+    P1 -->|确认| P2["仅确认当前采购入库单"]
+    P2 --> P3["待审核单据保持不变；已确认入库单保持不变"]
+    P3 --> P4["相关采购单状态更新为：已有入库确认"]
+    P4 --> Z
+
+    O -->|是| Q["强确认提示：当前采购入库单 + 可联动入库单会一起入库"]
+    Q --> Q1["明确提示：待审核单据不会随本次提交；已确认入库单保持不变"]
+    Q1 --> R{"用户是否确认入库并联动"}
+
+    R -->|取消| Z
+    R -->|确认| S["当前采购入库单 + 暂存/已审核待提交的直接关联入库单一起完成入库"]
+
+    S --> T["待审核单据保持不变"]
+    T --> U["已确认入库的历史单据保持不变"]
+    U --> V["相关采购单状态更新为：已有入库确认"]
+    V --> Z`,
+  },
+];
+
+const markdownDocumentCache = new Map();
+
 let iterationHistory = [
+  {
+    version: "V0.9",
+    date: "2026-07-10",
+    title: "字段说明 PRD 接入",
+    changes: ["项目库新增字段说明 PRD", "读取 purchase-field-spec.md 并渲染为前端说明页", "支持文档内表格、代码块和 Mermaid 流程图展示"],
+  },
   {
     version: "V0.7",
     date: "2026-07-02",
@@ -596,6 +743,13 @@ let pageAnnotations = {
     dev: ["每个项目卡片都预留 route 字段，后续新增 PRD 时只需要扩展项目数据和对应路由。", "规划中项目当前不跳转真实原型，用 toast 明确提示，避免误以为功能已完成。"],
     business: ["项目状态用于区分已可评审、迭代中和规划中的 PRD。", "同一平台承载多个项目，方便历史版本、页面说明和业务规则集中管理。"],
     iteration: ["本次新增项目库，当前 AI 录单系统作为第一个可打开项目。", "点击 AI 录单系统后进入系统首页看板。"],
+  },
+  "field-spec": {
+    title: "字段说明 PRD",
+    overview: "该页从 purchase-field-spec.md 读取采购录入应用字段口径，集中展示字段业务含义、来源字段、计算逻辑、数据口径和异常说明。",
+    dev: ["字段说明文档保留为独立 Markdown 文件，前端通过 FIELD_SPEC_MARKDOWN_FILE 加载并渲染。", "Markdown 渲染支持标题、段落、表格、有序列表、代码块和 Mermaid 流程图，便于产品持续维护字段说明。"],
+    business: ["字段口径用于产品经理和开发对齐采购单、采购入库单、状态、统计字段和接口返回含义。", "字段说明与页面原型保持同一入口，减少字段名称、状态口径和异常处理在沟通中的歧义。"],
+    iteration: ["2026-07-10 新增字段说明 PRD 入口，并渲染 purchase-field-spec.md。"],
   },
   home: {
     title: "项目首页",
@@ -670,8 +824,8 @@ let pageAnnotations = {
   "purchase-review": {
     title: "采购入库单审核",
     overview: "采购入库单审核页集中处理供应商实际到货和送货单识别任务，确认后可进入采购入库单详情页。",
-    dev: ["采购入库任务使用 purchaseTasks 数据，详情按钮会路由到 purchase-detail。", "状态筛选使用 state.filters.purchaseStatus，展示待审核、入库暂存和已确认入库。", "审核列表展示流程场景、采购单入库流转状态和确认入库影响提示。", "本次批注明确列表字段口径：采购入库单状态只代表当前单据，采购单入库流转状态由关联采购入库单和采购单关闭状态推导，确认入库影响只做提示不驱动数量决策。"],
-    business: ["确认入库只按采购单关联关系提示，不用数量统计或差异计算做自动决策。", "采购单已有入库确认后仍可继续被其它采购入库单关联，只有采购单关闭时才阻断确认。", "同一采购单下，入库暂存采购入库单可随本次确认联动入库；待审核采购入库单不会随本次提交。", "审核列表必须展示未关联、已关联未确认、已有入库确认、已关闭不可再关联等状态，用于覆盖分批、合并和混合送货场景。"],
+    dev: ["采购入库任务使用 purchaseTasks 数据，详情按钮会路由到 purchase-detail。", "状态筛选使用 state.filters.purchaseStatus，展示待审核、暂存和已确认入库。", "审核列表展示流程场景、采购单入库流转状态和确认入库影响提示。", "本次批注明确列表字段口径：采购入库单状态只代表当前单据，采购单入库流转状态由关联采购入库单和采购单关闭状态推导，确认入库影响只做提示不驱动数量决策。"],
+    business: ["确认入库只按采购单关联关系提示，不用数量统计或差异计算做自动决策。", "采购单已有入库确认后仍可继续被其它采购入库单关联，只有采购单关闭时才阻断确认。", "同一采购单下，暂存采购入库单可随本次确认联动入库；待审核采购入库单不会随本次提交。", "审核列表必须展示未关联、已关联未确认、已有入库确认、已关闭不可再关联等状态，用于覆盖分批、合并和混合送货场景。"],
     iteration: ["V0.7 将采购入库单审核保留为独立入口。", "2026-07-09 采购入库审核列表按关联采购单摘要收口展示。", "2026-07-09 补充分批、合并、混合送货下的采购单入库流转状态和确认提示。", "2026-07-10 将状态字段、确认影响和待审核不联动规则写入页面批注。"],
   },
   "purchase-order-review": {
@@ -684,9 +838,9 @@ let pageAnnotations = {
   "purchase-detail": {
     title: "采购入库单详情",
     overview: "采购入库单详情页聚焦供应商送货单原始内容、AI 识别结果确认、关联采购单选择和确认入库前的关联采购入库单影响提示。",
-    dev: ["当前 activeDetailId 控制详情数据，明细表格使用静态输入框模拟可编辑状态。", "采购入库单详情展示关联采购单入库流转状态、已有入库确认和未确认联动提示。", "暂存入库和确认入库会更新当前静态任务状态。", "金额按采购设置中的计算优先级取数后乘以单价。", "本次批注补充字段字典：识别到货数来自 AI 原文，实收数为操作员确认数量，差异等于采购数减实收数，金额按实收数优先、采购数优先或取两者最小值计算。", "关联采购入库单弹窗只展示采购入库单号、状态、入库时间、供应商和查看操作；查看会进入对应采购入库单详情页。"],
-    business: ["操作员确认供应商、商品名称、识别到货数、实收数、单价、金额、备注和关联采购单即可。", "关联采购单确认过入库后不自动关闭，后续仍可继续关联；确认时只提示直接关联采购入库单范围。", "总采购数、总实收数、总差异数和总差异占比只做页面提示，不驱动确认入库流程。", "同一采购单下，待审核采购入库单不随本次提交；入库暂存采购入库单在二次确认后可联动入库；已确认入库的历史单据只提示不重复提交。"],
-    iteration: ["V0.5 按一期范围瘦身采购详情页，删除复杂对账与自动关联展示。", "2026-07-09 采购入库单详情支持多选关联采购单、历史关联入口和入库暂存。", "2026-07-09 确认入库改为关联关系提示，不按差异计算分支。", "2026-07-10 将字段含义、计算口径、关联字段、异常说明和查看跳转写入页面批注。"],
+    dev: ["当前 activeDetailId 控制详情数据，明细表格使用静态输入框模拟可编辑状态。", "采购入库单详情展示关联采购单入库流转状态、已有入库确认和未确认联动提示。", "暂存和确认入库会更新当前静态任务状态。", "金额按采购设置中的计算优先级取数后乘以单价。", "本次批注补充字段字典：识别到货数来自 AI 原文，实收数为操作员确认数量，差异等于采购数减实收数，金额按实收数优先、采购数优先或取两者最小值计算。", "关联采购入库单弹窗只展示采购入库单号、状态、入库时间、供应商和查看操作；查看会进入对应采购入库单详情页。"],
+    business: ["操作员确认供应商、商品名称、识别到货数、实收数、单价、金额、备注和关联采购单即可。", "关联采购单确认过入库后不自动关闭，后续仍可继续关联；确认时只提示直接关联采购入库单范围。", "总采购数、总实收数、总差异数和总差异占比只做页面提示，不驱动确认入库流程。", "同一采购单下，待审核采购入库单不随本次提交；暂存采购入库单在二次确认后可联动入库；已确认入库的历史单据只提示不重复提交。"],
+    iteration: ["V0.5 按一期范围瘦身采购详情页，删除复杂对账与自动关联展示。", "2026-07-09 采购入库单详情支持多选关联采购单、历史关联入口和暂存。", "2026-07-09 确认入库改为关联关系提示，不按差异计算分支。", "2026-07-10 将字段含义、计算口径、关联字段、异常说明和查看跳转写入页面批注。"],
   },
   "sales-customers": {
     title: "客户管理",
@@ -816,7 +970,7 @@ const chatMessages = {
   purchase: [
     { role: "assistant", text: "已连接采购入库 Agent，请选择供应商或群聊后发送入库信息。" },
     { role: "user", text: "鲈鱼 80 条，基围虾 120 斤，今晚到中心仓" },
-    { role: "assistant", text: "已识别 2 个采购商品，生成入库暂存采购入库单 PI-20260701-011。" },
+    { role: "assistant", text: "已识别 2 个采购商品，生成暂存采购入库单 PI-20260701-011。" },
   ],
   "purchase-order": [
     { role: "assistant", text: "已连接采购单录入 Agent，请选择供应商或采购单群后发送采购内容。" },
@@ -854,7 +1008,7 @@ function render() {
   state.route = getRouteFromHash();
   state.annotationEditing = false;
   document.body.classList.toggle("entry-mode", state.route === "sales-entry" || state.route === "purchase-order-entry" || state.route === "purchase-entry" || state.route === "purchase-detail");
-  document.body.classList.toggle("project-mode", state.route === "projects");
+  document.body.classList.toggle("project-mode", routes[state.route]?.module === "projects");
   document.body.classList.toggle("home-mode", state.route === "home");
   document.body.classList.toggle("annotation-open", state.annotationOpen && state.route !== "projects");
   normalizeTabsForRoute();
@@ -1058,6 +1212,8 @@ function renderTabs() {
 function renderContent() {
   const content = document.getElementById("content");
   if (state.route === "projects") content.innerHTML = projectsPage();
+  if (state.route === "process-flow") content.innerHTML = processFlowPage();
+  if (state.route === "field-spec") content.innerHTML = fieldSpecPage();
   if (state.route === "home") content.innerHTML = homePage();
   if (state.route === "purchase-home") content.innerHTML = purchaseHomePage();
   if (state.route === "sales-entry") content.innerHTML = entryPage("sales");
@@ -1087,6 +1243,8 @@ function renderContent() {
   if (state.route === "tenant-members") content.innerHTML = memberManagementPage();
   if (state.route === "tenant-quota") content.innerHTML = quotaManagementPage();
   wirePageInteractions();
+  renderMermaidDiagrams();
+  renderMarkdownDocuments();
 }
 
 function projectsPage() {
@@ -1110,7 +1268,7 @@ function projectsPage() {
         ${prdProjects.map((project) => `
           <article class="prd-project-card">
             <div class="prd-project-top">
-              <span class="app-icon ${project.id === "ai-order" ? "sales-grad" : "config-grad"}">${project.id === "ai-order" ? "AI" : "PRD"}</span>
+              <span class="app-icon ${project.iconTone || (project.id === "ai-order" ? "sales-grad" : "config-grad")}">${project.icon || (project.id === "ai-order" ? "AI" : "PRD")}</span>
               <span class="tag ${project.status === "迭代中" ? "blue" : "gold"}">${project.status}</span>
             </div>
             <h3>${project.name}</h3>
@@ -1125,7 +1283,7 @@ function projectsPage() {
             </div>
             <div class="prd-project-actions">
               ${project.status === "迭代中"
-                ? `<button class="btn primary" data-route="${project.route}">进入录单系统</button>`
+                ? `<button class="btn primary" data-route="${project.route}">${project.actionLabel || "进入录单系统"}</button>`
                 : `<button class="btn" data-toast="${project.name} 还在规划中，后续可接入新的前端 PRD">预留项目</button>`}
             </div>
           </article>
@@ -1133,6 +1291,227 @@ function projectsPage() {
       </div>
     </div>
   `;
+}
+
+function processFlowPage() {
+  return `
+    <div class="page flow-page">
+      <div class="page-title flow-page-title">
+        <h2>采购流程图</h2>
+        <button class="btn" data-route="projects">返回项目库</button>
+      </div>
+
+      <div class="flow-diagram-stack">
+        ${purchaseFlowDiagrams.map((diagram) => `
+          <section class="flow-diagram-card">
+            <div class="flow-diagram-head">
+              <h3>${diagram.title}</h3>
+            </div>
+            <div class="flow-diagram-chart">
+              <pre class="mermaid">${escapeHTML(diagram.chart)}</pre>
+            </div>
+          </section>
+        `).join("")}
+      </div>
+    </div>
+  `;
+}
+
+function fieldSpecPage() {
+  return `
+    <div class="page field-spec-page">
+      <div class="page-title field-spec-title">
+        <div>
+          <span class="pill blue">Markdown PRD</span>
+          <h2>采购录入应用字段说明 PRD</h2>
+          <p>来源：purchase-field-spec.md，展示字段业务含义、计算逻辑、关联字段、数据口径与异常说明。</p>
+        </div>
+        <div class="field-spec-actions">
+          <a class="btn" href="${FIELD_SPEC_MARKDOWN_FILE}" target="_blank" rel="noopener">查看 Markdown 原文</a>
+          <button class="btn" data-route="projects">返回项目库</button>
+        </div>
+      </div>
+      <section class="field-spec-doc markdown-doc" data-markdown-src="${FIELD_SPEC_MARKDOWN_FILE}">
+        <div class="markdown-loading">正在加载字段说明 PRD...</div>
+      </section>
+    </div>
+  `;
+}
+
+function renderMarkdownDocuments() {
+  document.querySelectorAll("[data-markdown-src]").forEach((node) => {
+    const src = node.dataset.markdownSrc;
+    if (!src) return;
+    const renderText = (markdown) => {
+      if (!document.body.contains(node)) return;
+      node.innerHTML = renderMarkdown(markdown);
+      renderMermaidDiagrams();
+    };
+    if (markdownDocumentCache.has(src)) {
+      renderText(markdownDocumentCache.get(src));
+      return;
+    }
+    node.innerHTML = `<div class="markdown-loading">正在加载字段说明 PRD...</div>`;
+    fetch(src, { cache: "no-store" })
+      .then((response) => {
+        if (!response.ok) throw new Error(`Markdown load failed: ${response.status}`);
+        return response.text();
+      })
+      .then((markdown) => {
+        markdownDocumentCache.set(src, markdown);
+        renderText(markdown);
+      })
+      .catch(() => {
+        if (!document.body.contains(node)) return;
+        node.innerHTML = `
+          <div class="empty-block">
+            未能读取 ${escapeHTML(src)}。请通过本地服务访问页面后重试，或点击上方“查看 Markdown 原文”打开文档。
+          </div>
+        `;
+      });
+  });
+}
+
+function renderMarkdown(markdown) {
+  const lines = String(markdown || "").replace(/\r\n/g, "\n").split("\n");
+  const blocks = [];
+  let index = 0;
+
+  while (index < lines.length) {
+    const line = lines[index];
+    const trimmed = line.trim();
+    if (!trimmed) {
+      index += 1;
+      continue;
+    }
+
+    if (trimmed.startsWith("```")) {
+      const lang = trimmed.slice(3).trim().toLowerCase();
+      const codeLines = [];
+      index += 1;
+      while (index < lines.length && !lines[index].trim().startsWith("```")) {
+        codeLines.push(lines[index]);
+        index += 1;
+      }
+      if (index < lines.length) index += 1;
+      const code = escapeHTML(codeLines.join("\n"));
+      blocks.push(lang === "mermaid"
+        ? `<div class="markdown-mermaid-wrap"><pre class="mermaid">${code}</pre></div>`
+        : `<pre class="markdown-code"><code>${code}</code></pre>`);
+      continue;
+    }
+
+    const heading = trimmed.match(/^(#{1,4})\s+(.+)$/);
+    if (heading) {
+      const level = heading[1].length;
+      blocks.push(`<h${level}>${renderInlineMarkdown(heading[2])}</h${level}>`);
+      index += 1;
+      continue;
+    }
+
+    if (isMarkdownTableStart(lines, index)) {
+      const tableLines = [];
+      while (index < lines.length && lines[index].trim().startsWith("|")) {
+        tableLines.push(lines[index]);
+        index += 1;
+      }
+      blocks.push(renderMarkdownTable(tableLines));
+      continue;
+    }
+
+    if (/^\d+\.\s+/.test(trimmed)) {
+      const items = [];
+      while (index < lines.length && /^\d+\.\s+/.test(lines[index].trim())) {
+        items.push(lines[index].trim().replace(/^\d+\.\s+/, ""));
+        index += 1;
+      }
+      blocks.push(`<ol>${items.map((item) => `<li>${renderInlineMarkdown(item)}</li>`).join("")}</ol>`);
+      continue;
+    }
+
+    if (/^[-*]\s+/.test(trimmed)) {
+      const items = [];
+      while (index < lines.length && /^[-*]\s+/.test(lines[index].trim())) {
+        items.push(lines[index].trim().replace(/^[-*]\s+/, ""));
+        index += 1;
+      }
+      blocks.push(`<ul>${items.map((item) => `<li>${renderInlineMarkdown(item)}</li>`).join("")}</ul>`);
+      continue;
+    }
+
+    const paragraph = [];
+    while (index < lines.length && !isMarkdownBlockStart(lines, index)) {
+      paragraph.push(lines[index].trim());
+      index += 1;
+    }
+    blocks.push(`<p>${renderInlineMarkdown(paragraph.join(" "))}</p>`);
+  }
+
+  return blocks.join("");
+}
+
+function isMarkdownBlockStart(lines, index) {
+  const trimmed = (lines[index] || "").trim();
+  return !trimmed
+    || trimmed.startsWith("```")
+    || /^#{1,4}\s+/.test(trimmed)
+    || isMarkdownTableStart(lines, index)
+    || /^\d+\.\s+/.test(trimmed)
+    || /^[-*]\s+/.test(trimmed);
+}
+
+function isMarkdownTableStart(lines, index) {
+  const current = (lines[index] || "").trim();
+  const next = (lines[index + 1] || "").trim();
+  return current.startsWith("|") && current.endsWith("|") && isMarkdownTableSeparator(next);
+}
+
+function isMarkdownTableSeparator(line) {
+  return /^\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|?$/.test(line.trim());
+}
+
+function parseMarkdownTableRow(line) {
+  return line.trim().replace(/^\|/, "").replace(/\|$/, "").split("|").map((cell) => cell.trim());
+}
+
+function renderMarkdownTable(tableLines) {
+  const header = parseMarkdownTableRow(tableLines[0] || "");
+  const rows = tableLines.slice(2).map(parseMarkdownTableRow);
+  return `
+    <div class="markdown-table-wrap">
+      <table>
+        <thead><tr>${header.map((cell) => `<th>${renderInlineMarkdown(cell)}</th>`).join("")}</tr></thead>
+        <tbody>
+          ${rows.map((row) => `<tr>${row.map((cell) => `<td>${renderInlineMarkdown(cell)}</td>`).join("")}</tr>`).join("")}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function renderInlineMarkdown(text) {
+  return escapeHTML(text)
+    .replace(/`([^`]+)`/g, "<code>$1</code>")
+    .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+}
+
+function renderMermaidDiagrams() {
+  const diagrams = document.querySelectorAll(".mermaid");
+  if (!diagrams.length || !window.mermaid) return;
+  if (!window.__prdMermaidInitialized) {
+    window.mermaid.initialize({
+      startOnLoad: false,
+      securityLevel: "loose",
+      flowchart: {
+        htmlLabels: true,
+        curve: "basis",
+      },
+    });
+    window.__prdMermaidInitialized = true;
+  }
+  window.mermaid.run({ nodes: diagrams }).catch((error) => {
+    console.warn("Mermaid render failed", error);
+  });
 }
 
 function getCurrentAnnotation() {
@@ -1655,8 +2034,8 @@ function purchaseHomePage() {
     return {
       ...card,
       firstMetric: {
-        label: isInbound ? "入库暂存" : "待处理",
-        value: card.tasks.filter((task) => task.status === (isInbound ? "入库暂存" : "待处理")).length,
+        label: isInbound ? "暂存" : "待处理",
+        value: card.tasks.filter((task) => task.status === (isInbound ? "暂存" : "待处理")).length,
         tone: isInbound ? "blue-text" : "gold-text",
       },
       secondMetric: {
@@ -1741,7 +2120,7 @@ function purchaseHomePage() {
         </div>
         <div class="purchase-table-wrap sync-table-wrap">
           <table class="purchase-group-board-table sync-order-table">
-            <thead><tr><th>采购单号</th><th>来源</th><th>供应商</th><th>观麦业务状态 <span class="help-icon" title="观麦系统中未提交的采购单会同步至录单系统">?</span></th><th>采购单入库状态</th><th>入库确认提示</th></tr></thead>
+            <thead><tr><th>采购单号</th><th>来源</th><th>供应商</th><th>观麦业务状态 <span class="help-icon" title="观麦系统中未提交的采购单会同步至录单系统">?</span></th><th>采购单关联状态</th><th>入库确认提示</th></tr></thead>
             <tbody>
               ${guanmaiPurchaseOrders.map((order) => {
                 const inboundStatus = getPurchaseOrderFlowStatus(order);
@@ -1784,7 +2163,7 @@ function purchaseHomePage() {
 function purchaseActiveGroupRows(tasks = [...purchaseOrderTasks, ...purchaseTasks]) {
   const metrics = tasks.reduce((acc, task) => {
     if (!acc[task.group]) acc[task.group] = { name: task.group, pending: 0, finished: 0, failed: 0 };
-    if (["待处理", "待审核", "入库暂存"].includes(task.status)) acc[task.group].pending += 1;
+    if (["待处理", "待审核", "暂存"].includes(task.status)) acc[task.group].pending += 1;
     if (["已完成", "已提交", "已确认入库"].includes(task.status)) acc[task.group].finished += 1;
     if (task.status === "失败") acc[task.group].failed += 1;
     return acc;
@@ -2133,12 +2512,12 @@ function reviewPage(type) {
     ? ["all", "待处理", "已完成", "失败", "合单"]
     : isPurchaseOrder
       ? ["all", "待处理", "已完成", "失败"]
-      : ["all", "待审核", "入库暂存", "已确认入库"];
+      : ["all", "待审核", "暂存", "已确认入库"];
   const alertText = isSales
     ? `当前有 ${tasks.filter((task) => task.status === "失败").length} 个识别失败的单据待人工处理。`
     : isPurchaseOrder
       ? "采购单确认后自动回传到观麦系统，并在观麦中保持未提交状态，供后续采购入库单关联。"
-      : "采购入库单关联采购单后可确认入库；其它入库暂存的采购入库单可联动入库，待审核单据不随本次提交。";
+      : "采购入库单关联采购单后可确认入库；其它暂存的采购入库单可联动入库，待审核单据不随本次提交。";
   const dateLabel = isSales ? "下单日期" : isPurchaseOrder ? "采购时间" : "入库时间";
   const ownerLabel = isSales ? "审核员" : "操作员";
   const partyFilter = isSales || isPurchaseOrder
@@ -2323,7 +2702,7 @@ function isInboundConfirmed(record) {
 }
 
 function isInboundBatchConfirmable(record) {
-  return ["入库暂存", "已审核待提交"].includes(record?.status);
+  return ["暂存", "已审核待提交"].includes(record?.status);
 }
 
 function isPurchaseOrderClosed(order) {
@@ -2415,10 +2794,10 @@ function purchaseOrderFlowNotice(order) {
   const hasConfirmed = records.some(isInboundConfirmed);
   const hasBatchConfirmable = records.some(isInboundBatchConfirmable);
   const hasReviewPending = records.some((record) => !isInboundConfirmed(record) && !isInboundBatchConfirmable(record));
-  if (hasConfirmed && hasBatchConfirmable) return "已有入库确认，仍有入库暂存采购入库单可联动";
+  if (hasConfirmed && hasBatchConfirmable) return "已有入库确认，仍有暂存采购入库单可联动";
   if (hasConfirmed && hasReviewPending) return "已有入库确认，仍有待审核采购入库单需单独审核";
   if (hasConfirmed) return "已有入库确认，后续采购入库单仍可继续关联";
-  if (hasBatchConfirmable) return "已有入库暂存采购入库单，确认时会提示联动入库";
+  if (hasBatchConfirmable) return "已有暂存采购入库单，确认时会提示联动入库";
   return "已有关联待审核采购入库单，本次不自动提交";
 }
 
@@ -2426,8 +2805,8 @@ function inboundConfirmImpactText(task) {
   const context = getInboundConfirmationContext(task);
   if (!context.orders.length) return "需先关联采购单";
   if (context.closedOrders.length) return "关联采购单已关闭";
-  if (context.hasBatchConfirmRecords && context.hasReviewPendingRecords) return "入库暂存采购入库单会联动，待审核单不提交";
-  if (context.hasBatchConfirmRecords) return "确认后，其它入库暂存采购入库单也会一起入库";
+  if (context.hasBatchConfirmRecords && context.hasReviewPendingRecords) return "暂存采购入库单会联动，待审核单不提交";
+  if (context.hasBatchConfirmRecords) return "确认后，其它暂存采购入库单也会一起入库";
   if (context.hasReviewPendingRecords) return "存在其它待审核采购入库单，本次不联动提交";
   if (context.hasConfirmedHistory) return "已有入库确认，本次仅确认当前采购入库单";
   return "仅确认当前采购入库单";
@@ -2493,7 +2872,7 @@ function submitPendingLinkedInboundsForOrders(task, orders) {
 
 function saveInboundDraftForOrders(task, orders) {
   if (!task || !orders?.length) return;
-  task.status = "入库暂存";
+  task.status = "暂存";
   orders.forEach((order) => ensureOrderInboundLink(order, task.id));
 }
 
@@ -2525,7 +2904,21 @@ function purchaseOrderReviewTable(tasks) {
 
 function purchaseReviewTable(tasks) {
   return `
-    <table class="review-table">
+    <table class="review-table purchase-review-table">
+      <colgroup>
+        <col class="col-status">
+        <col class="col-scenario">
+        <col class="col-time">
+        <col class="col-group">
+        <col class="col-supplier">
+        <col class="col-raw">
+        <col class="col-count">
+        <col class="col-orders">
+        <col class="col-flow">
+        <col class="col-impact">
+        <col class="col-operator">
+        <col class="col-actions">
+      </colgroup>
       <thead><tr><th>采购入库单状态</th><th>流程场景</th><th>时间</th><th>群聊</th><th>供应商</th><th>原文</th><th class="right">商品数</th><th>关联采购单</th><th>采购单入库流转状态</th><th>确认入库影响</th><th>操作员</th><th>操作</th></tr></thead>
       <tbody>
         ${tasks.map((task, i) => {
@@ -2538,13 +2931,13 @@ function purchaseReviewTable(tasks) {
               <td>07-01 ${String(8 + i).padStart(2, "0")}:32:18</td>
               <td>${task.group}</td>
               <td>${task.supplier}</td>
-              <td>${task.raw}</td>
+              <td class="review-raw-cell">${task.raw}</td>
               <td class="right">${task.items || "-"}</td>
-              <td>${linkedOrders.length ? linkedOrders.map((order) => `<strong>${order.id}</strong>`).join("、") : "未关联"}</td>
+              <td class="review-orders-cell">${linkedOrders.length ? linkedOrders.map((order) => `<strong>${order.id}</strong>`).join("、") : "未关联"}</td>
               <td class="wrap-cell">${purchaseOrderStatusTags(linkedOrders)}</td>
               <td class="wrap-cell">${impactText}</td>
               <td>${reviewerSelect(task.auditor)}</td>
-              <td><button class="text-btn" data-detail="${task.id}">查看</button><button class="text-btn" data-toast="已对 ${task.id} 重新执行 AI 识别">重识别</button><button class="text-btn muted" data-toast="演示环境未实际删除">删除</button></td>
+              <td><div class="review-actions"><button class="text-btn" data-detail="${task.id}">查看</button><button class="text-btn" data-toast="已对 ${task.id} 重新执行 AI 识别">重识别</button><button class="text-btn muted" data-toast="演示环境未实际删除">删除</button></div></td>
             </tr>
           `;
         }).join("")}
@@ -2554,7 +2947,7 @@ function purchaseReviewTable(tasks) {
 }
 
 function statusTag(status) {
-  const color = ["待处理", "待审核", "入库暂存", "需人工确认", "已关联未确认"].includes(status)
+  const color = ["待处理", "待审核", "暂存", "需人工确认", "已关联未确认"].includes(status)
     ? "gold"
     : ["已完成", "已提交", "已确认入库", "未提交", "已关联", "已生成", "已确认", "已有入库确认", "历史已确认", "无差异"].includes(status)
       ? "green"
@@ -2655,7 +3048,7 @@ function purchaseDetailPage() {
   const detailLineActions = readonlyDetail ? "" : `
     <div class="detail-line-actions">
       <button class="btn danger" data-toast="已删除选中的${detailKindLabel}商品">删除</button>
-      <button class="btn" ${isPurchaseOrder ? `data-toast="${detailKindLabel}明细已保存"` : `data-save-inbound-draft="${task.id}"`}>${isPurchaseOrder ? "保存" : "暂存入库"}</button>
+      <button class="btn" ${isPurchaseOrder ? `data-toast="${detailKindLabel}明细已保存"` : `data-save-inbound-draft="${task.id}"`}>${isPurchaseOrder ? "保存" : "暂存"}</button>
       <button class="btn primary" ${isPurchaseOrder ? `data-toast="${confirmToast}"` : `data-confirm-inbound="${task.id}"`}>${confirmText}</button>
     </div>
   `;
@@ -2713,7 +3106,7 @@ ${isPurchaseOrder ? "价格缺失时留待操作员确认，不自动关联其�
           </div>
           ${!isPurchaseOrder ? `
             <div class="inbound-review-tip">
-              确认入库前请重点核对关联采购单。若关联采购单下还有其它入库暂存采购入库单，提交前系统会再次提示并按直接关联范围一起入库；待审核单据保持不变。
+              确认入库前请重点核对关联采购单。若关联采购单下还有其它暂存采购入库单，提交前系统会再次提示并按直接关联范围一起入库；待审核单据保持不变。
             </div>
           ` : ""}
           <div class="purchase-form-row">
@@ -3551,9 +3944,9 @@ function bindPurchaseAssociationActions(root = document) {
       const orders = getLinkedPurchaseOrders(task);
       if (orders.length) saveInboundDraftForOrders(task, orders);
       else {
-        task.status = "入库暂存";
+        task.status = "暂存";
       }
-      toast("已入库暂存，暂不提交观麦");
+      toast("已暂存，暂不提交观麦");
       renderContent();
     };
   });
@@ -3566,9 +3959,9 @@ function bindPurchaseAssociationActions(root = document) {
     button.onclick = () => {
       const task = getInboundTaskById(button.dataset.tempHoldInbound);
       if (!task) return;
-      task.status = "入库暂存";
+      task.status = "暂存";
       closeModal();
-      toast("已入库暂存，暂不提交观麦");
+      toast("已暂存，暂不提交观麦");
       renderContent();
     };
   });
@@ -3584,7 +3977,7 @@ function handleInboundConfirm(inboundId) {
   if (!task) return;
   const context = getInboundConfirmationContext(task);
   if (!context.orders.length) {
-    toast("请先关联采购单，或选择暂存入库");
+    toast("请先关联采购单，或选择暂存");
     return;
   }
   if (context.closedOrders.length) {
@@ -3605,7 +3998,7 @@ function handleAssociationSubmit(button) {
   if (button.dataset.submitAssociation === "draft") {
     saveInboundDraftForOrders(task, orders);
     closeModal();
-    toast("已入库暂存，暂不提交观麦");
+    toast("已暂存，暂不提交观麦");
     renderContent();
     return;
   }
@@ -3618,7 +4011,7 @@ function handleAssociationSubmit(button) {
   }
   submitPendingLinkedInboundsForOrders(task, orders);
   closeModal();
-  toast("已确认入库，直接关联的入库暂存采购入库单已一起入库");
+  toast("已确认入库，直接关联的暂存采购入库单已一起入库");
   renderContent();
 }
 
@@ -3660,19 +4053,19 @@ function inboundAssociationImpactModal(task, context) {
   return `
     <div class="association-modal decision-modal">
       <div class="decision-banner warning">
-        <strong>${shouldBatchConfirm ? "当前关联的采购单还关联了其它入库暂存采购入库单" : hasReviewPending ? "当前关联的采购单还有待审核采购入库单" : "当前关联的采购单已有采购入库单确认入库"}</strong>
-        <p>${shouldBatchConfirm ? "确认后，当前采购入库单和其它入库暂存的直接关联采购入库单会一起入库；待审核单据和已确认入库单保持不变。" : hasReviewPending ? "待审核单据还没有完成审核，不会随着本次确认入库一起提交。本次只处理当前采购入库单。" : "已确认入库的历史单据只作为提示，不会重复入库。本次确认只会处理当前采购入库单。"}</p>
+        <strong>${shouldBatchConfirm ? "当前关联的采购单还关联了其它暂存采购入库单" : hasReviewPending ? "当前关联的采购单还有待审核采购入库单" : "当前关联的采购单已有采购入库单确认入库"}</strong>
+        <p>${shouldBatchConfirm ? "确认后，当前采购入库单和其它暂存的直接关联采购入库单会一起入库；待审核单据和已确认入库单保持不变。" : hasReviewPending ? "待审核单据还没有完成审核，不会随着本次确认入库一起提交。本次只处理当前采购入库单。" : "已确认入库的历史单据只作为提示，不会重复入库。本次确认只会处理当前采购入库单。"}</p>
       </div>
       <div class="po-modal-summary">
         <div><span>当前采购入库单</span><strong>${task.id}</strong></div>
         <div><span>关联采购单</span><strong>${orderIds.join("、")}</strong></div>
-        <div><span>确认影响</span><strong>${shouldBatchConfirm ? "联动入库暂存采购入库单" : "仅确认当前采购入库单"}</strong></div>
+        <div><span>确认影响</span><strong>${shouldBatchConfirm ? "联动暂存采购入库单" : "仅确认当前采购入库单"}</strong></div>
       </div>
       <section class="linked-history-block">
         <div class="modal-subtitle">
           <div>
             <strong>将一起入库的单据</strong>
-            <span>只包含当前采购入库单，以及当前关联采购单下处于入库暂存状态的直接关联采购入库单</span>
+            <span>只包含当前采购入库单，以及当前关联采购单下处于暂存状态的直接关联采购入库单</span>
           </div>
         </div>
         ${inboundImpactTable([task, ...context.batchConfirmRecords], "暂无其它可联动采购入库单。")}
