@@ -594,6 +594,17 @@ const markdownDocumentCache = new Map();
 
 let iterationHistory = [
   {
+    version: "V0.13",
+    date: "2026-07-11",
+    title: "分批送货异常校验补齐",
+    changes: [
+      "确认前拦截空商品、无效实收数、重复送货单和供应商不一致",
+      "累计超收、采购单商品不匹配和无有效单价改为显式警告",
+      "审核时修改实收数和单价会写回当前单据并刷新汇总",
+      "供应商变更时自动解除不一致采购单关联",
+    ],
+  },
+  {
     version: "V0.12",
     date: "2026-07-10",
     title: "确认入库商品数核对优化",
@@ -1001,6 +1012,10 @@ let pageAnnotations = {
       "按钮【暂存】采购入库单详情中保存当前审核结果，暂不提交观麦；不会被其它批次自动联动。",
       "按钮【确认采购单】采购单详情中确认采购单并回传观麦，观麦状态保持未提交。",
       "按钮【确认入库】执行候选检测；未关联采购单也可提交，关联关闭采购单时要求解除或更换后再提交。",
+      "规则【确认前阻断】无供应商、无仓库、空商品、无效实收数、重复送货单或采购单供应商不一致时禁止提交。",
+      "规则【确认前警告】累计超收、采购单中找不到同名同单位商品或单价无效时展示警告，由操作员确认是否继续。",
+      "规则【字段写回】审核员修改实收数和单价时立即更新当前任务数据、行金额和汇总结果。",
+      "规则【供应商变更】人工修改供应商后，系统自动解除供应商不一致的采购单关联。",
       "按钮【新增采购单商品/新增采购入库单商品】添加明细行，用于补录 AI 漏识别商品。",
       "按钮【+/-】在行内新增或删除商品行，用于快速修正明细。",
       "弹窗【确认入库】只展示采购单商品数和当前采购入库单商品数，不展示当前入库单号、同步状态或外部审核状态。",
@@ -1012,6 +1027,7 @@ let pageAnnotations = {
       "按钮【放弃确认/取消】关闭确认弹窗，不改变当前单据状态。"
     ],
     "iteration": [
+      "2026-07-11 补齐分批送货确认前异常校验、输入写回、汇总刷新和供应商变更联动。",
       "2026-07-10 确认弹窗增加采购单、当前入库单和候选入库单商品数核对，并支持候选详情返回。",
       "2026-07-10 扩写采购详情页字段、按钮、弹窗和采购单/采购入库单双形态说明。",
       "2026-07-10 明确金额由采购设置计算优先级影响，差异仍为采购数减实收数。",
@@ -3224,6 +3240,40 @@ function getPurchaseOrderProductCount(order) {
   return Array.isArray(order?.items) ? order.items.length : 0;
 }
 
+function validateInboundBeforeConfirm(task) {
+  const errors = [];
+  const warnings = [];
+  const items = getPurchaseDetailItems(task);
+  const order = getLinkedPurchaseOrder(task);
+  if (!task?.supplier?.trim()) errors.push("请先确认供应商");
+  if (!task?.warehouse?.trim()) errors.push("请先确认入库仓库");
+  if (!items.length) errors.push("当前采购入库单没有可提交的商品");
+  if (items.some((item) => !item.name?.trim())) errors.push("存在未填写商品名称的明细");
+  if (items.some((item) => !item.unit?.trim())) errors.push("存在未填写单位的商品明细");
+  if (items.some((item) => !Number.isFinite(Number(item.receivedQty)) || Number(item.receivedQty) <= 0)) errors.push("实收数量必须大于 0");
+  const duplicate = getAllInboundRecords().find((record) => record.id !== task.id && task.deliveryNo && record.deliveryNo === task.deliveryNo && record.supplier === task.supplier);
+  if (duplicate) errors.push(`送货单号 ${task.deliveryNo} 已存在，请检查是否重复录入`);
+  if (order && order.supplier !== task.supplier) errors.push("采购单供应商与当前采购入库单不一致");
+  if (order) {
+    const unmatchedItems = items.filter((item) => !(order.items || []).some((orderItem) => orderItem.name === item.name && orderItem.unit === item.unit));
+    if (unmatchedItems.length) warnings.push(`有 ${unmatchedItems.length} 个商品未在采购单中找到同名同单位明细`);
+    const overReceiptItems = items.filter((item) => getInboundItemProgress(task, item).remainingQty < 0);
+    if (overReceiptItems.length) warnings.push(`有 ${overReceiptItems.length} 个商品确认后将超过采购数量`);
+  }
+  if (items.some((item) => !Number.isFinite(Number(item.price)) || Number(item.price) <= 0)) warnings.push("存在未填写有效单价的商品，请确认是否继续");
+  return { errors: [...new Set(errors)], warnings: [...new Set(warnings)] };
+}
+
+function inboundConfirmWarningBlock(warnings) {
+  if (!warnings?.length) return "";
+  return `
+    <section class="confirm-checklist">
+      <strong>提交前请注意</strong>
+      <ol>${warnings.map((warning) => `<li>${warning}</li>`).join("")}</ol>
+    </section>
+  `;
+}
+
 
 function linkedInboundLabel(id) {
   const task = getInboundTaskById(id);
@@ -3497,6 +3547,7 @@ ${isPurchaseOrder ? "价格缺失时留待操作员确认，不自动关联其�
               <span>供应商：${task.supplier}</span>
               <span>操作员：${taskOperator}</span>
               <span>来源群聊：${taskGroup}</span>
+              ${!isPurchaseOrder ? `<span>仓库：${task.warehouse || "-"}</span><span>送货单号：${task.deliveryNo || "-"}</span>` : ""}
               ${!isPurchaseOrder && task.gmInboundNo ? `<span>系统入库单：${task.gmInboundNo}</span>` : ""}
             </div>
           </div>
@@ -3515,15 +3566,15 @@ ${isPurchaseOrder ? "价格缺失时留待操作员确认，不自动关联其�
             </div>
           ` : ""}
           <div class="purchase-form-row">
-            <label>供应商 <select${disabledAttr}>${supplierOptions.map((name) => `<option>${name}</option>`).join("")}</select></label>
+            <label>供应商 <select${!isPurchaseOrder ? ` data-inbound-supplier="${task.id}"` : ""}${disabledAttr}>${supplierOptions.map((name) => `<option>${name}</option>`).join("")}</select></label>
             <label class="wide">${remarkLabel} <input value="${isPurchaseOrder ? "价格待确认" : "到仓复称，异常短缺请备注"}"${disabledAttr}></label>
           </div>
           ${!isPurchaseOrder ? `
             <div class="inbound-summary-row">
               <span>采购单原订购 <b>${hasLinkedOrder ? totalPurchaseQty : "未关联"}</b></span>
               <span>历史已确认 <b>${hasLinkedOrder ? totalHistoricalQty : "-"}</b></span>
-              <span>本批实收 <b>${totalReceivedQty}</b></span>
-              <span>确认后剩余 <b class="${totalRemainingQty !== null && totalRemainingQty < 0 ? "red-text" : "green-text"}">${totalRemainingQty === null ? "-" : totalRemainingQty}</b></span>
+              <span>本批实收 <b data-summary-received>${totalReceivedQty}</b></span>
+              <span>确认后剩余 <b data-summary-remaining class="${totalRemainingQty !== null && totalRemainingQty < 0 ? "red-text" : "green-text"}">${totalRemainingQty === null ? "-" : totalRemainingQty}</b></span>
             </div>
           ` : ""}
           <div class="purchase-table-wrap">
@@ -3539,7 +3590,7 @@ ${isPurchaseOrder ? "价格缺失时留待操作员确认，不自动关联其�
                   const amount = formatInboundAmount(item.purchaseQty, item.receivedQty, item.price);
                   return isPurchaseOrder
                     ? `<tr><td><b>${index + 1}</b></td><td>${item.raw}</td><td><input value="${item.name}"${disabledAttr}></td><td><input class="qty-input" value="${item.qty}"${disabledAttr}></td><td><input class="remark-input" value="${item.remark || "按采购计划确认"}"${disabledAttr}></td><td>${item.spu}</td><td><code>${item.code}</code></td>${readonlyDetail ? "" : `<td class="detail-row-actions">${rowActions}</td>`}</tr>`
-                    : `<tr data-inbound-detail-row data-purchase-qty="${progress.purchaseQty ?? 0}" data-historical-qty="${progress.historicalQty}" data-has-order="${progress.purchaseQty !== null}" data-unit="${item.unit}">
+                    : `<tr data-inbound-detail-row data-inbound-id="${task.id}" data-item-index="${index}" data-purchase-qty="${progress.purchaseQty ?? 0}" data-historical-qty="${progress.historicalQty}" data-has-order="${progress.purchaseQty !== null}" data-unit="${item.unit}">
                         <td><b>${index + 1}</b></td>
                         <td>${item.raw}</td>
                         <td><input value="${item.name}"${disabledAttr}></td>
@@ -4394,7 +4445,13 @@ function bindPurchaseAssociationActions(root = document) {
 function handleInboundConfirm(inboundId) {
   const task = getInboundTaskById(inboundId);
   if (!task) return;
+  const validation = validateInboundBeforeConfirm(task);
+  if (validation.errors.length) {
+    toast(validation.errors.join("；"));
+    return;
+  }
   const context = getInboundConfirmationContext(task);
+  context.validation = validation;
   if (context.closedOrders.length) {
     toast(`关联采购单 ${context.closedOrders.map((order) => order.id).join("、")} 已关闭，不允许确认入库`);
     return;
@@ -4453,6 +4510,7 @@ function inboundSingleConfirmModal(task, context) {
         ${order ? `<div><span>采购单 ${order.id}</span><strong>${getPurchaseOrderProductCount(order)} 个商品</strong></div>` : ""}
         <div><span>当前采购入库单</span><strong>${currentProductCount} 个商品</strong></div>
       </div>
+      ${inboundConfirmWarningBlock(context.validation?.warnings)}
       <div class="decision-actions">
         <div>
           <strong>本次只处理当前采购入库单</strong>
@@ -4480,6 +4538,7 @@ function inboundAssociationImpactModal(task, context) {
         <div><span>当前采购入库单</span><strong>${currentProductCount} 个商品</strong></div>
         <div><span>疑似关联入库单</span><strong>${context.mergeCandidates.length} 张</strong></div>
       </div>
+      ${inboundConfirmWarningBlock(context.validation?.warnings)}
       <section class="linked-history-block">
         <div class="modal-subtitle">
           <div>
@@ -4660,6 +4719,9 @@ function wirePageInteractions() {
     };
   });
   const recalcInboundDetailRows = () => {
+    let totalReceived = 0;
+    let totalRemaining = 0;
+    let hasLinkedOrderRows = true;
     document.querySelectorAll("[data-inbound-detail-row]").forEach((row) => {
       const purchaseQty = Number(row.dataset.purchaseQty) || 0;
       const historicalQty = Number(row.dataset.historicalQty) || 0;
@@ -4668,6 +4730,16 @@ function wirePageInteractions() {
       const receivedQty = Number(row.querySelector("[data-received-input]")?.value) || 0;
       const price = Number(row.querySelector("[data-price-input]")?.value) || 0;
       const diff = purchaseQty - historicalQty - receivedQty;
+      const inboundTask = getInboundTaskById(row.dataset.inboundId);
+      const item = inboundTask?.detailItems?.[Number(row.dataset.itemIndex)];
+      if (item) {
+        item.receivedQty = receivedQty;
+        item.price = price.toFixed(2);
+        item.amount = formatInboundAmount(purchaseQty, receivedQty, price);
+      }
+      totalReceived += receivedQty;
+      totalRemaining += diff;
+      hasLinkedOrderRows = hasLinkedOrderRows && hasOrder;
       const diffCell = row.querySelector("[data-diff-cell]");
       const amountCell = row.querySelector("[data-amount-cell]");
       if (diffCell) {
@@ -4677,9 +4749,34 @@ function wirePageInteractions() {
       }
       if (amountCell) amountCell.textContent = `¥${formatInboundAmount(purchaseQty, receivedQty, price)}`;
     });
+    const receivedSummary = document.querySelector("[data-summary-received]");
+    const remainingSummary = document.querySelector("[data-summary-remaining]");
+    if (receivedSummary) receivedSummary.textContent = String(totalReceived);
+    if (remainingSummary) {
+      remainingSummary.textContent = hasLinkedOrderRows ? String(totalRemaining) : "-";
+      remainingSummary.classList.toggle("red-text", hasLinkedOrderRows && totalRemaining < 0);
+      remainingSummary.classList.toggle("green-text", !hasLinkedOrderRows || totalRemaining >= 0);
+    }
   };
   document.querySelectorAll("[data-received-input], [data-price-input]").forEach((input) => {
     input.oninput = recalcInboundDetailRows;
+  });
+  document.querySelectorAll("[data-inbound-supplier]").forEach((select) => {
+    select.onchange = () => {
+      const task = getInboundTaskById(select.dataset.inboundSupplier);
+      if (!task) return;
+      const previousOrders = getLinkedPurchaseOrders(task);
+      task.supplier = select.value;
+      const invalidOrders = previousOrders.filter((order) => order.supplier !== task.supplier);
+      if (invalidOrders.length) {
+        invalidOrders.forEach((order) => removeOrderInboundLink(order, task.id));
+        setLinkedPurchaseOrderIds(task, previousOrders.filter((order) => order.supplier === task.supplier).map((order) => order.id));
+        toast("供应商已更新，原采购单因供应商不一致已解除关联");
+      } else {
+        toast("供应商已更新");
+      }
+      renderContent();
+    };
   });
   document.querySelectorAll("[data-reset-filter]").forEach((button) => {
     button.onclick = () => {
