@@ -621,11 +621,75 @@ body.home-mode .content {
 }
 
 .flow-page-title {
-  min-height: 56px;
+  min-height: 86px;
   border-radius: 8px;
-  padding: 0 18px;
+  padding: 14px 18px;
   background: #fff;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+.flow-page-title > div:first-child {
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.flow-page-title h2,
+.flow-page-title p {
+  margin: 0;
+}
+
+.flow-page-title p {
+  color: var(--secondary);
+  line-height: 1.6;
+}
+
+.flow-scope-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.flow-scope-card {
+  min-width: 0;
+  padding: 16px 18px;
+  border: 1px solid #edf0f5;
+  border-radius: 8px;
+  background: #fff;
+  display: grid;
+  gap: 7px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
+}
+
+.flow-scope-card > span {
+  color: #6b7280;
+  font-size: 12px;
+}
+
+.flow-scope-card strong {
+  color: #111827;
+  line-height: 1.5;
+}
+
+.flow-scope-card p {
+  margin: 0;
+  color: #6b7280;
+  line-height: 1.55;
+}
+
+.flow-scope-card.success {
+  border-color: #b7eb8f;
+  background: #f6ffed;
+}
+
+.flow-scope-card.warning {
+  border-color: #ffe58f;
+  background: #fffbe6;
+}
+
+.flow-scope-card.muted {
+  border-color: #d9d9d9;
+  background: #fafafa;
 }
 
 .flow-diagram-stack {
@@ -650,10 +714,22 @@ body.home-mode .content {
   gap: 12px;
 }
 
+.flow-diagram-head > div {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+}
+
 .flow-diagram-head h3 {
   margin: 0;
   font-size: 16px;
   line-height: 24px;
+}
+
+.flow-diagram-head p {
+  margin: 0;
+  color: var(--secondary);
+  line-height: 1.55;
 }
 
 .flow-diagram-chart {
@@ -672,6 +748,25 @@ body.home-mode .content {
 .flow-diagram-chart .mermaid svg {
   max-width: none;
   height: auto;
+}
+
+.flow-review-points {
+  padding: 14px 18px 16px;
+  border-top: 1px solid var(--line);
+  background: #fbfcff;
+  display: grid;
+  gap: 8px;
+}
+
+.flow-review-points strong {
+  color: #111827;
+}
+
+.flow-review-points ul {
+  margin: 0;
+  padding-left: 20px;
+  color: #4b5563;
+  line-height: 1.7;
 }
 
 .field-spec-page {
@@ -4296,6 +4391,11 @@ body.entry-mode .content {
   outline: 0;
 }
 
+.recognized-qty {
+  color: #4b5563;
+  white-space: nowrap;
+}
+
 .purchase-form-row select {
   width: 220px;
 }
@@ -4318,6 +4418,99 @@ body.entry-mode .content {
   color: #7a4f01;
   font-size: 13px;
   line-height: 1.6;
+}
+
+.inbound-workflow {
+  margin-top: 16px;
+  padding: 14px 16px;
+  border: 1px solid #dbeafe;
+  border-radius: 8px;
+  background: #f8fbff;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+}
+
+.workflow-step {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.workflow-step > b {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+  border-radius: 50%;
+  background: #eaf3ff;
+  color: #1677ff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+}
+
+.workflow-step.done > b {
+  background: #1677ff;
+  color: #fff;
+}
+
+.workflow-step span {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.workflow-step strong {
+  color: #111827;
+  font-size: 14px;
+}
+
+.workflow-step small {
+  color: #6b7280;
+  line-height: 1.4;
+}
+
+.workflow-arrow {
+  color: #91caff;
+  font-size: 22px;
+}
+
+.inbound-result-banner {
+  margin-top: 16px;
+  padding: 14px 16px;
+  border: 1px solid #b7eb8f;
+  border-radius: 8px;
+  background: #f6ffed;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.inbound-result-banner .result-icon {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+  border-radius: 50%;
+  background: #52c41a;
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+}
+
+.inbound-result-banner strong {
+  color: #135200;
+  font-size: 15px;
+}
+
+.inbound-result-banner p {
+  margin: 4px 0 0;
+  color: #3f6600;
+  line-height: 1.55;
 }
 
 .inbound-summary-row {
@@ -5038,6 +5231,15 @@ select:focus {
     flex-direction: column;
   }
 
+  .flow-page-title {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .flow-scope-grid {
+    grid-template-columns: 1fr;
+  }
+
   .field-spec-doc {
     padding: 20px 16px 24px;
   }
@@ -5329,6 +5531,14 @@ select:focus {
   .detail-main {
     padding-left: 12px;
     padding-right: 12px;
+  }
+
+  .inbound-workflow {
+    grid-template-columns: 1fr;
+  }
+
+  .workflow-arrow {
+    display: none;
   }
 
   .banner {
