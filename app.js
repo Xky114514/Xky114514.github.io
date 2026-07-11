@@ -643,6 +643,16 @@ const markdownDocumentCache = new Map();
 
 let iterationHistory = [
   {
+    version: "V0.18",
+    date: "2026-07-11",
+    title: "采购入库详情提示信息收敛",
+    changes: [
+      "关联采购单和采购入库明细说明改为标题右侧问号悬浮提示",
+      "移除采购入库详情顶部三步操作指引，减少页面纵向占用",
+      "同步更新字段说明和页面批注",
+    ],
+  },
+  {
     version: "V0.17",
     date: "2026-07-11",
     title: "采购入库字段与状态口径收敛",
@@ -1085,7 +1095,7 @@ let pageAnnotations = {
       "字段【操作员】表示当前审核或处理人，用于责任归属、绩效统计和后续追溯。",
       "字段【来源群聊】表示原始业务消息来源，帮助排查供应商沟通和群绑定问题。",
       "字段【系统创建时间】表示当前采购入库单生成时间，是同供应商疑似批次人工核对依据。",
-      "字段【三步操作指引】按核对送货信息、关联采购单（可选）、核对商品并提交展示当前详情页的标准操作顺序。",
+      "字段【标题问号说明】位于关联采购单和采购入库明细标题右侧，鼠标悬浮或键盘聚焦时展示补充规则，不再占用卡片正文空间。",
       "字段【提交结果】在已确认详情顶部持续展示独立提交或合并结果，说明其它批次未被自动联动。",
       "字段【采购单同步说明】仅采购单详情展示，说明 AI 确认采购单后会回传观麦，并保持未提交状态供采购入库单关联。",
       "字段【关联采购单-选择】仅采购入库单详情展示，最多单选一张，也可不选；已确认入库后不可修改。",
@@ -3551,9 +3561,15 @@ function purchaseAssociationSection(task) {
   return `
     <section class="purchase-group po-association-card">
       <div class="purchase-group-head">
-        <div><strong>关联采购单${readonlyAssociation ? "（只读）" : "（可选）"}</strong><span class="gm-tip">${readonlyAssociation ? "单据已确认，关联关系不可修改" : "最多选择一张；未关联也可确认入库"}</span></div>
+        <div>
+          <strong>关联采购单${readonlyAssociation ? "（只读）" : "（可选）"}</strong>
+          <span class="gm-tip">${readonlyAssociation ? "单据已确认，关联关系不可修改" : "最多选择一张；未关联也可确认入库"}</span>
+          <span class="inline-help association-help" role="button" tabindex="0" aria-label="关联采购单说明">
+            <span class="inline-help-trigger" aria-hidden="true">?</span>
+            <span class="inline-help-content" role="tooltip">${readonlyAssociation ? "当前为已确认记录，下方仅用于查看采购单关联和历史批次信息。" : "采购单用于提高分批匹配可信度。系统提交时会按供应商和系统创建时间检查疑似关联入库单；关联同一采购单时优先提示，未关联采购单时由操作员人工核对候选。"}</span>
+          </span>
+        </div>
       </div>
-      <div class="inbound-review-tip">${readonlyAssociation ? "当前为已确认记录，下方仅用于查看采购单关联和历史批次信息。" : "采购单用于提高分批匹配可信度。系统提交时会按供应商和系统创建时间检查疑似关联入库单；关联同一采购单时优先提示，未关联采购单时由操作员人工核对候选。"}</div>
       <div class="purchase-table-wrap po-link-table-wrap">
         <table class="purchase-group-board-table po-link-table">
           <thead><tr><th class="check-col">选择</th><th>采购单</th><th>采购单关联状态</th><th>关联采购入库单提示</th><th>操作</th></tr></thead>
@@ -3625,15 +3641,6 @@ function purchaseDetailPage() {
     <button class="circle-btn minus" data-toast="已删除当前${detailKindLabel}商品" aria-label="删除${detailKindLabel}商品">-</button>
   `;
   const relationSection = isPurchaseOrder ? purchaseOrderSyncSection(task) : purchaseAssociationSection(task);
-  const inboundWorkflow = !isPurchaseOrder && !readonlyDetail ? `
-    <section class="inbound-workflow" aria-label="采购入库操作步骤">
-      <div class="workflow-step done"><b>1</b><span><strong>核对送货信息</strong><small>确认供应商和系统创建时间</small></span></div>
-      <div class="workflow-arrow">›</div>
-      <div class="workflow-step"><b>2</b><span><strong>关联采购单（可选）</strong><small>最多一张；未关联也可继续</small></span></div>
-      <div class="workflow-arrow">›</div>
-      <div class="workflow-step"><b>3</b><span><strong>核对商品并提交</strong><small>检查商品、本批实收和单价</small></span></div>
-    </section>
-  ` : "";
   const inboundResult = !isPurchaseOrder && readonlyDetail ? `
     <section class="inbound-result-banner">
       <span class="result-icon">✓</span>
@@ -3686,19 +3693,21 @@ ${isPurchaseOrder ? "价格缺失时留待操作员确认，不自动关联其�
         </div>
 
         ${inboundResult}
-        ${inboundWorkflow}
         ${relationSection}
 
         <section class="purchase-group">
           <div class="purchase-group-head">
-            <div><strong>AI 识别${detailKindLabel}明细</strong></div>
+            <div>
+              <strong>AI 识别${detailKindLabel}明细</strong>
+              ${!isPurchaseOrder && !readonlyDetail ? `
+                <span class="inline-help" role="button" tabindex="0" aria-label="采购入库单明细说明">
+                  <span class="inline-help-trigger" aria-hidden="true">?</span>
+                  <span class="inline-help-content" role="tooltip">本次只确认当前采购入库单，不会自动提交其它暂存或待确认单据。提交时系统会按供应商、系统创建时间和采购单关系检查疑似关联入库单。</span>
+                </span>
+              ` : ""}
+            </div>
             ${detailLineActions}
           </div>
-          ${!isPurchaseOrder && !readonlyDetail ? `
-            <div class="inbound-review-tip">
-              本次只确认当前采购入库单，不会自动提交其它暂存或待确认单据。提交时系统会按供应商、系统创建时间和采购单关系检查疑似关联入库单。
-            </div>
-          ` : ""}
           <div class="purchase-form-row">
             <label>供应商 <select${!isPurchaseOrder ? ` data-inbound-supplier="${task.id}"` : ""}${disabledAttr}>${supplierOptions.map((name) => `<option>${name}</option>`).join("")}</select></label>
             <label class="wide">${remarkLabel} <input value="${isPurchaseOrder ? "价格待确认" : "复称，异常短缺请备注"}"${disabledAttr}></label>

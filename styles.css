@@ -4409,73 +4409,61 @@ body.entry-mode .content {
   width: auto;
 }
 
-.inbound-review-tip {
-  margin: 14px 18px 0;
-  padding: 10px 12px;
-  border: 1px solid #ffe58f;
-  border-radius: 8px;
-  background: #fffbe6;
-  color: #7a4f01;
-  font-size: 13px;
-  line-height: 1.6;
-}
-
-.inbound-workflow {
-  margin-top: 16px;
-  padding: 14px 16px;
-  border: 1px solid #dbeafe;
-  border-radius: 8px;
-  background: #f8fbff;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr);
+.inline-help {
+  position: relative;
+  display: inline-flex;
   align-items: center;
-  gap: 10px;
+  outline: none;
 }
 
-.workflow-step {
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.workflow-step > b {
-  width: 28px;
-  height: 28px;
-  flex: 0 0 28px;
+.inline-help-trigger {
+  width: 20px;
+  height: 20px;
+  border: 1px solid #91caff;
   border-radius: 50%;
   background: #eaf3ff;
   color: #1677ff;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: help;
+}
+
+.inline-help-content {
+  width: min(460px, calc(100vw - 96px));
+  padding: 10px 12px;
+  border: 1px solid #ffe58f;
+  border-radius: 8px;
+  background: #fffbe6;
+  box-shadow: 0 8px 24px rgba(17, 24, 39, 0.14);
+  color: #7a4f01;
   font-size: 13px;
+  font-weight: 400;
+  line-height: 1.6;
+  text-align: left;
+  position: absolute;
+  top: calc(100% + 8px);
+  left: -8px;
+  z-index: 20;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  transition: opacity 0.16s ease, transform 0.16s ease, visibility 0.16s ease;
+  pointer-events: none;
 }
 
-.workflow-step.done > b {
-  background: #1677ff;
-  color: #fff;
+.inline-help:hover .inline-help-content,
+.inline-help:focus-within .inline-help-content {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
 }
 
-.workflow-step span {
-  min-width: 0;
-  display: grid;
-  gap: 3px;
-}
-
-.workflow-step strong {
-  color: #111827;
-  font-size: 14px;
-}
-
-.workflow-step small {
-  color: #6b7280;
-  line-height: 1.4;
-}
-
-.workflow-arrow {
-  color: #91caff;
-  font-size: 22px;
+.association-help .inline-help-content {
+  right: -8px;
+  left: auto;
 }
 
 .inbound-result-banner {
@@ -5535,14 +5523,6 @@ select:focus {
   .detail-main {
     padding-left: 12px;
     padding-right: 12px;
-  }
-
-  .inbound-workflow {
-    grid-template-columns: 1fr;
-  }
-
-  .workflow-arrow {
-    display: none;
   }
 
   .banner {
