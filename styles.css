@@ -3130,7 +3130,7 @@ table {
 
 .purchase-review-table .col-status { width: 112px; }
 .purchase-review-table .col-scenario { width: 148px; }
-.purchase-review-table .col-time { width: 112px; }
+.purchase-review-table .col-time { width: 168px; }
 .purchase-review-table .col-group { width: 140px; }
 .purchase-review-table .col-supplier { width: 124px; }
 .purchase-review-table .col-raw { width: 230px; }
@@ -4536,6 +4536,10 @@ body.entry-mode .content {
   font-size: 20px;
   line-height: 28px;
   font-weight: 600;
+}
+
+.inbound-summary-row.product-count-summary {
+  grid-template-columns: repeat(2, minmax(180px, 1fr));
 }
 
 .po-modal-summary {
