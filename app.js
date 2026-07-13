@@ -1,6 +1,10 @@
 const ANNOTATION_STORAGE_KEY = "prd-platform-annotation-overrides";
 const ANNOTATION_FILE = "annotations.json";
 const FIELD_SPEC_MARKDOWN_FILE = "./purchase-field-spec.md";
+const FIELD_SPEC_MARKDOWN_FALLBACK_URLS = [
+  "https://raw.githubusercontent.com/Xky114514/Xky114514.github.io/fenpi/purchase-field-spec.md",
+  "https://raw.githubusercontent.com/Xky114514/Xky114514.github.io/main/purchase-field-spec.md",
+];
 const appShellTemplate = document.getElementById("app").innerHTML;
 
 const state = {
@@ -1923,24 +1927,39 @@ function renderMarkdownDocuments() {
       return;
     }
     node.innerHTML = `<div class="markdown-loading">正在加载字段说明 PRD...</div>`;
-    fetch(src, { cache: "no-store" })
-      .then((response) => {
-        if (!response.ok) throw new Error(`Markdown load failed: ${response.status}`);
-        return response.text();
-      })
+    loadMarkdownDocument(src)
       .then((markdown) => {
         markdownDocumentCache.set(src, markdown);
         renderText(markdown);
       })
-      .catch(() => {
+      .catch((error) => {
+        console.error("字段说明 PRD 加载失败", error);
         if (!document.body.contains(node)) return;
         node.innerHTML = `
           <div class="empty-block">
-            未能读取 ${escapeHTML(src)}。请通过本地服务访问页面后重试，或点击上方“查看 Markdown 原文”打开文档。
+            字段说明暂时加载失败，请刷新页面重试，或点击上方“查看 Markdown 原文”打开文档。
           </div>
         `;
       });
   });
+}
+
+async function loadMarkdownDocument(src) {
+  const pageRelativeUrl = new URL(src, window.location.href).href;
+  const sources = [...new Set([pageRelativeUrl, src, ...FIELD_SPEC_MARKDOWN_FALLBACK_URLS])];
+  const failures = [];
+  for (const source of sources) {
+    try {
+      const response = await fetch(source, { cache: "no-store" });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const markdown = await response.text();
+      if (!markdown.trim() || /^\s*<!doctype\s+html/i.test(markdown)) throw new Error("响应不是 Markdown 原文");
+      return markdown;
+    } catch (error) {
+      failures.push(`${source}: ${error.message}`);
+    }
+  }
+  throw new Error(failures.join(" | "));
 }
 
 function renderMarkdown(markdown) {
