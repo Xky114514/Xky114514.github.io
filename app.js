@@ -480,11 +480,11 @@ const prdProjects = [
     name: "采购流程图 PRD",
     status: "迭代中",
     route: "process-flow",
-    version: "V0.3",
+    version: "V0.4",
     owner: "管理员",
-    updated: "2026-07-11",
-    desc: "完整展示正常送货与分批送货的范围、角色链路、匹配决策、异常校验和状态权限。",
-    pages: ["范围关系", "端到端链路", "采购单状态", "候选匹配", "确认决策", "异常校验", "状态权限"],
+    updated: "2026-07-13",
+    desc: "从产品和业务视角说明采购入库主流程，并重点展示确认入库与合单的判断逻辑。",
+    pages: ["业务范围", "操作链路", "确认入库", "合单决策"],
     actionLabel: "查看流程图",
     icon: "FLOW",
     iconTone: "flow-grad",
@@ -494,11 +494,11 @@ const prdProjects = [
     name: "字段说明 PRD",
     status: "迭代中",
     route: "field-spec",
-    version: "V0.3",
+    version: "V0.5",
     owner: "管理员",
-    updated: "2026-07-11",
-    desc: "按业务范围、字段来源、可编辑性、校验、接口和验收场景统一采购入库需求口径。",
-    pages: ["范围边界", "字段字典", "计算校验", "弹窗口径", "接口契约", "验收清单"],
+    updated: "2026-07-13",
+    desc: "用业务语言说明采购入库页面字段、操作规则、确认逻辑、异常提示和验收场景。",
+    pages: ["业务范围", "页面字段", "操作规则", "确认入库", "异常提示", "验收场景"],
     actionLabel: "查看字段说明",
     icon: "SPEC",
     iconTone: "spec-grad",
@@ -546,29 +546,28 @@ const purchaseFlowDiagrams = [
   M3["退入库 / 采购退货"] --> OUT`,
   },
   {
-    title: "2. 端到端业务链路（操作员视角）",
-    description: "从供应商送货材料进入系统，到来源定位、采购单筛选、明细核对、可合单检测和结果只读，完整说明当前页面主链路。",
-    reviewPoints: ["关联采购单默认限定同供应商、近 1 天，可切换时间范围", "可合单弹窗只展示候选列表、详情和合单入口", "提交成功后必须有持续可见的结果反馈"],
+    title: "2. 确认入库流程",
+    description: "操作员核对当前单据后发起确认；系统根据是否存在可合单入库单，分别进入独立提交或人工合单流程。",
+    reviewPoints: ["没有可合单记录时，核对商品数后确认当前单据", "存在可合单记录时，只展示候选列表、详情和合单入口", "是否合单始终由操作员决定，系统不会自动合并"],
     chart: String.raw`flowchart TD
-  A["供应商送货消息 / 图片 / PDF"] --> B["AI 识别采购入库单"]
-  B --> C["审核列表：待确认"]
-  C --> D["进入详情：定位来源"]
-  D --> E["核对供应商、时间和原始材料"]
-  E --> F["关联采购单：同供应商 + 默认近 1 天"]
-  F --> G["核对商品、实收数、识别入库数、单价和金额"]
-  G --> H{"操作员选择"}
-  H -->|"暂存"| I["保存草稿，不提交"]
-  H -->|"确认入库"| J["校验当前单 + 查询可合单候选"]
-  J --> K{"存在可合单入库单"}
-  K -->|"否"| L["确认弹窗：商品数 + 问号说明"]
-  L --> M["确认提交当前采购入库单"]
-  K -->|"是"| N["候选弹窗：入库单、时间、商品数"]
-  N -->|"查看详情"| O["查看候选明细后返回"]
-  O --> N
-  N -->|"合并到此单"| P["二次确认后合并"]
-  N -->|"关闭"| G
-  M --> Q["详情只读，展示提交结果"]
-  P --> Q`,
+  A["进入采购入库单详情"] --> B["核对供应商、采购单和商品明细"]
+  B --> C{"操作员选择"}
+  C -->|"暂存"| D["保存当前内容，稍后继续"]
+  C -->|"确认入库"| E{"信息是否完整"}
+  E -->|"否"| F["提示需要修改的内容，返回详情"]
+  E -->|"是"| G{"是否存在可合单入库单"}
+  G -->|"否"| H["展示采购单与当前单商品数"]
+  H --> I["操作员确认提交当前单据"]
+  G -->|"是"| J["展示可合单入库单列表"]
+  J -->|"查看详情"| K["核对候选单商品明细"]
+  K --> J
+  J -->|"关闭"| B
+  J -->|"合并到此单"| L["再次确认合并对象"]
+  L --> M{"目标单是否仍可合并"}
+  M -->|"否"| N["停止合单，提示刷新后重新选择"]
+  M -->|"是"| O["完成合单"]
+  I --> P["状态变为已确认入库，详情只读"]
+  O --> P`,
   },
   {
     title: "3. 采购单来源、可关联状态与分批关系",
@@ -1844,9 +1843,9 @@ function processFlowPage() {
     <div class="page flow-page">
       <div class="page-title flow-page-title">
         <div>
-          <span class="pill blue">V0.3 · 细化评审版</span>
+          <span class="pill blue">V0.4 · 产品评审版</span>
           <h2>采购单与采购入库单流程 PRD</h2>
-          <p>围绕正常送货与分批送货，统一页面链路、采购单筛选、可合单处理、金额编辑、状态权限及观麦系统协同边界。</p>
+          <p>围绕正常送货与分批送货，说明本期业务范围、操作员处理链路和确认入库决策。</p>
         </div>
         <button class="btn" data-route="projects">返回项目库</button>
       </div>
@@ -1863,14 +1862,14 @@ function processFlowPage() {
           <p>辅助说明收进问号；候选弹窗只保留详情和合并入口。</p>
         </article>
         <article class="flow-scope-card muted">
-          <span>外部协同</span>
-          <strong>观麦提供主数据、采购单、入库单和状态能力</strong>
-          <p>AI 录单负责识别与本地审核，外部提交和最终状态以观麦为准。</p>
+          <span>页面原则</span>
+          <strong>只展示操作员当前需要理解和处理的信息</strong>
+          <p>不展示匹配依据和技术状态，避免额外说明干扰确认决策。</p>
         </article>
       </section>
 
       <div class="flow-diagram-stack">
-        ${purchaseFlowDiagrams.map((diagram) => `
+        ${purchaseFlowDiagrams.slice(0, 2).map((diagram) => `
           <section class="flow-diagram-card">
             <div class="flow-diagram-head">
               <div>
@@ -1899,7 +1898,7 @@ function fieldSpecPage() {
         <div>
           <span class="pill blue">Markdown PRD</span>
           <h2>采购录入应用字段说明 PRD</h2>
-          <p>来源：purchase-field-spec.md，展示字段业务含义、计算逻辑、关联字段、数据口径与异常说明。</p>
+          <p>来源：purchase-field-spec.md，说明页面字段、业务规则、确认流程、异常提示和验收场景。</p>
         </div>
         <div class="field-spec-actions">
           <a class="btn" href="${FIELD_SPEC_MARKDOWN_FILE}" target="_blank" rel="noopener">查看 Markdown 原文</a>
