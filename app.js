@@ -469,7 +469,7 @@ const prdProjects = [
     name: "AI 录单系统",
     status: "迭代中",
     route: "home",
-    version: "V0.3",
+    version: "V0.7",
     owner: "管理员",
     updated: "2026-07-13",
     desc: "用可交互前端承载应用中心、销售订单录单、采购录单、全局能力与一期采购入库确认流程。",
@@ -477,7 +477,7 @@ const prdProjects = [
   },
   {
     id: "process-flow",
-    name: "采购流程图 PRD",
+    name: "采购录单流程图 PRD",
     status: "迭代中",
     route: "process-flow",
     version: "V0.7",
@@ -491,7 +491,7 @@ const prdProjects = [
   },
   {
     id: "field-spec",
-    name: "字段说明 PRD",
+    name: "采购录单字段说明 PRD",
     status: "迭代中",
     route: "field-spec",
     version: "V0.7",
@@ -598,6 +598,27 @@ const purchaseFlowDiagrams = [
 const markdownDocumentCache = new Map();
 
 let iterationHistory = [
+  {
+    version: "V0.22",
+    date: "2026-07-13",
+    title: "采购审核操作区与来源页签布局调整",
+    changes: [
+      "采购单审核将查询、重置收进筛选区，并将刷新、合单移至列表工具栏右侧",
+      "采购详情把群聊消息与定位来源合并为同一复合页签，定位来源作为附加操作展示",
+      "同步更新采购审核和采购详情页面批注与验收说明",
+    ],
+  },
+  {
+    version: "V0.21",
+    date: "2026-07-13",
+    title: "采购入库详情供应商与差异规则调整",
+    changes: [
+      "供应商改为 AI 明细自由文本输入，关联采购单区域只读同步，已关联变更增加解除确认",
+      "关联采购单卡片置顶，商品与关联摘要压缩为小字号单行信息条",
+      "新增入库时间、采购数量、差异与严格大于 10% 的偏差高亮",
+      "保存与确认提交文案统一，补单候选按供应商、入库时间范围和观麦待审核状态匹配",
+    ],
+  },
   {
     version: "V0.20",
     date: "2026-07-13",
@@ -1020,7 +1041,7 @@ let pageAnnotations = {
       "审核页复用 reviewPage(\"purchase-order\")，任务数据来自 purchaseOrderTasks。",
       "状态筛选使用 state.filters.purchaseOrderStatus，状态选项为全部状态、待处理、已完成、失败。",
       "列表表格由 purchaseOrderReviewTable 渲染，查看按钮通过 openPurchaseDetail 进入 purchase-detail，并按 PO- 前缀展示采购单详情形态。",
-      "顶部合单、刷新、重识别和删除当前为演示按钮，后续可接真实批量处理、刷新、重跑 AI 和删除接口。"
+      "筛选区右侧展示查询和重置，列表工具栏右侧展示刷新和合单；重识别和删除仍保留在行内操作。"
     ],
     "business": [
       "字段【状态筛选】用于按采购单处理进度过滤任务；待处理表示需要人工审核，已完成表示已确认并可回传观麦，失败表示识别异常。",
@@ -1028,6 +1049,7 @@ let pageAnnotations = {
       "字段【群聊】筛选采购单来源群，帮助操作员按责任群处理任务。",
       "字段【操作员】筛选当前处理人，用于团队分工和绩效统计。",
       "字段【供应商】筛选采购单供应商，便于同供应商集中审核。",
+      "筛选栏右侧依次展示【查询】【重置】；列表工具栏右侧依次展示【刷新】【合单】。",
       "按钮【合单】表示后续可把同供应商、同采购日期或同业务场景的采购单合并处理；当前为演示入口。",
       "按钮【刷新】重新加载列表数据，用于查看最新识别任务或审核结果。",
       "按钮【重置】清空筛选条件，恢复全部采购单任务。",
@@ -1044,6 +1066,7 @@ let pageAnnotations = {
       "规则【确认提交】采购单提交至观麦后进入待审核状态；只有尚未审核的采购单可供采购入库单关联。"
     ],
     "iteration": [
+      "2026-07-13 调整审核页操作分组：查询和重置归入筛选区，刷新和合单归入列表工具栏。",
       "2026-07-10 扩写采购单审核页筛选项、列表字段和操作按钮说明。",
       "V0.7 新增采购单审核入口。"
     ]
@@ -1054,19 +1077,20 @@ let pageAnnotations = {
     "dev": [
       "页面由 purchaseDetailPage 渲染，activeDetailId 控制当前任务；PO- 前缀展示采购单详情，PI- 前缀展示采购入库单详情。",
       "采购单关系区说明确认提交后传到观麦并等待审核。",
-      "采购入库单关系区默认按同供应商、近 1 天且观麦待审核筛选可关联采购单，并支持切换近 3 天、近 7 天和全部时间。",
+      "采购入库单关系区位于详情主区域最上方，供应商只读展示；唯一编辑入口是 AI 识别明细中的自由文本输入。",
       "采购入库单明细金额默认按实收数乘以单价计算，也允许操作员直接修改金额；手工修改后不再被实收数或单价变化自动覆盖。",
-      "已提交的采购入库单进入只读状态，隐藏删除、暂存、确认提交和新增行操作。",
-      "确认提交时检查观麦中是否存在已提交但尚未审核的可补单入库单。",
+      "采购数量和差异从关联采购单实时计算，差异比例严格大于 10% 时高亮提示。",
+      "已提交的采购入库单进入只读状态，隐藏删除、保存、确认提交和新增行操作。",
+      "确认提交时按供应商、入库时间范围和观麦待审核状态检查可补单入库单。",
       "补充到待审核入库单前进行二次确认；目标已审核时停止补单。"
     ],
     "business": [
-      "字段【基本信息/群聊消息/定位来源页签】用于在详情左侧切换基础资料、群聊内容和来源定位，默认展示基本信息。",
+      "字段【基本信息/群聊消息页签】用于在详情左侧切换基础资料与群聊内容；定位来源作为群聊消息页签中的附加操作，与群聊消息共用激活下划线。",
       "字段【原始文件】展示导入文件名称，可能是采购单 PDF、送货单图片或附件，是审核追溯材料。",
       "按钮【下载】用于查看或下载原始附件；当前为演示按钮，真实业务应校验文件权限。",
       "字段【原始消息】保留 AI 识别前的完整文本、采购日期或到货时间、供应商和补充说明，不能被后续修正字段覆盖。",
       "字段【详情标题状态】展示当前单据类型和状态；采购入库单已提交后详情只读，不允许重复提交。",
-      "字段【供应商】表示采购计划供应商或实际送货供应商，是采购单回传和采购入库单关联采购单的核心字段。",
+      "字段【供应商】在 AI 识别明细中以自由文本输入，在关联采购单卡片中只读同步；采购入库单基本信息不重复展示。",
       "字段【操作员】表示当前审核或处理人，用于责任归属、绩效统计和后续追溯。",
       "字段【来源群聊】表示原始业务消息来源，帮助排查供应商沟通和群绑定问题。",
       "字段【时间】表示当前采购入库单生成时间，用于展示和排序可补单记录。",
@@ -1074,13 +1098,16 @@ let pageAnnotations = {
       "字段【提交结果】在已提交详情顶部持续展示独立提交或补单结果，说明仍需前往观麦审核。",
       "字段【采购单同步说明】仅采购单详情展示，说明采购单提交观麦后等待审核，未审核期间可被采购入库单关联。",
       "字段【关联采购单-选择】仅采购入库单详情展示，最多单选一张观麦待审核采购单，也可不选；当前单据提交后不可修改。",
-      "字段【采购单时间】默认选择近 1 天，可切换近 3 天、近 7 天或全部时间；供应商固定为当前采购入库单供应商。",
+      "字段【采购单时间】默认选择近 1 天，可切换近 3 天、近 7 天或全部时间；供应商输入生效后重新筛选采购单。",
       "字段【关联采购单-采购单】展示可关联的观麦采购单号、来源和采购日期，用于判断是否为本次到货对应的采购计划。",
       "字段【关联采购单-采购单关联状态】展示该采购单下是否已有采购入库单关联或提交，用于识别正常送货和同采购单分批送货。",
       "字段【关联采购入库单提示】展示是否存在其它关联采购入库单；有记录时需要查看历史、暂存或待确认单据。",
       "按钮【查看关联采购入库单】打开当前采购单下除当前单据外的关联入库记录，用于查看历史批次，不会自动联动提交。",
       "按钮【采购单详情】打开观麦采购单明细，核对计划商品和采购数量。",
-      "字段【供应商下拉】用于人工修正单据供应商；采购入库单确认前必须保证供应商与关联采购单一致。",
+      "字段【供应商输入】位于 AI 识别明细，允许输入任意供应商名称；失焦或按 Enter 后同步到关联采购单区域。",
+      "规则【已关联供应商变更】新供应商与当前采购单不一致时先提示，确认后才解除原关联并应用修改。",
+      "字段【商品与关联摘要】以小字号单行信息条展示当前商品数、采购单号和关联状态。",
+      "字段【入库时间】由日期和起止时间组成，用于筛选时间落在范围内的可补单入库单。",
       "字段【采购备注/备注】采购单中表示采购计划备注，采购入库单中表示收货异常、复称、破损、短缺等入库备注。",
       "字段【当前采购入库单商品数】按当前单商品明细行统计，不代表数量单位合计。",
       "字段【关联采购单商品数】按关联采购单商品明细行统计，未关联时显示未关联。",
@@ -1088,7 +1115,9 @@ let pageAnnotations = {
       "字段【识别文本】表示 AI 从原始消息中切出的商品原文，作为核对商品名和数量的证据。",
       "字段【商品名称】表示人工确认后的商品名称，后续用于映射 SPU 和商品编码。",
       "字段【采购单数量/单位】采购单详情中表示计划采购数量和单位，是采购计划口径。",
+      "字段【采购数量】取关联采购单中对应商品的采购数量；未关联或未匹配到商品时留空。",
       "字段【实收数】表示当前批次操作员确认的实际收货数量。",
+      "字段【差异】等于采购数量减实收数；绝对差异比例严格大于 10% 时高亮，但不阻断提交。",
       "字段【识别入库数】表示 AI 从供应商送货内容识别出的到货数量文本。",
       "字段【单价】表示采购入库单价，异常或缺失价格需要人工确认，不能自动补齐未知价格。",
       "字段【金额】默认等于实收数乘以单价，并允许人工修改；正式业务以后端金额为准。",
@@ -1096,17 +1125,17 @@ let pageAnnotations = {
       "字段【商品编码】表示商品主数据编码，是后续入库、库存和财务核算的关联键。",
       "按钮【删除】删除选中或当前明细行；已提交采购入库单不可删除。",
       "按钮【保存】采购单详情中保存采购单明细修正，不代表已回传观麦。",
-      "按钮【暂存】采购入库单详情中保存当前审核结果，暂不提交观麦；不会被其它批次自动联动。",
+      "按钮【保存】采购入库单详情中保存当前审核结果，暂不提交观麦；不会被其它批次自动联动。",
       "按钮【确认提交】采购单详情中将采购单提交至观麦并等待审核。",
       "按钮【确认提交】采购入库单详情中检查可补单记录；关联采购单已审核或关闭时要求解除或更换。",
       "规则【确认前阻断】无供应商、空商品、无效实收数或采购单供应商不一致时禁止提交。",
       "规则【确认前警告】单价无效时展示警告，由操作员确认是否继续。",
       "规则【字段写回】操作员修改实收数和单价时更新默认金额；金额经人工修改后保留人工值，不再自动覆盖。",
       "规则【明细修正写回】商品名称和备注修改后立即写回当前任务；识别到货数保持只读证据。",
-      "规则【供应商变更】人工修改供应商后，系统自动解除供应商不一致的采购单关联。",
+      "规则【供应商变更】人工修改供应商后，若与当前采购单不一致则先提示；确认后才解除原关联并应用新供应商。",
       "按钮【新增商品】添加明细行，用于补录 AI 漏识别商品。",
       "按钮【+/-】在行内新增或删除商品行，用于快速修正明细。",
-      "弹窗【确认提交】只展示采购单商品数和当前采购入库单商品数；处理说明收进标题旁问号。",
+      "弹窗【确认提交】只展示采购单商品数和当前采购入库单商品数；底部不提供暂存按钮。",
       "弹窗【历史批次已完成】明确历史记录已经审核、不能补单，本次只独立提交当前批次。",
       "弹窗【存在可补单的入库单】展示观麦待审核入库单列表、商品数、详情和补单操作，底部保留确认提交。",
       "按钮【查看详情】打开候选采购入库单只读商品详情，返回后继续当前确认操作。",
@@ -1118,6 +1147,9 @@ let pageAnnotations = {
       "按钮【放弃确认/取消】关闭确认弹窗，不改变当前单据状态。"
     ],
     "iteration": [
+      "2026-07-13 将群聊消息与定位来源合并为复合页签，定位来源改为群聊消息的附加操作。",
+      "2026-07-13 供应商改为 AI 明细自由文本输入，关联区域只读同步；已关联变更增加确认，摘要卡片压缩为单行。",
+      "2026-07-13 关联采购单置顶并改为被动同步供应商；新增入库时间、采购数量、差异与 10% 偏差高亮，补单按时间范围匹配。",
       "2026-07-13 调整详情页签和字段名称，金额支持人工修改，确认说明改为问号悬浮提示。",
       "2026-07-13 简化可合单提示弹窗，删除核对依据和辅助说明；关联采购单增加供应商与时间范围筛选。",
       "2026-07-11 完成真实操作流程走查，增加三步引导、合并二次确认、持久结果反馈和提交二次校验。",
@@ -3045,10 +3077,10 @@ function reviewPage(type) {
     <div class="page wide-page">
       <div class="page-title">
         <h2>${title}</h2>
-        ${isPurchaseInbound ? "" : `<div>
+        ${isSales ? `<div>
           <button class="btn" data-toast="已进入合单选择模式">合单</button>
           <button class="btn" data-toast="列表已刷新">刷新</button>
-        </div>`}
+        </div>` : ""}
       </div>
       <div class="alert">${alertText}</div>
       <section class="filters">
@@ -3058,15 +3090,15 @@ function reviewPage(type) {
         <label class="field compact"><span>${dateLabel}</span><input value="2026-07-01"></label>
         ${isSales ? partyFilter : purchaseFilters}
         ${isSales ? `<label class="field compact"><span>${ownerLabel}</span><select><option>全部</option><option>李娜</option><option>赵倩</option><option>周诚</option></select></label>` : ""}
-        ${isPurchaseInbound
+        ${!isSales
           ? `<div class="review-filter-actions"><button class="btn primary" data-toast="已按当前条件查询">查询</button><button class="btn" data-reset-filter="${type}">重置</button></div>`
           : `<button class="btn" data-reset-filter="${type}">重置</button>`}
       </section>
       <section class="table-card">
-        ${isPurchaseInbound ? `
+        ${!isSales ? `
           <div class="review-list-toolbar">
             <button class="btn" data-toast="列表已刷新">刷新</button>
-            <button class="btn" data-toast="请选择两张或多张待审核采购入库单进行合单">合单</button>
+            <button class="btn" data-toast="${isPurchaseOrder ? "请选择两张或多张待处理采购单进行合单" : "请选择两张或多张待审核采购入库单进行合单"}">合单</button>
           </div>
         ` : ""}
         ${showGroupTab ? `
@@ -3143,6 +3175,39 @@ function getPurchaseAmountBaseQty(purchaseQty, receivedQty) {
 
 function formatInboundAmount(purchaseQty, receivedQty, price) {
   return formatPurchaseAmount(getPurchaseAmountBaseQty(purchaseQty, receivedQty), price);
+}
+
+function formatQuantity(value) {
+  const quantity = Number(value);
+  if (!Number.isFinite(quantity)) return "";
+  return Number.isInteger(quantity) ? String(quantity) : quantity.toFixed(2).replace(/\.?0+$/, "");
+}
+
+function getInboundVariance(purchaseQty, receivedQty) {
+  if (purchaseQty === null || purchaseQty === undefined || purchaseQty === "") return null;
+  const purchase = Number(purchaseQty);
+  const received = Number(receivedQty);
+  if (!Number.isFinite(purchase) || !Number.isFinite(received)) return null;
+  const difference = purchase - received;
+  const ratio = purchase > 0 ? Math.abs(difference) / purchase : 0;
+  return { difference, ratio, warning: purchase > 0 && ratio > 0.1 };
+}
+
+function normalizeProductName(value) {
+  return String(value || "").trim().toLocaleLowerCase("zh-CN");
+}
+
+function getLinkedPurchaseOrderItem(task, detailItem) {
+  const order = getLinkedPurchaseOrder(task);
+  if (!order || !detailItem) return null;
+  const candidateNames = [detailItem.name, detailItem.spu].map(normalizeProductName).filter(Boolean);
+  return (order.items || []).find((item) => candidateNames.includes(normalizeProductName(item.name)) && (!detailItem.unit || !item.unit || detailItem.unit === item.unit)) || null;
+}
+
+function getInboundItemPurchaseQty(task, detailItem) {
+  const orderItem = getLinkedPurchaseOrderItem(task, detailItem);
+  const quantity = Number(orderItem?.qty);
+  return Number.isFinite(quantity) ? quantity : null;
 }
 
 function isGuanmaiOrderLinkable(order) {
@@ -3292,14 +3357,58 @@ function getInboundCreatedAt(record) {
   return record?.createdAt || "-";
 }
 
+function getInboundTimeWindow(task) {
+  const createdDate = String(task?.createdAt || "").slice(0, 10);
+  return {
+    date: task?.inboundDate || createdDate || "2026-07-13",
+    startTime: task?.inboundStartTime || "06:00",
+    endTime: task?.inboundEndTime || "20:30",
+  };
+}
+
+function parseInboundDateTime(date, time) {
+  const match = `${date || ""} ${time || ""}`.match(/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})(?::(\d{2}))?$/);
+  if (!match) return NaN;
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const hour = Number(match[4]);
+  const minute = Number(match[5]);
+  const second = Number(match[6] || 0);
+  const value = new Date(year, month - 1, day, hour, minute, second, 0);
+  if (value.getFullYear() !== year || value.getMonth() !== month - 1 || value.getDate() !== day || value.getHours() !== hour || value.getMinutes() !== minute || value.getSeconds() !== second) return NaN;
+  return value.getTime();
+}
+
+function getInboundTimeWindowRange(task) {
+  const window = getInboundTimeWindow(task);
+  const start = parseInboundDateTime(window.date, window.startTime);
+  let end = parseInboundDateTime(window.date, window.endTime);
+  if (Number.isFinite(end) && /^\d{2}:\d{2}$/.test(window.endTime)) end += 59999;
+  if (Number.isFinite(start) && Number.isFinite(end) && end < start) end += 86400000;
+  return { ...window, start, end };
+}
+
+function isInboundRecordInTimeWindow(task, record) {
+  const range = getInboundTimeWindowRange(task);
+  const createdAt = String(record?.createdAt || "").replace("T", " ");
+  const date = createdAt.slice(0, 10);
+  const time = createdAt.slice(11, 19);
+  const recordTime = parseInboundDateTime(date, time);
+  return Number.isFinite(range.start) && Number.isFinite(range.end) && Number.isFinite(recordTime) && recordTime >= range.start && recordTime <= range.end;
+}
+
+function formatInboundTimeWindow(task) {
+  const window = getInboundTimeWindow(task);
+  return `${window.date} ${window.startTime}—${window.endTime}`;
+}
+
 function getInboundMergeMatch(task, record) {
   if (!task || !record || task.id === record.id) return "";
   if (task.supplier !== record.supplier) return "";
+  if (!isInboundRecordInTimeWindow(task, record)) return "";
   if (!isInboundConfirmed(record) || record.gmSyncStatus !== "同步成功" || record.gmAuditStatus !== "待审核" || !record.gmInboundNo) return "";
-  const currentOrderId = getLinkedPurchaseOrderIds(task)[0] || "";
-  const recordOrderId = getLinkedPurchaseOrderIds(record)[0] || "";
-  if (currentOrderId && recordOrderId && currentOrderId !== recordOrderId) return "";
-  return currentOrderId && recordOrderId ? "同采购单" : "同供应商";
+  return "同供应商、入库时间范围内、观麦待审核";
 }
 
 function getInboundMergeCandidates(task) {
@@ -3308,10 +3417,7 @@ function getInboundMergeCandidates(task) {
     .filter((candidate) => candidate.matchType);
   const candidatesByGuanmaiNo = new Map();
   candidates.forEach((candidate) => {
-    const current = candidatesByGuanmaiNo.get(candidate.record.gmInboundNo);
-    if (!current || (current.matchType !== "同采购单" && candidate.matchType === "同采购单")) {
-      candidatesByGuanmaiNo.set(candidate.record.gmInboundNo, candidate);
-    }
+    if (!candidatesByGuanmaiNo.has(candidate.record.gmInboundNo)) candidatesByGuanmaiNo.set(candidate.record.gmInboundNo, candidate);
   });
   return [...candidatesByGuanmaiNo.values()].sort((a, b) => getInboundCreatedAt(b.record).localeCompare(getInboundCreatedAt(a.record)));
 }
@@ -3388,13 +3494,16 @@ function validateInboundBeforeConfirm(task) {
   const warnings = [];
   const items = getPurchaseDetailItems(task);
   const order = getLinkedPurchaseOrder(task);
-  if (!task?.supplier?.trim()) errors.push("请先确认供应商");
+  const inboundTimeRange = getInboundTimeWindowRange(task);
+  if (!task?.supplier?.trim()) errors.push("请先填写供应商");
+  if (!Number.isFinite(inboundTimeRange.start) || !Number.isFinite(inboundTimeRange.end)) errors.push("请填写完整、有效的入库时间范围");
   if (!items.length) errors.push("当前采购入库单没有可提交的商品");
   if (items.some((item) => !item.name?.trim())) errors.push("存在未填写商品名称的明细");
   if (items.some((item) => !item.unit?.trim())) errors.push("存在未填写单位的商品明细");
   if (items.some((item) => !Number.isFinite(Number(item.receivedQty)) || Number(item.receivedQty) <= 0)) errors.push("实收数量必须大于 0");
   if (order && order.supplier !== task.supplier) errors.push("采购单供应商与当前采购入库单不一致");
   if (items.some((item) => !Number.isFinite(Number(item.price)) || Number(item.price) <= 0)) warnings.push("存在未填写有效单价的商品，请确认是否继续");
+  if (order && items.some((item) => getInboundVariance(getInboundItemPurchaseQty(task, item), item.receivedQty)?.warning)) warnings.push("存在采购数量与实收数量差异超过 10% 的商品，请确认后再提交");
   return { errors: [...new Set(errors)], warnings: [...new Set(warnings)] };
 }
 
@@ -3577,9 +3686,15 @@ function purchaseAssociationSection(task) {
   const selectedOrderIds = getLinkedPurchaseOrderIds(task);
   const readonlyAssociation = isInboundConfirmed(task);
   const purchaseOrderRange = getPurchaseOrderRange(task.id);
+  const supplierName = String(task.supplier || "").trim();
   const eligibleOrders = guanmaiPurchaseOrders.filter((order) => readonlyAssociation
     ? selectedOrderIds.includes(order.id)
-    : (order.supplier === task.supplier && isGuanmaiOrderLinkable(order) && isPurchaseOrderInRange(order, task.supplier, purchaseOrderRange)) || selectedOrderIds.includes(order.id));
+    : (supplierName && order.supplier === supplierName && isGuanmaiOrderLinkable(order) && isPurchaseOrderInRange(order, supplierName, purchaseOrderRange)) || selectedOrderIds.includes(order.id));
+  const emptyAssociationText = readonlyAssociation
+    ? "本次提交未关联采购单。"
+    : supplierName
+      ? `未找到供应商“${escapeHTML(supplierName)}”在当前时间范围内待审核的可关联采购单。`
+      : "请先在“AI 识别采购入库单明细”中填写供应商。";
   return `
     <section class="purchase-group po-association-card">
       <div class="purchase-group-head">
@@ -3591,17 +3706,20 @@ function purchaseAssociationSection(task) {
             <span class="inline-help-content" role="tooltip">${readonlyAssociation ? "当前为已确认记录，下方仅用于查看采购单关联和历史批次信息。" : "系统默认展示当前供应商近 1 天的采购单。你可以调整时间范围，查找该供应商其它时间的采购单。"}</span>
           </span>
         </div>
-        ${readonlyAssociation ? "" : `
-          <div class="po-association-filter">
-            <span>供应商：<strong>${task.supplier || "-"}</strong></span>
+        <div class="po-association-filter">
+          <span class="po-passive-supplier" title="供应商由 AI 识别采购入库单明细同步，不可在此修改">
+            <span>供应商</span>
+            <strong>${supplierName ? escapeHTML(supplierName) : "未填写"}</strong>
+          </span>
+          ${readonlyAssociation ? "" : `
             <label>
               <span>采购单时间</span>
               <select data-po-date-range data-inbound-id="${task.id}">
                 ${purchaseOrderRangeOptions.map((option) => `<option value="${option.value}" ${purchaseOrderRange === option.value ? "selected" : ""}>${option.label}</option>`).join("")}
               </select>
             </label>
-          </div>
-        `}
+          `}
+        </div>
       </div>
       <div class="purchase-table-wrap po-link-table-wrap">
         <table class="purchase-group-board-table po-link-table">
@@ -3634,12 +3752,57 @@ function purchaseAssociationSection(task) {
                   <td><button class="text-btn" data-view-gm-po="${order.id}">详情</button></td>
                 </tr>
               `;
-            }).join("") : `<tr><td colspan="5"><div class="empty-note">${readonlyAssociation ? "本次提交未关联采购单。" : "当前时间范围内暂无待审核的可关联采购单，请调整采购单时间。"}</div></td></tr>`}
+            }).join("") : `<tr><td colspan="5"><div class="empty-note">${emptyAssociationText}</div></td></tr>`}
           </tbody>
         </table>
       </div>
     </section>
   `;
+}
+
+function applyInboundSupplierChange(task, nextSupplier) {
+  if (!task) return [];
+  const supplierName = String(nextSupplier || "").trim();
+  const previousOrders = getLinkedPurchaseOrders(task);
+  const invalidOrders = previousOrders.filter((order) => order.supplier !== supplierName);
+  task.supplier = supplierName;
+  invalidOrders.forEach((order) => removeOrderInboundLink(order, task.id));
+  setLinkedPurchaseOrderIds(task, previousOrders.filter((order) => order.supplier === supplierName).map((order) => order.id));
+  return invalidOrders;
+}
+
+function inboundSupplierChangeConfirmModal(task, nextSupplier, invalidOrders) {
+  const supplierChangeText = nextSupplier ? `改为“${escapeHTML(nextSupplier)}”` : "清空供应商";
+  return `
+    <div class="association-modal supplier-change-confirm-modal">
+      <div class="decision-banner warning">
+        <strong>修改供应商将解除当前采购单关联</strong>
+        <p>当前已关联 ${invalidOrders.map((order) => order.id).join("、")}。确认${supplierChangeText}后，系统会解除原关联并按新供应商刷新候选采购单。</p>
+      </div>
+      <div class="decision-actions">
+        <button class="btn" data-close-modal>取消</button>
+        <button class="btn primary" data-confirm-inbound-supplier-change data-inbound-id="${task.id}" data-new-supplier="${escapeAttribute(nextSupplier)}">确认修改</button>
+      </div>
+    </div>
+  `;
+}
+
+function commitInboundSupplierInput(input) {
+  const task = getInboundTaskById(input?.dataset.inboundSupplierInput);
+  if (!task) return;
+  const nextSupplier = String(input.value || "").trim();
+  const currentSupplier = String(task.supplier || "").trim();
+  input.value = nextSupplier;
+  if (nextSupplier === currentSupplier) return;
+  const invalidOrders = getLinkedPurchaseOrders(task).filter((order) => order.supplier !== nextSupplier);
+  if (invalidOrders.length) {
+    input.value = currentSupplier;
+    openModal("确认修改供应商", inboundSupplierChangeConfirmModal(task, nextSupplier, invalidOrders), { wide: true, hideFooter: true });
+    return;
+  }
+  applyInboundSupplierChange(task, nextSupplier);
+  toast(nextSupplier ? "供应商已更新，关联采购单列表已刷新" : "供应商已清空，请重新填写");
+  setTimeout(() => renderContent(), 0);
 }
 
 function purchaseDetailPage() {
@@ -3661,10 +3824,11 @@ function purchaseDetailPage() {
   const remarkLabel = isPurchaseOrder ? "采购备注" : "备注";
   const detailItems = getPurchaseDetailItems(task);
   const linkedOrder = !isPurchaseOrder ? getLinkedPurchaseOrder(task) : null;
+  const inboundTimeWindow = !isPurchaseOrder ? getInboundTimeWindow(task) : null;
   const detailLineActions = readonlyDetail ? "" : `
     <div class="detail-line-actions">
       ${isPurchaseOrder ? `<button class="btn danger" data-toast="已删除选中的${detailKindLabel}商品">删除</button>` : ""}
-      <button class="btn" ${isPurchaseOrder ? `data-toast="${detailKindLabel}明细已保存"` : `data-save-inbound-draft="${task.id}"`}>${isPurchaseOrder ? "保存" : "暂存"}</button>
+      <button class="btn" ${isPurchaseOrder ? `data-toast="${detailKindLabel}明细已保存"` : `data-save-inbound-draft="${task.id}"`}>保存</button>
       <button class="btn primary" ${isPurchaseOrder ? `data-toast="${confirmToast}"` : `data-confirm-inbound="${task.id}"`}>${confirmText}</button>
     </div>
   `;
@@ -3685,10 +3849,12 @@ function purchaseDetailPage() {
   return `
     <div class="purchase-detail-page">
       <aside class="detail-source">
-        <div class="detail-tabs">
-          <button class="active">基本信息</button>
-          <button>群聊消息</button>
-          <button>定位来源</button>
+        <div class="detail-tabs" role="tablist" aria-label="详情来源信息">
+          <button class="detail-basic-tab" role="tab" aria-selected="false">基本信息</button>
+          <div class="detail-chat-tab active">
+            <button class="detail-chat-label" role="tab" aria-selected="true">群聊消息</button>
+            <button class="detail-locate-source" data-toast="已定位到本次任务的原始群聊消息">定位来源</button>
+          </div>
         </div>
         <div class="detail-source-section">
           <div class="detail-section-title"><span></span><strong>原始文件</strong><span></span></div>
@@ -3712,11 +3878,12 @@ ${isPurchaseOrder ? "价格缺失时留待操作员确认，不自动关联其�
       </aside>
 
       <main class="detail-main">
+        ${!isPurchaseOrder ? relationSection : ""}
         <div class="detail-header">
           <div>
             <h2>${detailTitle} ${statusTag(isPurchaseOrder ? task.status : getInboundDisplayStatus(task))}</h2>
             <div class="detail-meta">
-              <span>供应商：${task.supplier}</span>
+              ${isPurchaseOrder ? `<span>供应商：${task.supplier}</span>` : ""}
               <span>操作员：${taskOperator}</span>
               <span>来源群聊：${taskGroup}</span>
               ${!isPurchaseOrder ? `<span>时间：${getInboundCreatedAt(task)}</span>` : ""}
@@ -3726,7 +3893,7 @@ ${isPurchaseOrder ? "价格缺失时留待操作员确认，不自动关联其�
         </div>
 
         ${inboundResult}
-        ${relationSection}
+        ${isPurchaseOrder ? relationSection : ""}
 
         <section class="purchase-group">
           <div class="purchase-group-head">
@@ -3742,13 +3909,30 @@ ${isPurchaseOrder ? "价格缺失时留待操作员确认，不自动关联其�
             ${detailLineActions}
           </div>
           <div class="purchase-form-row">
-            <label>供应商 <select${!isPurchaseOrder ? ` data-inbound-supplier="${task.id}"` : ""}${disabledAttr}>${supplierOptions.map((name) => `<option>${name}</option>`).join("")}</select></label>
+            ${isPurchaseOrder
+              ? `<label>供应商 <select>${supplierOptions.map((name) => `<option>${name}</option>`).join("")}</select></label>`
+              : `<label class="inbound-supplier-field">
+                  <span>供应商</span>
+                  <input class="inbound-supplier-input" type="text" value="${escapeAttribute(task.supplier || "")}" data-inbound-supplier-input="${task.id}" placeholder="请输入供应商名称" autocomplete="off"${disabledAttr}>
+                </label>
+                <label class="inbound-time-field">
+                  <span>入库时间</span>
+                  <span class="inbound-time-controls">
+                    <input class="inbound-date-input" type="date" value="${inboundTimeWindow.date}" data-inbound-date="${task.id}" aria-label="入库日期"${disabledAttr}>
+                    <span class="inbound-time-range">
+                      <input type="time" value="${inboundTimeWindow.startTime}" data-inbound-start-time="${task.id}" aria-label="入库开始时间"${disabledAttr}>
+                      <span aria-hidden="true">→</span>
+                      <input type="time" value="${inboundTimeWindow.endTime}" data-inbound-end-time="${task.id}" aria-label="入库结束时间"${disabledAttr}>
+                    </span>
+                  </span>
+                </label>`}
             <label class="wide">${remarkLabel} <input value="${isPurchaseOrder ? "价格待确认" : "复称，异常短缺请备注"}"${disabledAttr}></label>
           </div>
           ${!isPurchaseOrder ? `
             <div class="inbound-summary-row product-count-summary">
-              <span>当前采购入库单商品数 <b>${getInboundProductCount(task)} 个商品</b></span>
-              <span>${linkedOrder ? `关联采购单 ${linkedOrder.id}` : "关联采购单"} <b>${linkedOrder ? `${getPurchaseOrderProductCount(linkedOrder)} 个商品` : "未关联"}</b></span>
+              <span><em>当前采购入库单商品数</em><b>${getInboundProductCount(task)} 个商品</b></span>
+              <i aria-hidden="true"></i>
+              <span><em>关联采购单</em><b class="${linkedOrder ? "linked" : "unlinked"}">${linkedOrder ? `${linkedOrder.id} · ${getPurchaseOrderProductCount(linkedOrder)} 个商品` : "未关联"}</b></span>
             </div>
           ` : ""}
           <div class="purchase-table-wrap">
@@ -3756,18 +3940,25 @@ ${isPurchaseOrder ? "价格缺失时留待操作员确认，不自动关联其�
               <thead>
                 ${isPurchaseOrder
                   ? `<tr><th>序号</th><th>识别文本</th><th>商品名称</th><th>${qtyLabel}</th><th>${remarkLabel}</th><th>SPU 名称</th><th>商品编码</th>${operationHeader}</tr>`
-                  : `<tr><th>序号</th><th>识别文本</th><th>商品名称</th><th>实收数</th><th>${qtyLabel}</th><th>${priceLabel}</th><th>${amountLabel}</th><th>${remarkLabel}</th><th>SPU 名称</th><th>商品编码</th>${operationHeader}</tr>`}
+                  : `<tr><th>序号</th><th>识别文本</th><th>商品名称</th><th>采购数量</th><th>实收数</th><th>差异</th><th>${qtyLabel}</th><th>${priceLabel}</th><th>${amountLabel}</th><th>${remarkLabel}</th><th>SPU 名称</th><th>商品编码</th>${operationHeader}</tr>`}
               </thead>
               <tbody>
                 ${detailItems.map((item, index) => {
-                  const amount = formatInboundAmount(item.receivedQty, item.receivedQty, item.price);
+                  const purchaseQty = !isPurchaseOrder ? getInboundItemPurchaseQty(task, item) : null;
+                  const variance = getInboundVariance(purchaseQty, item.receivedQty);
+                  const amount = formatInboundAmount(purchaseQty ?? item.receivedQty, item.receivedQty, item.price);
+                  const purchaseQtyDisplay = purchaseQty === null ? "" : `${formatQuantity(purchaseQty)} ${item.unit}`;
+                  const differenceDisplay = variance === null ? "" : `${formatQuantity(variance.difference)} ${item.unit}`;
+                  const warningLabel = variance?.warning ? `<span class="variance-warning-label">偏差 ${(variance.ratio * 100).toFixed(1)}%</span>` : "";
                   return isPurchaseOrder
                     ? `<tr><td><b>${index + 1}</b></td><td>${item.raw}</td><td><input value="${item.name}"${disabledAttr}></td><td><input class="qty-input" value="${item.qty}"${disabledAttr}></td><td><input class="remark-input" value="${item.remark || "按采购计划确认"}"${disabledAttr}></td><td>${item.spu}</td><td><code>${item.code}</code></td>${readonlyDetail ? "" : `<td class="detail-row-actions">${rowActions}</td>`}</tr>`
-                    : `<tr data-inbound-detail-row data-inbound-id="${task.id}" data-item-index="${index}">
+                    : `<tr class="${variance?.warning ? "inbound-variance-warning" : ""}" data-inbound-detail-row data-inbound-id="${task.id}" data-item-index="${index}" data-purchase-qty="${purchaseQty ?? ""}">
                         <td><b>${index + 1}</b></td>
                         <td>${item.raw}</td>
                         <td><input data-inbound-name-input value="${item.name}"${disabledAttr}></td>
-                        <td><input class="qty-input received-input" data-received-input value="${item.receivedQty}"${disabledAttr}> ${item.unit}</td>
+                        <td class="purchase-qty-cell" data-purchase-qty-cell>${purchaseQtyDisplay}</td>
+                        <td class="received-qty-cell"><input class="qty-input received-input" data-received-input value="${item.receivedQty}"${disabledAttr}> ${item.unit}</td>
+                        <td class="difference-cell" data-difference-cell>${differenceDisplay}${warningLabel}</td>
                         <td><span class="recognized-qty">${item.qty}</span></td>
                         <td>¥ <input class="price-input" data-price-input value="${item.price}"${disabledAttr}></td>
                         <td>¥ <input class="amount-input" data-amount-input value="${item.amount ?? amount}"${disabledAttr}></td>
@@ -4546,6 +4737,37 @@ function quotaSettings() {
 }
 
 function bindPurchaseAssociationActions(root = document) {
+  root.querySelectorAll("[data-inbound-supplier-input]").forEach((input) => {
+    input.onblur = () => commitInboundSupplierInput(input);
+    input.onkeydown = (event) => {
+      if (event.key !== "Enter") return;
+      event.preventDefault();
+      input.blur();
+    };
+  });
+
+  root.querySelectorAll("[data-confirm-inbound-supplier-change]").forEach((button) => {
+    button.onclick = () => {
+      const task = getInboundTaskById(button.dataset.inboundId);
+      if (!task) return;
+      const invalidOrders = applyInboundSupplierChange(task, button.dataset.newSupplier || "");
+      closeModal();
+      toast(invalidOrders.length ? "供应商已更新，原采购单关联已解除" : "供应商已更新");
+      renderContent();
+    };
+  });
+
+  root.querySelectorAll("[data-inbound-date], [data-inbound-start-time], [data-inbound-end-time]").forEach((input) => {
+    input.onchange = () => {
+      const inboundId = input.dataset.inboundDate || input.dataset.inboundStartTime || input.dataset.inboundEndTime;
+      const task = getInboundTaskById(inboundId);
+      if (!task) return;
+      if (input.dataset.inboundDate) task.inboundDate = input.value;
+      if (input.dataset.inboundStartTime) task.inboundStartTime = input.value;
+      if (input.dataset.inboundEndTime) task.inboundEndTime = input.value;
+    };
+  });
+
   root.querySelectorAll("[data-po-date-range]").forEach((select) => {
     select.onchange = () => {
       state.purchaseOrderRangeByInbound[select.dataset.inboundId] = select.value;
@@ -4561,6 +4783,11 @@ function bindPurchaseAssociationActions(root = document) {
       const alreadyLinked = getLinkedPurchaseOrderIds(task).includes(order.id);
       if (!alreadyLinked && !isGuanmaiOrderLinkable(order)) {
         toast("该采购单已审核或不可用，只有观麦待审核采购单允许关联");
+        return;
+      }
+      if (!alreadyLinked && order.supplier !== task.supplier) {
+        toast("供应商已发生变化，采购单列表将重新刷新");
+        renderContent();
         return;
       }
       togglePurchaseOrderLink(task, order);
@@ -4601,7 +4828,7 @@ function bindPurchaseAssociationActions(root = document) {
       else {
         task.status = "暂存";
       }
-      toast("当前采购入库单已暂存");
+      toast("当前采购入库单已保存");
       renderContent();
     };
   });
@@ -4616,7 +4843,7 @@ function bindPurchaseAssociationActions(root = document) {
       if (!task) return;
       task.status = "暂存";
       closeModal();
-      toast("当前采购入库单已暂存");
+      toast("当前采购入库单已保存");
       renderContent();
     };
   });
@@ -4684,7 +4911,7 @@ function handleAssociationSubmit(button) {
   if (button.dataset.submitAssociation === "draft") {
     saveInboundDraftForOrders(task, orders);
     closeModal();
-    toast("当前采购入库单已暂存");
+    toast("当前采购入库单已保存");
     renderContent();
     return;
   }
@@ -4748,7 +4975,7 @@ function inboundSingleConfirmModal(task, context) {
     ? "系统已找到历史入库记录，但这些记录已经审核，不能再补单。本次只会提交当前批次。"
     : order
       ? "当前不存在可补单的入库单，请核对商品数后确认提交。"
-      : "当前未关联采购单，也不存在可补单的入库单，可以直接提交或暂存。";
+      : "当前未关联采购单，也不存在可补单的入库单，可以直接确认提交。";
   const actionHelp = hasCompletedHistory
     ? "确认后会新建当前批次，不会修改或重复提交已完成历史记录。"
     : "商品数仅用于快速核对，不代表系统已经完成逐商品差异判断。";
@@ -4771,7 +4998,6 @@ function inboundSingleConfirmModal(task, context) {
           ${confirmationHelp(actionHelp, "处理范围说明")}
         </div>
         <button class="btn" data-close-modal>取消</button>
-        <button class="btn" data-submit-association="draft" data-inbound-id="${task.id}">暂存</button>
         <button class="btn primary" data-submit-association="new" data-inbound-id="${task.id}">确认提交</button>
       </div>
     </div>
@@ -4800,7 +5026,6 @@ function inboundAssociationImpactModal(task, context) {
       </section>
       <div class="decision-actions">
         <button class="btn" data-close-modal>取消</button>
-        <button class="btn" data-submit-association="draft" data-inbound-id="${task.id}">暂存</button>
         <button class="btn primary" data-submit-association="new" data-inbound-id="${task.id}">确认提交</button>
       </div>
     </div>
@@ -4828,7 +5053,7 @@ function inboundMergeFinalConfirmModal(task, target) {
         <strong>提交前最后核对</strong>
         <ol>
           <li>供应商：${task.supplier || "-"}</li>
-          <li>当前单时间：${getInboundCreatedAt(task)}</li>
+          <li>本次入库时间范围：${formatInboundTimeWindow(task)}</li>
           <li>目标单时间：${getInboundCreatedAt(target)}</li>
           <li>当前单与目标单商品数分别按各自明细行统计，不代表系统已完成逐商品差异判断。</li>
         </ol>
@@ -4836,7 +5061,7 @@ function inboundMergeFinalConfirmModal(task, target) {
       <div class="decision-actions">
         <div class="decision-title-with-help">
           <strong>仍不确定是否应补单？</strong>
-          ${confirmationHelp("返回上一页继续查看候选详情，也可以在候选页选择独立确认提交或暂存。", "补单操作说明")}
+          ${confirmationHelp("返回上一页继续查看候选详情，也可以在候选页选择独立确认提交。", "补单操作说明")}
         </div>
         <button class="btn" data-return-inbound-confirm="${task.id}">返回核对</button>
         <button class="btn primary" data-submit-association="merge" data-inbound-id="${task.id}" data-merge-target="${target.id}">确认补单</button>
@@ -4875,7 +5100,7 @@ function inboundCandidateDetailModal(inbound, currentTask) {
         </div>
       </section>
       <div class="decision-actions">
-        <div><strong>核对完成后返回</strong><span>返回后仍可选择补充到此单、确认提交或暂存。</span></div>
+        <div><strong>核对完成后返回</strong><span>返回后仍可选择补充到此单或独立确认提交。</span></div>
         <button class="btn primary" data-return-inbound-confirm="${currentTask.id}">返回补单选择</button>
       </div>
     </div>
@@ -4990,7 +5215,8 @@ function wirePageInteractions() {
     document.querySelectorAll("[data-inbound-detail-row]").forEach((row) => {
       const receivedQty = Number(row.querySelector("[data-received-input]")?.value) || 0;
       const price = Number(row.querySelector("[data-price-input]")?.value) || 0;
-      const calculatedAmount = formatInboundAmount(receivedQty, receivedQty, price);
+      const purchaseQty = row.dataset.purchaseQty === "" ? null : Number(row.dataset.purchaseQty);
+      const calculatedAmount = formatInboundAmount(purchaseQty ?? receivedQty, receivedQty, price);
       const inboundTask = getInboundTaskById(row.dataset.inboundId);
       const item = inboundTask?.detailItems?.[Number(row.dataset.itemIndex)];
       if (item) {
@@ -5000,6 +5226,14 @@ function wirePageInteractions() {
       }
       const amountInput = row.querySelector("[data-amount-input]");
       if (amountInput && !item?.amountManuallyEdited) amountInput.value = calculatedAmount;
+      const variance = getInboundVariance(purchaseQty, receivedQty);
+      const differenceCell = row.querySelector("[data-difference-cell]");
+      if (differenceCell) {
+        differenceCell.innerHTML = variance
+          ? `${formatQuantity(variance.difference)} ${item?.unit || ""}${variance.warning ? `<span class="variance-warning-label">偏差 ${(variance.ratio * 100).toFixed(1)}%</span>` : ""}`
+          : "";
+      }
+      row.classList.toggle("inbound-variance-warning", Boolean(variance?.warning));
     });
   };
   document.querySelectorAll("[data-received-input], [data-price-input]").forEach((input) => {
@@ -5031,23 +5265,6 @@ function wirePageInteractions() {
       const task = row ? getInboundTaskById(row.dataset.inboundId) : null;
       const item = task?.detailItems?.[Number(row?.dataset.itemIndex)];
       if (item) item.remark = input.value;
-    };
-  });
-  document.querySelectorAll("[data-inbound-supplier]").forEach((select) => {
-    select.onchange = () => {
-      const task = getInboundTaskById(select.dataset.inboundSupplier);
-      if (!task) return;
-      const previousOrders = getLinkedPurchaseOrders(task);
-      task.supplier = select.value;
-      const invalidOrders = previousOrders.filter((order) => order.supplier !== task.supplier);
-      if (invalidOrders.length) {
-        invalidOrders.forEach((order) => removeOrderInboundLink(order, task.id));
-        setLinkedPurchaseOrderIds(task, previousOrders.filter((order) => order.supplier === task.supplier).map((order) => order.id));
-        toast("供应商已更新，原采购单因供应商不一致已解除关联");
-      } else {
-        toast("供应商已更新");
-      }
-      renderContent();
     };
   });
   document.querySelectorAll("[data-reset-filter]").forEach((button) => {
