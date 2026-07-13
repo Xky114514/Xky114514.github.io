@@ -599,6 +599,16 @@ const markdownDocumentCache = new Map();
 
 let iterationHistory = [
   {
+    version: "V0.20",
+    date: "2026-07-13",
+    title: "采购状态文案与计算优先级布局优化",
+    changes: [
+      "采购单关联状态中的已有入库提交、已有确认入库统一为已确认提交",
+      "计算优先级改为左对齐紧凑表单，限制内容宽度并取消全宽卡片与按钮",
+      "同步补充采购设置页开发批注和迭代记录",
+    ],
+  },
+  {
     version: "V0.19",
     date: "2026-07-13",
     title: "采购流程与观麦协同细化",
@@ -796,7 +806,7 @@ let pageAnnotations = {
       "字段【来源】区分观麦系统录入和 AI 确认回传，帮助判断采购单来自外部系统还是本应用。",
       "字段【供应商】用于限制采购入库单可关联范围；采购入库单通常只展示同供应商且未关闭的采购单。",
       "字段【观麦业务状态】说明采购单在观麦侧是否为未提交；只有未提交且未关闭的采购单允许继续关联采购入库单。",
-      "字段【采购单关联状态】由该采购单下关联采购入库单状态推导，包含未关联、已关联未确认、已有入库确认、已关闭不可再关联。",
+      "字段【采购单关联状态】由该采购单下关联采购入库单状态推导，包含未关联、已关联待提交、已确认提交、已关闭不可再关联。",
       "按钮【详情】打开该采购单下全部关联采购入库单列表，用于查看是否已有历史入库、暂存或待确认单据。",
       "字段【入库确认提示】说明该采购单下是否存在仍可合并的历史批次；可合并批次由操作员人工选择，已完成历史仅展示且后续批次需新建。",
       "字段【群聊名称】表示当天产生采购任务的来源群；群聊类型决定该群进入采购单链路还是采购入库单链路。",
@@ -988,7 +998,7 @@ let pageAnnotations = {
       "字段【原文】保留 AI 识别前的送货内容或送货单摘要，不能被修正后的商品字段覆盖。",
       "字段【商品数】统计 AI 识别出的明细行数，只代表行数，不代表入库数量合计。",
       "字段【关联采购单】为可选项；每张采购入库单最多关联一张采购单，未关联时也允许确认提交。",
-      "字段【采购单关联状态】只展示未关联、已关联未确认、已有入库确认或已关闭不可再关联的状态标签，不重复展示采购单号。",
+      "字段【采购单关联状态】在采购入库单详情中展示未关联、已关联待提交、已确认提交或已关闭不可再关联，不重复展示采购单号。",
       "字段【操作员】表示当前审核人，下拉选择代表可转派或变更负责人。",
       "按钮【查看】进入采购入库单详情，核对明细、关联采购单并执行暂存或确认提交。",
       "按钮【重识别】表示重新执行 AI 解析，适用于原文识别错误、模板调整或供应商格式变化后重新跑数。",
@@ -1343,7 +1353,8 @@ let pageAnnotations = {
       "页面复用 agentSettingsPage(\"purchase\")，采购侧只展示机器人管理、回复设置和计算优先级三个页签。",
       "机器人管理复用 agentRobotSettings，回复设置复用 agentReplySettings，计算优先级由 purchaseCalcPrioritySettings 渲染。",
       "计算优先级状态保存在 state.purchaseCalcPriorityLevel 和 state.purchaseCustomCalcPriority，详情页金额通过 getPurchaseCalcPriorityLabel 和 formatInboundAmount 读取。",
-      "当前原型的计算优先级影响金额字段；差异字段仍按采购数减实收数计算。"
+      "当前原型的计算优先级影响金额字段；差异字段仍按采购数减实收数计算。",
+      "计算优先级采用最大 720px 的左对齐紧凑表单布局，配置级别、规则说明和保存操作按标准 B 端表单分行展示，并保留移动端自适应。"
     ],
     "business": [
       "页签【机器人管理】用于查看采购录入机器人绑定和在线状态。",
@@ -1376,6 +1387,7 @@ let pageAnnotations = {
       "按钮【计算优先级保存】保存当前金额计算配置，并影响采购入库单详情页金额展示。"
     ],
     "iteration": [
+      "2026-07-13 计算优先级由全宽卡片调整为左对齐紧凑表单，并同步补充页面批注。",
       "2026-07-10 扩写采购设置页机器人管理、回复设置和计算优先级字段按钮说明。",
       "2026-07-09 新增计算优先级标签页。",
       "2026-07-10 将实收数优先、采购数优先和取两者最小值的金额口径写入页面批注。"
@@ -3233,16 +3245,16 @@ function getPurchaseOrderFlowStatus(order) {
   if (isPurchaseOrderClosed(order)) return "已关闭不可再关联";
   const records = getInboundRecordsForOrder(order);
   if (!records.length) return "未关联";
-  return records.some(isInboundConfirmed) ? "已有入库提交" : "已关联待提交";
+  return records.some(isInboundConfirmed) ? "已确认提交" : "已关联待提交";
 }
 
 function getLinkedInboundStatus(order) {
   const ids = order?.linkedInboundIds || [];
   if (!ids.length) return "未关联";
   const tasks = ids.map(getInboundRecordById).filter(Boolean);
-  if (!tasks.length) return "已有入库提交";
+  if (!tasks.length) return "已确认提交";
   if (tasks.some((task) => task.status === "同步失败")) return "同步失败";
-  return tasks.every(isInboundConfirmed) ? "已有入库提交" : "已关联待提交";
+  return tasks.every(isInboundConfirmed) ? "已确认提交" : "已关联待提交";
 }
 
 function getOtherLinkedInboundIds(order, inboundId) {
@@ -3333,7 +3345,7 @@ function purchaseOrderFlowNotice(order) {
   if (!records.length) return "可被新的采购入库单关联";
   if (records.some((record) => record.gmAuditStatus === "待审核")) return "已有可补单的观麦待审核入库单";
   if (records.some((record) => record.gmAuditStatus === "已审核")) return "已有已完成历史批次，后续批次需独立提交";
-  if (records.some(isInboundConfirmed)) return "已有入库确认，等待同步或状态回查";
+  if (records.some(isInboundConfirmed)) return "已确认提交，等待同步或状态回查";
   return "已有未确认批次，各批次独立审核";
 }
 
@@ -3506,7 +3518,7 @@ function purchaseReviewTable(tasks) {
 function statusTag(status) {
   const color = ["待处理", "待审核", "待确认", "暂存", "需人工确认", "已关联未确认", "已关联待提交", "未同步", "未提交"].includes(status)
     ? "gold"
-    : ["已完成", "已提交", "已确认入库", "同步成功", "已关联", "已生成", "已确认", "已有入库确认", "已有入库提交", "历史已完成", "无差异", "已审核"].includes(status)
+    : ["已完成", "已提交", "已确认提交", "已确认入库", "同步成功", "已关联", "已生成", "已确认", "历史已完成", "无差异", "已审核"].includes(status)
       ? "green"
       : ["失败", "已提交到观麦", "同步失败", "商品不一致", "已关闭", "已关闭不可再关联"].includes(status)
         ? "red"
@@ -4314,33 +4326,54 @@ function agentReplySettings(agentName, isSales) {
 function purchaseCalcPrioritySettings() {
   const customDisabled = state.purchaseCalcPriorityLevel !== "custom";
   return `
-    <div class="agent-setting-pane">
-      <div class="info-banner">用于采购入库单金额与差异计算。仅可选中一个配置级别；默认设置级固定为实收数优先，不支持修改。</div>
-      <div class="calc-priority-table">
-        <label class="calc-priority-row ${state.purchaseCalcPriorityLevel === "default" ? "active" : ""}">
-          <span class="calc-radio"><input type="radio" name="purchase-calc-priority-level" value="default" ${state.purchaseCalcPriorityLevel === "default" ? "checked" : ""} data-calc-priority-level="default"></span>
-          <span class="calc-level">
-            <strong>默认设置级</strong>
-            <em>系统内置，不可更改</em>
-          </span>
-          <span class="calc-value"><span class="tag blue">实收数优先</span></span>
-          <span class="calc-action muted">固定规则</span>
-        </label>
-        <label class="calc-priority-row ${state.purchaseCalcPriorityLevel === "custom" ? "active" : ""}">
-          <span class="calc-radio"><input type="radio" name="purchase-calc-priority-level" value="custom" ${state.purchaseCalcPriorityLevel === "custom" ? "checked" : ""} data-calc-priority-level="custom"></span>
-          <span class="calc-level">
-            <strong>自定义设置</strong>
-            <em>选中后按自定义规则计算</em>
-          </span>
-          <span class="calc-value">
-            <select data-custom-calc-priority ${customDisabled ? "disabled" : ""}>
-              ${["实收数优先", "采购数优先", "取两者最小值"].map((item) => `<option value="${item}" ${state.purchaseCustomCalcPriority === item ? "selected" : ""}>${item}</option>`).join("")}
-            </select>
-          </span>
-          <span class="calc-action">${customDisabled ? "未启用" : "已启用"}</span>
-        </label>
+    <div class="agent-setting-pane calc-priority-pane">
+      <div class="calc-priority-panel">
+        <div class="calc-priority-heading">采购入库金额计算</div>
+        <div class="calc-priority-form">
+          <div class="calc-priority-form-row">
+            <div class="calc-priority-label">配置级别：</div>
+            <div class="calc-priority-control">
+              <div class="calc-priority-options">
+                <label class="calc-priority-option ${state.purchaseCalcPriorityLevel === "default" ? "active" : ""}">
+                  <input type="radio" name="purchase-calc-priority-level" value="default" ${state.purchaseCalcPriorityLevel === "default" ? "checked" : ""} data-calc-priority-level="default">
+                  <span>默认设置级</span>
+                </label>
+                <label class="calc-priority-option ${state.purchaseCalcPriorityLevel === "custom" ? "active" : ""}">
+                  <input type="radio" name="purchase-calc-priority-level" value="custom" ${state.purchaseCalcPriorityLevel === "custom" ? "checked" : ""} data-calc-priority-level="custom">
+                  <span>自定义设置</span>
+                </label>
+              </div>
+              <p class="calc-priority-help">仅可选中一个配置级别；默认设置级固定为实收数优先。</p>
+            </div>
+          </div>
+          <div class="calc-priority-form-row">
+            <div class="calc-priority-label">默认规则：</div>
+            <div class="calc-priority-control">
+              <span class="tag blue">实收数优先</span>
+              <p class="calc-priority-help">系统内置规则，不支持修改。</p>
+            </div>
+          </div>
+          <div class="calc-priority-form-row">
+            <label class="calc-priority-label" for="purchase-custom-calc-priority">自定义规则：</label>
+            <div class="calc-priority-control">
+              <div class="calc-priority-select-row">
+                <select id="purchase-custom-calc-priority" data-custom-calc-priority ${customDisabled ? "disabled" : ""}>
+                  ${["实收数优先", "采购数优先", "取两者最小值"].map((item) => `<option value="${item}" ${state.purchaseCustomCalcPriority === item ? "selected" : ""}>${item}</option>`).join("")}
+                </select>
+                <span class="calc-priority-status ${customDisabled ? "" : "active"}">${customDisabled ? "未启用" : "已启用"}</span>
+              </div>
+              <p class="calc-priority-help">${customDisabled ? "选择“自定义设置”后，可配置采购入库单金额的取数规则。" : "当前采购入库单金额将按所选规则取数。"}</p>
+            </div>
+          </div>
+          <div class="calc-priority-form-row calc-priority-note-row">
+            <div class="calc-priority-label">规则说明：</div>
+            <p class="calc-priority-note">该设置仅影响采购入库单金额取数，差异仍按采购数减实收数计算。</p>
+          </div>
+          <div class="calc-priority-actions">
+            <button class="btn primary" data-toast="采购录单计算优先级已保存">保存</button>
+          </div>
+        </div>
       </div>
-      <button class="btn primary full-save" data-toast="采购录单计算优先级已保存">保存</button>
     </div>
   `;
 }
