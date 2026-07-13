@@ -599,6 +599,16 @@ const markdownDocumentCache = new Map();
 
 let iterationHistory = [
   {
+    version: "V0.23",
+    date: "2026-07-13",
+    title: "采购入库供应商改为可输入下拉选项",
+    changes: [
+      "AI 明细供应商字段增加已有供应商候选下拉，同时保留自定义名称输入能力",
+      "选择候选、失焦或按 Enter 后同步关联采购单区域并刷新候选采购单",
+      "同步更新采购详情页面批注和字段验收说明",
+    ],
+  },
+  {
     version: "V0.22",
     date: "2026-07-13",
     title: "采购审核操作区与来源页签布局调整",
@@ -1077,7 +1087,7 @@ let pageAnnotations = {
     "dev": [
       "页面由 purchaseDetailPage 渲染，activeDetailId 控制当前任务；PO- 前缀展示采购单详情，PI- 前缀展示采购入库单详情。",
       "采购单关系区说明确认提交后传到观麦并等待审核。",
-      "采购入库单关系区位于详情主区域最上方，供应商只读展示；唯一编辑入口是 AI 识别明细中的自由文本输入。",
+      "采购入库单关系区位于详情主区域最上方，供应商只读展示；唯一编辑入口是 AI 识别明细中的可输入下拉选项。",
       "采购入库单明细金额默认按实收数乘以单价计算，也允许操作员直接修改金额；手工修改后不再被实收数或单价变化自动覆盖。",
       "采购数量和差异从关联采购单实时计算，差异比例严格大于 10% 时高亮提示。",
       "已提交的采购入库单进入只读状态，隐藏删除、保存、确认提交和新增行操作。",
@@ -1090,7 +1100,7 @@ let pageAnnotations = {
       "按钮【下载】用于查看或下载原始附件；当前为演示按钮，真实业务应校验文件权限。",
       "字段【原始消息】保留 AI 识别前的完整文本、采购日期或到货时间、供应商和补充说明，不能被后续修正字段覆盖。",
       "字段【详情标题状态】展示当前单据类型和状态；采购入库单已提交后详情只读，不允许重复提交。",
-      "字段【供应商】在 AI 识别明细中以自由文本输入，在关联采购单卡片中只读同步；采购入库单基本信息不重复展示。",
+      "字段【供应商】在 AI 识别明细中使用可输入下拉选项，在关联采购单卡片中只读同步；采购入库单基本信息不重复展示。",
       "字段【操作员】表示当前审核或处理人，用于责任归属、绩效统计和后续追溯。",
       "字段【来源群聊】表示原始业务消息来源，帮助排查供应商沟通和群绑定问题。",
       "字段【时间】表示当前采购入库单生成时间，用于展示和排序可补单记录。",
@@ -1104,7 +1114,7 @@ let pageAnnotations = {
       "字段【关联采购入库单提示】展示是否存在其它关联采购入库单；有记录时需要查看历史、暂存或待确认单据。",
       "按钮【查看关联采购入库单】打开当前采购单下除当前单据外的关联入库记录，用于查看历史批次，不会自动联动提交。",
       "按钮【采购单详情】打开观麦采购单明细，核对计划商品和采购数量。",
-      "字段【供应商输入】位于 AI 识别明细，允许输入任意供应商名称；失焦或按 Enter 后同步到关联采购单区域。",
+      "字段【供应商输入】位于 AI 识别明细，可从已有供应商候选中选择，也允许输入任意供应商名称；选择候选、失焦或按 Enter 后同步到关联采购单区域。",
       "规则【已关联供应商变更】新供应商与当前采购单不一致时先提示，确认后才解除原关联并应用修改。",
       "字段【商品与关联摘要】以小字号单行信息条展示当前商品数、采购单号和关联状态。",
       "字段【入库时间】由日期和起止时间组成，用于筛选时间落在范围内的可补单入库单。",
@@ -1147,6 +1157,7 @@ let pageAnnotations = {
       "按钮【放弃确认/取消】关闭确认弹窗，不改变当前单据状态。"
     ],
     "iteration": [
+      "2026-07-13 供应商改为可输入下拉选项，既可选择已有供应商，也可填写自定义名称。",
       "2026-07-13 将群聊消息与定位来源合并为复合页签，定位来源改为群聊消息的附加操作。",
       "2026-07-13 供应商改为 AI 明细自由文本输入，关联区域只读同步；已关联变更增加确认，摘要卡片压缩为单行。",
       "2026-07-13 关联采购单置顶并改为被动同步供应商；新增入库时间、采购数量、差异与 10% 偏差高亮，补单按时间范围匹配。",
@@ -3913,7 +3924,10 @@ ${isPurchaseOrder ? "价格缺失时留待操作员确认，不自动关联其�
               ? `<label>供应商 <select>${supplierOptions.map((name) => `<option>${name}</option>`).join("")}</select></label>`
               : `<label class="inbound-supplier-field">
                   <span>供应商</span>
-                  <input class="inbound-supplier-input" type="text" value="${escapeAttribute(task.supplier || "")}" data-inbound-supplier-input="${task.id}" placeholder="请输入供应商名称" autocomplete="off"${disabledAttr}>
+                  <input class="inbound-supplier-input" type="text" list="inbound-supplier-options-${task.id}" value="${escapeAttribute(task.supplier || "")}" data-inbound-supplier-input="${task.id}" placeholder="请输入或选择供应商" autocomplete="off"${disabledAttr}>
+                  <datalist id="inbound-supplier-options-${task.id}">
+                    ${supplierOptions.map((name) => `<option value="${escapeAttribute(name)}"></option>`).join("")}
+                  </datalist>
                 </label>
                 <label class="inbound-time-field">
                   <span>入库时间</span>
@@ -4739,6 +4753,7 @@ function quotaSettings() {
 function bindPurchaseAssociationActions(root = document) {
   root.querySelectorAll("[data-inbound-supplier-input]").forEach((input) => {
     input.onblur = () => commitInboundSupplierInput(input);
+    input.onchange = () => commitInboundSupplierInput(input);
     input.onkeydown = (event) => {
       if (event.key !== "Enter") return;
       event.preventDefault();
