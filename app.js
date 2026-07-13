@@ -480,11 +480,11 @@ const prdProjects = [
     name: "采购流程图 PRD",
     status: "迭代中",
     route: "process-flow",
-    version: "V0.4",
+    version: "V0.5",
     owner: "管理员",
     updated: "2026-07-13",
-    desc: "从产品和业务视角说明采购入库主流程，并重点展示确认入库与合单的判断逻辑。",
-    pages: ["业务范围", "操作链路", "确认入库", "合单决策"],
+    desc: "从产品和业务视角说明采购单来源、采购入库关联关系，以及确认入库与合单的判断逻辑。",
+    pages: ["业务范围", "采购单来源", "单据关联", "确认入库", "合单决策"],
     actionLabel: "查看流程图",
     icon: "FLOW",
     iconTone: "flow-grad",
@@ -546,7 +546,7 @@ const purchaseFlowDiagrams = [
   M3["退入库 / 采购退货"] --> OUT`,
   },
   {
-    title: "2. 确认入库流程",
+    title: "3. 确认入库流程",
     description: "操作员核对当前单据后发起确认；系统根据是否存在可合单入库单，分别进入独立提交或人工合单流程。",
     reviewPoints: ["没有可合单记录时，核对商品数后确认当前单据", "存在可合单记录时，只展示候选列表、详情和合单入口", "是否合单始终由操作员决定，系统不会自动合并"],
     chart: String.raw`flowchart TD
@@ -570,25 +570,27 @@ const purchaseFlowDiagrams = [
   O --> P`,
   },
   {
-    title: "3. 采购单来源、可关联状态与分批关系",
-    description: "采购单可由观麦创建，也可由 AI 录单确认后回传观麦。详情页从观麦可关联采购单中按当前供应商和时间范围筛选。",
-    reviewPoints: ["默认近 1 天，可切换近 3 天、近 7 天和全部时间", "当前已选采购单即使超出时间范围仍保留展示", "观麦已关闭或不可关联状态必须阻断新增关联"],
+    title: "2. 采购单来源与采购入库单关联流程",
+    description: "采购单可能直接来自观麦，也可能由 AI 录单确认后同步到观麦；采购入库单详情按供应商和时间展示可选采购单，由操作员选择是否关联。",
+    reviewPoints: ["采购单有观麦录入和 AI 录单两种来源", "采购入库单最多关联一张采购单，也可以暂不关联", "正常送货关联一次；分批送货的后续入库单可以继续关联同一张采购单"],
     chart: String.raw`flowchart TD
-  S["采购单来源"] --> GM["观麦系统录入"]
-  S --> AI["AI 录单系统生成"]
-  AI --> BACK["人工确认后回传观麦，保持未提交"]
-  GM --> AVAILABLE["观麦可关联采购单"]
-  BACK --> AVAILABLE
-  AVAILABLE --> FILTER["同供应商 + 时间范围 + 未关闭"]
-  FILTER --> DAY1["默认近 1 天"]
-  FILTER --> OTHER["近 3 天 / 近 7 天 / 全部时间"]
-  FILTER --> P0["未关联"]
-  FILTER --> P1["已关联未确认"]
-  FILTER --> P2["已有入库确认"]
-  P0 --> LINK["当前采购入库单可选择关联"]
-  P1 --> LINK
-  P2 --> LINK2["仍可关联后续分批送货"]
-  CLOSED["采购单已关闭"] --> STOP["不可新增关联 / 不可确认入库"]`,
+  S["采购单来源"] --> GM["在观麦中录入采购单"]
+  S --> AI["AI 识别并生成采购单"]
+  AI --> CHECK["操作员核对并确认采购单"]
+  CHECK --> AVAILABLE["采购单进入可关联范围"]
+  GM --> AVAILABLE
+  MSG["收到供应商送货消息或附件"] --> INBOUND["AI 生成待确认采购入库单"]
+  INBOUND --> DETAIL["操作员进入采购入库单详情"]
+  AVAILABLE --> FILTER["按当前供应商筛选采购单"]
+  FILTER --> TIME["默认近 1 天，可切换其它时间"]
+  TIME --> DETAIL
+  DETAIL --> CHOICE{"是否关联采购单"}
+  CHOICE -->|"暂不关联"| UNLINKED["继续核对当前采购入库单"]
+  CHOICE -->|"选择一张"| LINKED["建立采购单与当前采购入库单的关联"]
+  LINKED --> TYPE{"送货方式"}
+  TYPE -->|"正常送货"| ONCE["本次采购入库单完成关联"]
+  TYPE -->|"分批送货"| BATCH["后续采购入库单仍可关联同一采购单"]
+  CLOSED["采购单已关闭或不可继续使用"] --> STOP["不允许新增关联或确认入库"]`,
   },
   {
     title: "4. 可合单入库单生成规则",
@@ -1843,9 +1845,9 @@ function processFlowPage() {
     <div class="page flow-page">
       <div class="page-title flow-page-title">
         <div>
-          <span class="pill blue">V0.4 · 产品评审版</span>
+          <span class="pill blue">V0.5 · 产品评审版</span>
           <h2>采购单与采购入库单流程 PRD</h2>
-          <p>围绕正常送货与分批送货，说明本期业务范围、操作员处理链路和确认入库决策。</p>
+          <p>围绕正常送货与分批送货，说明采购单来源、采购入库单关联关系和确认入库决策。</p>
         </div>
         <button class="btn" data-route="projects">返回项目库</button>
       </div>
@@ -1869,7 +1871,7 @@ function processFlowPage() {
       </section>
 
       <div class="flow-diagram-stack">
-        ${purchaseFlowDiagrams.slice(0, 2).map((diagram) => `
+        ${[purchaseFlowDiagrams[0], purchaseFlowDiagrams[2], purchaseFlowDiagrams[1]].map((diagram) => `
           <section class="flow-diagram-card">
             <div class="flow-diagram-head">
               <div>
