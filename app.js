@@ -495,7 +495,7 @@ const prdProjects = [
     name: "采购录单字段说明 PRD",
     status: "迭代中",
     route: "field-spec",
-    version: "V0.9",
+    version: "V0.10",
     owner: "管理员",
     updated: "2026-07-14",
     desc: "用业务语言说明采购入库页面字段、操作规则、确认逻辑、异常提示和验收场景。",
@@ -605,6 +605,16 @@ const purchaseFlowDiagrams = [
 const markdownDocumentCache = new Map();
 
 let iterationHistory = [
+  {
+    version: "V0.26",
+    date: "2026-07-14",
+    title: "采购入库确认弹窗信息精简",
+    changes: [
+      "候选入库单详情移除用途说明、原始送货信息和返回辅助文案",
+      "普通确认提交弹窗移除提交前注意事项，仅保留确认文案和操作按钮",
+      "差异超过 10% 继续在详情明细高亮，不在确认弹窗重复提示",
+    ],
+  },
   {
     version: "V0.25",
     date: "2026-07-14",
@@ -831,8 +841,8 @@ let pageAnnotations = {
     title: "字段说明 PRD",
     overview: "该页说明采购审核布局、来源页签、采购入库字段、供应商联动、采购单筛选、差异提示、确认提交和补单验收规则。",
     dev: ["字段说明只保留业务含义、页面表现和操作规则，不展开技术实现。", "供应商可输入下拉、采购数量与差异、入库时间范围及补单状态必须作为联调和验收项。"],
-    business: ["采购单审核的查询、重置位于筛选区，刷新、合单位于列表工具栏。", "群聊消息与定位来源属于同一组，定位来源是群聊消息右侧的附加操作。", "供应商只在 AI 明细编辑，关联采购单区域只读同步。", "候选弹窗展示可补单列表，同时保留独立确认提交入口且不提供暂存按钮。", "只有观麦尚未审核的采购单和采购入库单可以继续关联或补单。"],
-    iteration: ["2026-07-13 V0.8 汇总审核布局、来源页签、可输入下拉供应商、差异高亮、保存文案和补单匹配规则。", "2026-07-13 细化关联采购单筛选、人工金额、确认问号说明，并新增观麦系统依赖与协同清单。", "2026-07-11 将字段说明升级为可直接研发评审和测试验收的完整 PRD。", "2026-07-11 增加合并送货影响评估和受限实现方案。", "2026-07-10 新增字段说明 PRD 入口，并渲染 purchase-field-spec.md。"],
+    business: ["采购单审核的查询、重置位于筛选区，刷新、合单位于列表工具栏。", "群聊消息与定位来源属于同一组，定位来源是群聊消息右侧的附加操作。", "供应商只在 AI 明细编辑，关联采购单区域只读同步。", "候选弹窗展示可补单列表，同时保留独立确认提交入口且不提供暂存按钮。", "候选详情只保留核对所需摘要、商品表格和返回按钮；普通确认弹窗只保留确认文案与操作按钮。", "只有观麦尚未审核的采购单和采购入库单可以继续关联或补单。"],
+    iteration: ["2026-07-14 V0.10 精简候选详情和普通确认提交弹窗，移除重复辅助信息与提交前注意事项。", "2026-07-13 V0.8 汇总审核布局、来源页签、可输入下拉供应商、差异高亮、保存文案和补单匹配规则。", "2026-07-13 细化关联采购单筛选、人工金额、确认问号说明，并新增观麦系统依赖与协同清单。", "2026-07-11 将字段说明升级为可直接研发评审和测试验收的完整 PRD。", "2026-07-11 增加合并送货影响评估和受限实现方案。", "2026-07-10 新增字段说明 PRD 入口，并渲染 purchase-field-spec.md。"],
   },
   home: {
     title: "项目首页",
@@ -1168,7 +1178,7 @@ let pageAnnotations = {
       "按钮【确认提交】采购单详情中将采购单提交至观麦并等待审核。",
       "按钮【确认提交】采购入库单详情中检查可补单记录；关联采购单已审核或关闭时要求解除或更换。",
       "规则【确认前阻断】无供应商、空商品、无效实收数或采购单供应商不一致时禁止提交。",
-      "规则【确认前警告】单价无效时展示警告，由操作员确认是否继续。",
+      "规则【确认弹窗精简】差异和单价信息由操作员在详情明细中核对，普通确认提交弹窗不再展示提交前注意事项。",
       "规则【字段写回】操作员修改实收数和单价时更新默认金额；金额经人工修改后保留人工值，不再自动覆盖。",
       "规则【明细修正写回】商品名称和备注修改后立即写回当前任务；识别到货数保持只读证据。",
       "规则【供应商变更】人工修改供应商后，若与当前采购单不一致则先提示；确认后才解除原关联并应用新供应商。",
@@ -1176,7 +1186,7 @@ let pageAnnotations = {
       "按钮【+/-】在行内新增或删除商品行，用于快速修正明细。",
       "弹窗【确认提交】在不存在可补单记录时只询问是否确认提交当前采购入库单，不重复展示商品数。",
       "弹窗【存在可补单的入库单】展示观麦待处理入库单列表、商品数、详情和补单操作，底部保留确认提交。",
-      "按钮【查看详情】打开候选采购入库单只读商品详情，返回后继续当前确认操作。",
+      "按钮【查看详情】打开候选采购入库单只读商品详情；详情仅保留供应商、时间、商品数、商品表格和返回按钮，不展示用途说明、原始送货信息或返回辅助文案。",
       "按钮【补充到此单】先进入二次确认，再把当前采购入库内容补充至所选观麦待处理入库单。",
       "弹窗【确认补充到待处理入库单】展示当前单和目标单关键信息，目标已审核时停止补单。",
       "按钮【确认提交】忽略候选并单独提交当前采购入库单。",
@@ -3315,12 +3325,6 @@ function getPurchaseDetailItems(task) {
   return rows.length ? rows : purchaseDetailItems;
 }
 
-function inboundRawText(inbound) {
-  if (!inbound) return "-";
-  const fallbackRaw = getInboundComparisonItems(inbound).map((item) => `${item.name} ${item.receivedQty}${item.unit}`).join("、");
-  return inbound.raw || fallbackRaw || "-";
-}
-
 function getOrderAssociationStatus(order) {
   return order?.linkedInboundIds?.length ? "已关联" : "未关联";
 }
@@ -3534,7 +3538,6 @@ function getPurchaseOrderProductCount(order) {
 
 function validateInboundBeforeConfirm(task) {
   const errors = [];
-  const warnings = [];
   const items = getPurchaseDetailItems(task);
   const order = getLinkedPurchaseOrder(task);
   const inboundTimeRange = getInboundTimeWindowRange(task);
@@ -3545,19 +3548,7 @@ function validateInboundBeforeConfirm(task) {
   if (items.some((item) => !item.unit?.trim())) errors.push("存在未填写单位的商品明细");
   if (items.some((item) => !Number.isFinite(Number(item.receivedQty)) || Number(item.receivedQty) <= 0)) errors.push("实收数量必须大于 0");
   if (order && order.supplier !== task.supplier) errors.push("采购单供应商与当前采购入库单不一致");
-  if (items.some((item) => !Number.isFinite(Number(item.price)) || Number(item.price) <= 0)) warnings.push("存在未填写有效单价的商品，请确认是否继续");
-  if (order && items.some((item) => getInboundVariance(getInboundItemPurchaseQty(task, item), item.receivedQty)?.warning)) warnings.push("存在采购数量与实收数量差异超过 10% 的商品，请确认后再提交");
-  return { errors: [...new Set(errors)], warnings: [...new Set(warnings)] };
-}
-
-function inboundConfirmWarningBlock(warnings) {
-  if (!warnings?.length) return "";
-  return `
-    <section class="confirm-checklist">
-      <strong>提交前请注意</strong>
-      <ol>${warnings.map((warning) => `<li>${warning}</li>`).join("")}</ol>
-    </section>
-  `;
+  return { errors: [...new Set(errors)] };
 }
 
 
@@ -5020,7 +5011,6 @@ function inboundSingleConfirmModal(task, context) {
         <strong>是否确认提交当前采购入库单？</strong>
         <p>确认后，当前采购入库单将提交至观麦系统。</p>
       </div>
-      ${inboundConfirmWarningBlock(context.validation?.warnings)}
       <div class="decision-actions">
         <button class="btn" data-close-modal>取消</button>
         <button class="btn primary" data-submit-association="new" data-inbound-id="${task.id}">确认提交</button>
@@ -5101,7 +5091,6 @@ function inboundCandidateDetailModal(inbound, currentTask) {
     <div class="association-modal review-modal inbound-candidate-detail">
       <div class="decision-banner success">
         <strong>采购入库单 ${inbound.id} 商品详情</strong>
-        <p>该详情只用于核对是否需要向这张观麦待处理入库单补充当前批次，不在此处修改历史入库数据。</p>
       </div>
       <div class="po-modal-summary document-count-summary">
         <div><span>供应商</span><strong>${inbound.supplier || "-"}</strong></div>
@@ -5109,7 +5098,6 @@ function inboundCandidateDetailModal(inbound, currentTask) {
         <div><span>商品数</span><strong>${getInboundProductCount(inbound)} 个商品</strong></div>
       </div>
       <section class="linked-history-block">
-        <div class="modal-subtitle"><div><strong>原始送货信息</strong><span>${inboundRawText(inbound)}</span></div></div>
         <div class="purchase-table-wrap modal-table-wrap">
           <table class="purchase-group-board-table history-inbound-table">
             <thead><tr><th>商品名称</th><th>实收数量</th><th>单价</th><th>金额</th><th>备注</th></tr></thead>
@@ -5125,7 +5113,6 @@ function inboundCandidateDetailModal(inbound, currentTask) {
         </div>
       </section>
       <div class="decision-actions">
-        <div><strong>核对完成后返回</strong><span>返回后仍可选择补充到此单或独立确认提交。</span></div>
         <button class="btn primary" data-return-inbound-confirm="${currentTask.id}">返回补单选择</button>
       </div>
     </div>
