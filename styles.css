@@ -3068,6 +3068,42 @@ body.project-mode .annotation-panel {
   gap: 8px;
 }
 
+.review-date-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--secondary);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.review-date-range {
+  min-width: 302px;
+  height: 34px;
+  padding: 0 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fff;
+}
+
+.review-date-range input {
+  width: 130px;
+  height: 30px;
+  padding: 0 4px;
+  border: 0;
+  outline: 0;
+  color: var(--text);
+  background: transparent;
+}
+
+.review-date-range i {
+  color: #bfbfbf;
+  font-style: normal;
+}
+
 .review-list-toolbar {
   padding-bottom: 12px;
   border-bottom: 1px solid var(--line);
@@ -5025,6 +5061,29 @@ body.entry-mode .content {
   background: #f8fbff;
 }
 
+.simple-submit-message {
+  min-height: 88px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid #edf0f5;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.simple-submit-message strong {
+  color: #111827;
+  font-size: 16px;
+}
+
+.simple-submit-message p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 13px;
+}
+
 .confirm-checklist {
   padding: 14px 16px;
   border: 1px solid #edf0f5;
@@ -5224,19 +5283,6 @@ body.entry-mode .content {
 .inbound-variance-warning .difference-cell {
   color: #cf1322;
   font-weight: 700;
-}
-
-.variance-warning-label {
-  width: max-content;
-  margin-top: 4px;
-  padding: 2px 7px;
-  display: block;
-  border-radius: 999px;
-  background: #ffccc7;
-  color: #a8071a;
-  font-size: 11px;
-  font-weight: 600;
-  line-height: 18px;
 }
 
 .diff-input {
