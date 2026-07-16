@@ -5,13 +5,29 @@ const FIELD_SPEC_MARKDOWN_FALLBACK_URLS = [
   "https://raw.githubusercontent.com/Xky114514/Xky114514.github.io/fenpi/purchase-field-spec.md",
   "https://raw.githubusercontent.com/Xky114514/Xky114514.github.io/main/purchase-field-spec.md",
 ];
+const SALES_APP_URL = "./ai_order/home.html";
+const legacySalesRoutes = new Set([
+  "sales-entry",
+  "sales-review",
+  "sales-statistics",
+  "sales-decision-screen",
+  "sales-customers",
+  "sales-customer-groups",
+  "sales-groups",
+  "sales-prompts",
+  "sales-memory",
+  "sales-agent-settings",
+  "prompts",
+  "memory",
+  "statistics",
+  "decision-screen",
+]);
 const appShellTemplate = document.getElementById("app").innerHTML;
 
 const state = {
   route: "projects",
   tabs: [{ key: "projects", label: "项目库", isHome: true }],
   activeDetailId: "PI-20260701-011",
-  chatMode: "customer",
   purchaseOrderChatMode: "supplier",
   purchaseChatMode: "supplier",
   promptTab: "customer",
@@ -30,9 +46,7 @@ const state = {
   annotationEditing: false,
   annotationOpen: false,
   filters: {
-    salesCustomer: "",
     purchaseSupplier: "",
-    salesStatus: "all",
     purchaseOrderStatus: "all",
     purchaseStatus: "all",
   },
@@ -44,13 +58,6 @@ const routes = {
   "field-spec": { label: "字段说明 PRD", module: "projects", title: "字段说明 PRD" },
   home: { label: "项目首页", module: "home", title: "AI 录单系统" },
   "purchase-home": { label: "首页", tabLabel: "采购首页", module: "purchase", title: "采购录单" },
-  "sales-entry": { label: "销售订单录入", module: "sales", title: "销售订单录单" },
-  "sales-review": { label: "销售订单审核", module: "sales", title: "销售订单录单" },
-  "sales-statistics": { label: "统计", tabLabel: "销售统计", module: "sales", title: "销售订单录单" },
-  "sales-decision-screen": { label: "决策大屏", tabLabel: "销售决策大屏", module: "sales", title: "销售订单录单" },
-  "sales-customers": { label: "客户管理", module: "sales", title: "销售订单录单" },
-  "sales-customer-groups": { label: "客户分组", module: "sales", title: "销售订单录单" },
-  "sales-groups": { label: "销售群聊管理", module: "sales", title: "销售订单录单" },
   "purchase-order-entry": { label: "采购单录入", module: "purchase", title: "采购录单" },
   "purchase-order-review": { label: "采购单审核", module: "purchase", title: "采购录单" },
   "purchase-entry": { label: "采购入库单录入", module: "purchase", title: "采购录单" },
@@ -61,11 +68,8 @@ const routes = {
   "purchase-suppliers": { label: "供应商管理", module: "purchase", title: "采购录单" },
   "purchase-supplier-groups": { label: "供应商分组", module: "purchase", title: "采购录单" },
   "purchase-groups": { label: "采购群聊管理", module: "purchase", title: "采购录单" },
-  "sales-prompts": { label: "提示词", tabLabel: "销售提示词", module: "sales", title: "销售订单录单" },
-  "sales-memory": { label: "AI 记忆", tabLabel: "销售 AI 记忆", module: "sales", title: "销售订单录单" },
   "purchase-prompts": { label: "提示词", tabLabel: "采购提示词", module: "purchase", title: "采购录单" },
   "purchase-memory": { label: "AI 记忆", tabLabel: "采购 AI 记忆", module: "purchase", title: "采购录单" },
-  "sales-agent-settings": { label: "设置", tabLabel: "销售设置", module: "sales", title: "销售订单录单" },
   "purchase-agent-settings": { label: "设置", tabLabel: "采购设置", module: "purchase", title: "采购录单" },
   settings: { label: "租户设置", module: "settings", title: "租户公共设置" },
   "tenant-members": { label: "成员管理", module: "settings", title: "租户公共配置" },
@@ -73,10 +77,6 @@ const routes = {
 };
 
 const routeAliases = {
-  prompts: "sales-prompts",
-  memory: "sales-memory",
-  statistics: "sales-statistics",
-  "decision-screen": "sales-decision-screen",
   "purchase-inbound-entry": "purchase-entry",
   "purchase-inbound-review": "purchase-review",
 };
@@ -87,33 +87,6 @@ const primaryMenus = [
   { key: "home", label: "首页", icon: "home", module: "home" },
   { key: "settings", label: "租户设置", icon: "setting", module: "settings" },
 ];
-
-const sideMenus = {
-  sales: [
-    { key: "sales-entry", label: "订单录入", icon: "edit" },
-    { key: "sales-review", label: "订单审核", icon: "review" },
-    { key: "sales-statistics", label: "统计", icon: "stats" },
-    { key: "sales-decision-screen", label: "决策大屏", icon: "dashboard" },
-    { key: "sales-customers", label: "客户管理", icon: "customer" },
-    { key: "sales-customer-groups", label: "客户分组", icon: "group" },
-    { key: "sales-groups", label: "群聊管理", icon: "group" },
-    { key: "sales-prompts", label: "提示词", icon: "prompt" },
-    { key: "sales-memory", label: "AI 记忆", icon: "memory" },
-    { key: "sales-agent-settings", label: "设置", icon: "setting" },
-  ],
-  purchase: [
-    { key: "purchase-order-entry", label: "采购单录入", icon: "edit" },
-    { key: "purchase-order-review", label: "采购单审核", icon: "review" },
-    { key: "purchase-entry", label: "采购入库单录入", icon: "edit" },
-    { key: "purchase-review", label: "采购入库单审核", icon: "review" },
-    { key: "purchase-statistics", label: "统计", icon: "stats" },
-    { key: "purchase-suppliers", label: "供应商管理", icon: "supplier" },
-    { key: "purchase-groups", label: "群聊管理", icon: "group" },
-    { key: "purchase-prompts", label: "提示词", icon: "prompt" },
-    { key: "purchase-memory", label: "AI 记忆", icon: "memory" },
-    { key: "purchase-agent-settings", label: "设置", icon: "setting" },
-  ],
-};
 
 const purchaseSideGroups = [
   {
@@ -169,13 +142,6 @@ const iconSvg = {
   dashboard: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 13a8 8 0 1 1 16 0"/><path d="M12 13l4-4"/><path d="M6.5 17h11"/><path d="M9 21h6"/></svg>',
   setting: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.8 1.8 0 0 0 .3 2l.1.1-2.1 2.1-.1-.1a1.8 1.8 0 0 0-2-.3 1.8 1.8 0 0 0-1 1.6V21h-3v-.2a1.8 1.8 0 0 0-1-1.6 1.8 1.8 0 0 0-2 .3l-.1.1-2.1-2.1.1-.1a1.8 1.8 0 0 0 .3-2 1.8 1.8 0 0 0-1.6-1H5v-3h.2a1.8 1.8 0 0 0 1.6-1 1.8 1.8 0 0 0-.3-2l-.1-.1 2.1-2.1.1.1a1.8 1.8 0 0 0 2 .3 1.8 1.8 0 0 0 1-1.6V3h3v.2a1.8 1.8 0 0 0 1 1.6 1.8 1.8 0 0 0 2-.3l.1-.1 2.1 2.1-.1.1a1.8 1.8 0 0 0-.3 2 1.8 1.8 0 0 0 1.6 1h.2v3h-.2a1.8 1.8 0 0 0-1.6 1Z"/></svg>',
 };
-
-const salesTasks = [
-  { id: "SO-20260701-001", status: "待处理", group: "华南餐饮订货群", store: "天河鲜食店", raw: "土豆 20 斤，前腿肉 8 斤，明早送", items: 2, order: "-", auditor: "李娜" },
-  { id: "SO-20260701-002", status: "已完成", group: "江北食堂订货群", store: "江北食堂", raw: "白菜两筐，鸡蛋 5 板", items: 2, order: "GM982711", auditor: "陈林" },
-  { id: "SO-20260701-003", status: "失败", group: "直营门店补货群", store: "万象城门店", raw: "昨天一样，饮料少一点", items: 0, order: "-", auditor: "王明" },
-  { id: "SO-20260701-004", status: "合单", group: "华南餐饮订货群", store: "天河鲜食店", raw: "追加香菜 3 斤", items: 1, order: "GM982742", auditor: "李娜" },
-];
 
 const purchaseTasks = [
   {
@@ -440,13 +406,6 @@ const historicalInboundRecords = [
   { id: "PI-20260630-032", status: "已确认入库", supplier: "海盛水产", createdAt: "2026-06-29 16:20:00", operator: "赵倩", raw: "上一批送达：鲈鱼 62 条，基围虾 90 斤；该批次已经完成入库", gmInboundNo: "GM-IN-7608", gmSyncStatus: "同步成功", gmAuditStatus: "已审核", permission: "可查看", linkedPurchaseOrderIds: ["GM-PO-8801"], items: [{ name: "鲜活鲈鱼", receivedQty: 62, unit: "条" }, { name: "基围虾", receivedQty: 90, unit: "斤" }] },
 ];
 
-const customers = [
-  { id: "C10021", name: "天河鲜食店", address: "广州天河区体育西路 88 号", phone: "13800001111", groups: "华南餐饮订货群", sku: 428, priority: "订单备注" },
-  { id: "C10037", name: "江北食堂", address: "重庆江北区观音桥 17 号", phone: "13600002222", groups: "江北食堂订货群", sku: 312, priority: "合并" },
-  { id: "C10052", name: "万象城门店", address: "深圳罗湖区宝安南路 1881 号", phone: "13900003333", groups: "直营门店补货群", sku: 537, priority: "SPU备注" },
-  { id: "C10078", name: "云岭酒店", address: "昆明盘龙区白云路 9 号", phone: "13700004444", groups: "未绑定", sku: 0, priority: "订单备注" },
-];
-
 const suppliers = [
   { id: "S20011", name: "海盛水产", category: "水产海鲜", contact: "吴经理", phone: "13500001111", address: "广州黄沙水产市场 3 栋", groups: "海鲜供应商对接群", synced: 146, priority: ["采购备注", "SPU备注", "合并"] },
   { id: "S20018", name: "春田蔬菜基地", category: "蔬菜", contact: "林主管", phone: "13500002222", address: "佛山三水春田蔬菜基地", groups: "蔬菜采购群、蔬菜供应商入库群", synced: 232, priority: ["采购备注", "SPU备注", "合并"] },
@@ -455,13 +414,11 @@ const suppliers = [
 ];
 
 const groups = [
-  { name: "华南餐饮订货群", members: 42, salesBound: "3 个客户", purchaseBound: "-", reviewer: "李娜", bot: "正常", time: "06:00-22:00", pending: 6 },
   { name: "海鲜供应商对接群", members: 18, salesBound: "-", purchaseBound: "1 个供应商", purchaseDocType: "inbound", reviewer: "赵倩", bot: "正常", time: "00:00-23:30", pending: 3 },
   { name: "蔬菜采购群", members: 25, salesBound: "-", purchaseBound: "1 个供应商", purchaseDocType: "order", reviewer: "周诚", bot: "正常", time: "05:00-20:00", pending: 1 },
   { name: "蔬菜供应商入库群", members: 21, salesBound: "-", purchaseBound: "1 个供应商", purchaseDocType: "inbound", reviewer: "周诚", bot: "正常", time: "05:00-20:00", pending: 1 },
   { name: "采购内部下单群", members: 16, salesBound: "-", purchaseBound: "3 个供应商", purchaseDocType: "order", reviewer: "陈林", bot: "正常", time: "08:00-20:00", pending: 2 },
   { name: "肉禽采购群", members: 22, salesBound: "-", purchaseBound: "1 个供应商", purchaseDocType: "inbound", reviewer: "赵倩", bot: "正常", time: "00:00-23:30", pending: 2 },
-  { name: "直营门店补货群", members: 63, salesBound: "8 个客户", purchaseBound: "-", reviewer: "王明", bot: "禁言", time: "不限", pending: 2 },
 ];
 
 const prdProjects = [
@@ -473,8 +430,8 @@ const prdProjects = [
     version: "V0.7",
     owner: "管理员",
     updated: "2026-07-14",
-    desc: "用可交互前端承载应用中心、销售订单录单、采购录单、全局能力与一期采购入库确认流程。",
-    pages: ["应用中心", "统计", "决策大屏", "销售订单录单", "采购录单", "批注面板"],
+    desc: "统一承载应用中心、采购录单和全局能力；销售订单录单已替换为独立完整原型。",
+    pages: ["应用中心", "销售订单录单入口", "采购录单", "全局配置", "批注面板"],
   },
   {
     id: "process-flow",
@@ -889,20 +846,6 @@ let pageAnnotations = {
       "2026-07-03 新增采购录单首页，包含快捷入口、今日任务和群聊看板。"
     ]
   },
-  "sales-statistics": {
-    title: "销售统计",
-    overview: "销售统计页用于查看销售订单录单内录单员、审核员和客户订单识别表现。",
-    dev: ["统计页归属销售订单录单左侧菜单，路由为 sales-statistics。", "当前数据为静态演示表格，后续可按日期范围、角色和操作员维度接入真实绩效接口。"],
-    business: ["业务方重点确认销售订单绩效指标口径是否满足审核员和录单员管理。", "导出 Excel 为前端演示按钮，后续需要明确导出字段和权限。"],
-    iteration: ["V0.6 将统计从全局入口移动到销售订单录单内。"],
-  },
-  "sales-decision-screen": {
-    title: "销售决策大屏",
-    overview: "销售决策大屏用于在销售订单录单内查看订单识别质量、异常诊断和操作员效能。",
-    dev: ["决策大屏归属销售订单录单左侧菜单，路由为 sales-decision-screen。", "页面按卡片和表格分区承载静态指标，后续可替换为实时指标接口和图表组件。"],
-    business: ["管理者可通过销售大屏判断销售订单提交、识别质量和人工纠错情况。", "时间范围控件用于表达今日实时、昨日、近 7 天、近 30 天和自定义查询。"],
-    iteration: ["V0.6 将决策大屏从全局入口移动到销售订单录单内。"],
-  },
   "purchase-statistics": {
     "title": "采购统计",
     "overview": "采购统计页用于按时间范围查看采购录入操作员绩效，聚合下单数、提交数和商品总数，为团队排班、审核效率和导出对账提供依据。",
@@ -967,13 +910,6 @@ let pageAnnotations = {
       "V0.6 将决策大屏从全局入口移动到采购录单内。"
     ]
   },
-  "sales-entry": {
-    title: "销售订单录入",
-    overview: "销售录入页模拟录单员从客户或群聊进入，对文字、图片、Excel、PDF 订单内容进行 AI 识别。",
-    dev: ["左侧客户/群聊分段切换由 state.chatMode 控制。", "发送消息后会向 chatMessages.sales 追加用户消息和 Agent 响应，便于演示识别链路。"],
-    business: ["录单前必须先确定客户或群聊来源，避免订单归属错误。", "识别结果进入销售订单审核，不在录入页直接完成下单。"],
-    iteration: ["V0.1 完成销售录入核心交互，后续可补充附件预览和异常商品提示。"],
-  },
   "purchase-entry": {
     "title": "采购入库单录入",
     "overview": "采购入库单录入页用于把供应商实际到货消息、供应商群内容或附件导入 AI 识别链路，生成待处理采购入库单草稿，供后续关联采购单和确认提交。",
@@ -1030,13 +966,6 @@ let pageAnnotations = {
       "2026-07-10 扩写采购单录入页字段和按钮说明，明确来源选择、文本/附件输入和发送后的任务流向。",
       "V0.7 新增采购单录入入口。"
     ]
-  },
-  "sales-review": {
-    title: "销售订单审核",
-    overview: "销售审核页用于查看 AI 识别后的订单任务，支持状态筛选、列表视图和群聊视图。",
-    dev: ["状态筛选使用 state.filters.salesStatus，列表和群聊视图通过 state.reviewTab 切换。", "失败、合单等状态保留独立标签，方便后续接真实审核动作。"],
-    business: ["待处理订单需要人工确认后进入正式订单。", "失败任务需要补充信息或转人工处理。"],
-    iteration: ["V0.1 完成销售审核列表，后续可加入批量审核与合单选择。"],
   },
   "purchase-review": {
     "title": "采购入库单审核",
@@ -1210,20 +1139,6 @@ let pageAnnotations = {
       "V0.5 按一期范围瘦身采购详情页，删除复杂对账与自动关联展示。"
     ]
   },
-  "sales-customers": {
-    title: "客户管理",
-    overview: "客户管理页展示客户、地址、联系方式、绑定群聊和同步 SKU 状态。",
-    dev: ["搜索条件写入 state.filters.salesCustomer，查询按钮触发本地过滤。", "表格字段后续可直接映射客户主数据接口。"],
-    business: ["客户绑定群聊后，群聊订单才能正确归属客户。", "SKU 同步数量用于判断客户商品范围是否完整。"],
-    iteration: ["V0.1 完成客户列表和搜索能力。"],
-  },
-  "sales-customer-groups": {
-    title: "客户分组",
-    overview: "客户分组页用于把审核员与客户、客户群聊建立分组关系，便于销售订单进入对应人员的处理范围。",
-    dev: ["客户分组属于销售订单录单二级菜单，路由为 sales-customer-groups。", "新建分组弹窗展示审核员、分组名称、群聊和客户选择区，当前为静态前端原型。"],
-    business: ["一个客户分组可以绑定审核员、多个群聊和多个客户。", "客户分组用于明确销售订单审核归属，减少无人处理或重复处理。"],
-    iteration: ["新增销售订单录单客户分组菜单和新建分组弹窗。"],
-  },
   "purchase-suppliers": {
     "title": "供应商管理",
     "overview": "供应商管理页维护采购录入应用所需的供应商主数据，展示供应商基础信息、绑定群聊、同步 SKU 和采购备注优先级，支撑采购单和采购入库单识别归属。",
@@ -1284,13 +1199,6 @@ let pageAnnotations = {
       "2026-07-03 统一供应商分组操作列，所有行展示编辑和删除。"
     ]
   },
-  "sales-groups": {
-    title: "销售群聊管理",
-    overview: "销售群聊管理页维护销售业务群、绑定客户、审核员、机器人状态和下单时段。",
-    dev: ["销售群通过 purchaseBound === '-' 过滤得到。", "机器人状态用 tag 样式表现，后续可接启停和禁言接口。"],
-    business: ["每个销售群应绑定客户，减少 AI 识别时的归属歧义。", "禁言状态表示机器人不主动响应或不参与群内处理。"],
-    iteration: ["V0.1 完成销售群聊管理列表。"],
-  },
   "purchase-groups": {
     "title": "采购群聊管理",
     "overview": "采购群聊管理页维护采购单群和采购入库单群的绑定关系、信道类型、供应商数量、成员数、操作员、机器人发言和采购时段，是采购消息进入 AI 识别前的来源配置页。",
@@ -1336,13 +1244,6 @@ let pageAnnotations = {
       "2026-07-10 页面批注同步采购单群和采购入库单群命名口径。"
     ]
   },
-  "sales-prompts": {
-    title: "销售提示词",
-    overview: "销售提示词页用于维护销售订单解析模板和系统规则。",
-    dev: ["promptTab 控制客户提示词和系统提示词两类视图。", "编辑弹窗当前为演示保存，后续接模板版本接口。"],
-    business: ["销售提示词只影响销售订单解析，不影响采购入库。", "特殊客户规则可沉淀为独立模板。"],
-    iteration: ["V0.1 完成销售提示词配置页。"],
-  },
   "purchase-prompts": {
     "title": "采购提示词",
     "overview": "采购提示词页用于维护采购单和采购入库单两类 AI 解析模板，按单据类型、供应商和系统规则隔离提示词，避免采购计划规则与实际入库规则互相污染。",
@@ -1376,13 +1277,6 @@ let pageAnnotations = {
       "2026-07-03 去掉导入模板和 AI 预识别入口。",
       "2026-07-10 页面批注同步采购入库单解析字段：识别到货数、入库单价和备注。"
     ]
-  },
-  "sales-memory": {
-    title: "销售 AI 记忆",
-    overview: "销售 AI 记忆页展示人工审核后沉淀的别名、偏好和客户规则。",
-    dev: ["记忆列表为静态 rows，查看按钮打开统一 memoryModal。", "后续可按来源、状态和命中次数接入真实数据。"],
-    business: ["记忆应来自人工确认，避免错误规则长期影响销售识别。", "命中次数帮助判断规则是否值得固化。"],
-    iteration: ["V0.1 完成销售记忆列表。"],
   },
   "purchase-memory": {
     "title": "采购 AI 记忆",
@@ -1420,13 +1314,6 @@ let pageAnnotations = {
       "V0.7 增加采购单/采购入库单 AI 记忆切换。",
       "2026-07-10 页面批注同步采购单记忆和采购入库单记忆隔离规则。"
     ]
-  },
-  "sales-agent-settings": {
-    title: "销售设置",
-    overview: "销售设置页承载销售录单机器人的启停、回复设置和识别边界。",
-    dev: ["路由为 sales-agent-settings，归属销售订单录单左侧菜单。", "当前表单为静态演示，后续可拆接机器人配置和回复模板接口。"],
-    business: ["销售机器人、回复设置、提示词和 AI 记忆只影响销售订单链路。"],
-    iteration: ["V0.5 新增 Agent 内独立设置入口。"],
   },
   "purchase-agent-settings": {
     "title": "采购设置",
@@ -1511,11 +1398,6 @@ const annotationFieldLabels = {
 };
 
 const chatMessages = {
-  sales: [
-    { role: "assistant", text: "已连接销售订单录入 Agent，请选择客户或群聊后发送订单。" },
-    { role: "user", text: "土豆 20 斤，前腿肉 8 斤，明早送天河店" },
-    { role: "assistant", text: "已识别 2 个商品，生成待审核销售订单 SO-20260701-001。" },
-  ],
   purchase: [
     { role: "assistant", text: "已连接采购入库 Agent，请选择供应商或群聊后发送入库信息。" },
     { role: "user", text: "鲈鱼 80 条，基围虾 120 斤，今晚到中心仓" },
@@ -1528,7 +1410,15 @@ const chatMessages = {
   ],
 };
 
+function openSalesApp() {
+  window.location.href = SALES_APP_URL;
+}
+
 function routeTo(key) {
+  if (legacySalesRoutes.has(key)) {
+    openSalesApp();
+    return;
+  }
   if (state.route === "projects" && key !== "projects") {
     state.tabs = [{ key: "home", label: "首页", isHome: true }];
   }
@@ -1547,6 +1437,10 @@ function openPurchaseDetail(id) {
 
 function getRouteFromHash() {
   const key = window.location.hash.replace(/^#/, "");
+  if (legacySalesRoutes.has(key)) {
+    openSalesApp();
+    return "home";
+  }
   if (routeAliases[key]) return routeAliases[key];
   if (hiddenRoutes.has(key)) return "purchase-home";
   return routes[key] ? key : "projects";
@@ -1556,7 +1450,7 @@ function render() {
   ensureAppShell();
   state.route = getRouteFromHash();
   state.annotationEditing = false;
-  document.body.classList.toggle("entry-mode", state.route === "sales-entry" || state.route === "purchase-order-entry" || state.route === "purchase-entry" || state.route === "purchase-detail");
+  document.body.classList.toggle("entry-mode", state.route === "purchase-order-entry" || state.route === "purchase-entry" || state.route === "purchase-detail");
   document.body.classList.toggle("project-mode", routes[state.route]?.module === "projects");
   document.body.classList.toggle("home-mode", state.route === "home");
   document.body.classList.toggle("annotation-open", state.annotationOpen && state.route !== "projects");
@@ -1617,7 +1511,6 @@ function renderSideMenu() {
   const activeKey = state.route === "purchase-detail"
     ? state.activeDetailId?.startsWith("PO-") ? "purchase-order-review" : "purchase-review"
     : state.route;
-  const moduleTitle = route.module === "sales" ? "销售订单录单" : route.module === "purchase" ? "采购录单" : "";
   const globalMenuItems = route.module === "settings" && state.route !== "settings"
     ? [
         { key: "home", label: "首页", icon: "home", module: "home" },
@@ -1625,7 +1518,7 @@ function renderSideMenu() {
         { key: "tenant-members", label: "成员管理", icon: "group", module: "settings" },
       ]
     : primaryMenus;
-  const globalHtml = !["sales", "purchase"].includes(route.module) ? `
+  const globalHtml = route.module !== "purchase" ? `
     <div class="side-group">
       <div class="side-section">全局能力</div>
       ${globalMenuItems.map((item) => `
@@ -1640,32 +1533,7 @@ function renderSideMenu() {
     document.getElementById("sideMenu").innerHTML = renderPurchaseIconMenu(activeKey);
     return;
   }
-  const menu = sideMenus[route.module] || [];
-  const moduleHtml = menu.length ? `
-    <div class="side-group">
-      <div class="side-section">${moduleTitle}</div>
-      ${menu.map((item) => `
-        <button class="side-item side-subitem ${item.key === activeKey ? "active" : ""}" data-route="${item.key}" title="${item.label}" aria-label="${item.label}">
-          <span class="side-icon" aria-hidden="true">${iconSvg[item.icon] || iconSvg.home}</span>
-          <span class="side-label">${item.label}</span>
-        </button>
-      `).join("")}
-    </div>
-  ` : "";
-  const agentSwitchHtml = ["sales", "purchase"].includes(route.module) ? `
-    <div class="side-switch">
-      <div class="side-section">切换 Agent</div>
-      <button class="side-item" data-route="home" title="应用中心" aria-label="应用中心">
-        <span class="side-icon" aria-hidden="true">${iconSvg.home}</span>
-        <span class="side-label">应用中心</span>
-      </button>
-      <button class="side-item" data-route="${route.module === "sales" ? "purchase-home" : "sales-entry"}" title="${route.module === "sales" ? "采购录单" : "销售订单录单"}" aria-label="${route.module === "sales" ? "采购录单" : "销售订单录单"}">
-        <span class="side-icon" aria-hidden="true">${route.module === "sales" ? iconSvg.purchase : iconSvg.sales}</span>
-        <span class="side-label">${route.module === "sales" ? "采购录单" : "销售订单录单"}</span>
-      </button>
-    </div>
-  ` : "";
-  document.getElementById("sideMenu").innerHTML = globalHtml + moduleHtml + agentSwitchHtml;
+  document.getElementById("sideMenu").innerHTML = globalHtml;
 }
 
 function renderPurchaseIconMenu(activeKey) {
@@ -1705,11 +1573,11 @@ function renderPurchaseIconMenu(activeKey) {
         </div>
       </div>
       <div class="side-flyout-wrap">
-        <button class="side-item side-icon-only" data-route="sales-entry" title="销售订单录单" aria-label="销售订单录单">
+        <a class="side-item side-icon-only" href="${SALES_APP_URL}" title="销售订单录单" aria-label="销售订单录单">
           <span class="side-icon" aria-hidden="true">${iconSvg.sales}</span>
-        </button>
+        </a>
         <div class="side-flyout" role="menu" aria-label="销售订单录单">
-          <button class="side-flyout-item" data-route="sales-entry" role="menuitem">销售订单录单</button>
+          <a class="side-flyout-item" href="${SALES_APP_URL}" role="menuitem">销售订单录单</a>
         </div>
       </div>
     </div>
@@ -1765,28 +1633,18 @@ function renderContent() {
   if (state.route === "field-spec") content.innerHTML = fieldSpecPage();
   if (state.route === "home") content.innerHTML = homePage();
   if (state.route === "purchase-home") content.innerHTML = purchaseHomePage();
-  if (state.route === "sales-entry") content.innerHTML = entryPage("sales");
   if (state.route === "purchase-order-entry") content.innerHTML = entryPage("purchase-order");
   if (state.route === "purchase-entry") content.innerHTML = entryPage("purchase");
-  if (state.route === "sales-review") content.innerHTML = reviewPage("sales");
   if (state.route === "purchase-order-review") content.innerHTML = reviewPage("purchase-order");
   if (state.route === "purchase-review") content.innerHTML = reviewPage("purchase");
-  if (state.route === "sales-statistics") content.innerHTML = statisticsPage("sales");
   if (state.route === "purchase-statistics") content.innerHTML = statisticsPage("purchase");
-  if (state.route === "sales-decision-screen") content.innerHTML = decisionScreenPage("sales");
   if (state.route === "purchase-decision-screen") content.innerHTML = decisionScreenPage("purchase");
   if (state.route === "purchase-detail") content.innerHTML = purchaseDetailPage();
-  if (state.route === "sales-customers") content.innerHTML = partyPage("sales");
   if (state.route === "purchase-suppliers") content.innerHTML = partyPage("purchase");
-  if (state.route === "sales-customer-groups") content.innerHTML = partyGroupPage("sales");
   if (state.route === "purchase-supplier-groups") content.innerHTML = partyGroupPage("purchase");
-  if (state.route === "sales-groups") content.innerHTML = groupsPage("sales");
   if (state.route === "purchase-groups") content.innerHTML = groupsPage("purchase");
-  if (state.route === "sales-prompts") content.innerHTML = promptsPage("sales");
-  if (state.route === "sales-memory") content.innerHTML = memoryPage("sales");
   if (state.route === "purchase-prompts") content.innerHTML = promptsPage("purchase");
   if (state.route === "purchase-memory") content.innerHTML = memoryPage("purchase");
-  if (state.route === "sales-agent-settings") content.innerHTML = agentSettingsPage("sales");
   if (state.route === "purchase-agent-settings") content.innerHTML = agentSettingsPage("purchase");
   if (state.route === "settings") content.innerHTML = settingsPage();
   if (state.route === "tenant-members") content.innerHTML = memberManagementPage();
@@ -2562,7 +2420,7 @@ function homePage() {
 
       <div class="section-title"><h2>应用中心</h2></div>
       <div class="grid two">
-        <button class="agent-card" data-route="sales-entry">
+        <a class="agent-card" href="${SALES_APP_URL}">
           <span class="agent-head">
             <span class="app-icon sales-grad">销</span>
             <span>
@@ -2570,7 +2428,7 @@ function homePage() {
               <p>销售录单审核</p>
             </span>
           </span>
-        </button>
+        </a>
         <button class="agent-card" data-route="purchase-home">
           <span class="agent-head">
             <span class="app-icon purchase-grad">采</span>
@@ -3068,7 +2926,7 @@ function entryListItems(type, mode) {
     `).join("");
   }
 
-  const rows = type === "sales" ? customers : suppliers;
+  const rows = suppliers;
   return rows.map((item) => `
     <button class="entry-list-item" data-toast="已选择：${item.name}">
       <strong>${item.name}</strong>
@@ -3100,7 +2958,7 @@ function reviewPage(type) {
   const isPurchaseOrder = type === "purchase-order";
   const isPurchaseInbound = !isSales && !isPurchaseOrder;
   const title = isSales ? "销售订单审核" : isPurchaseOrder ? "采购单审核" : "采购入库单审核";
-  const taskRows = isSales ? salesTasks : isPurchaseOrder ? purchaseOrderTasks : purchaseTasks;
+  const taskRows = isPurchaseOrder ? purchaseOrderTasks : purchaseTasks;
   const tasks = filterTasks(taskRows, getStatus(type));
   const statusOptions = isSales
     ? ["all", "待处理", "已完成", "失败", "合单"]
@@ -4017,7 +3875,7 @@ ${isPurchaseOrder ? "价格缺失时留待操作员确认，不自动关联其�
 function partyPage(type) {
   const isSales = type === "sales";
   const title = isSales ? "客户管理" : "供应商管理";
-  const rows = isSales ? customers : suppliers;
+  const rows = suppliers;
   const filterKey = isSales ? "salesCustomer" : "purchaseSupplier";
   const keyword = state.filters[filterKey].trim();
   const visible = keyword ? rows.filter((row) => `${row.id}${row.name}${row.address || ""}${row.category || ""}${row.contact || ""}${row.phone || ""}`.includes(keyword)) : rows;
@@ -4110,7 +3968,7 @@ function groupBindingModal(type) {
   const isSales = type === "customer-group";
   const partyLabel = isSales ? "客户" : "供应商";
   const ownerLabel = isSales ? "审核员" : "操作员";
-  const partyRows = isSales ? customers : suppliers;
+  const partyRows = suppliers;
   const groupRows = groups.filter((group) => isSales ? group.purchaseBound === "-" : group.purchaseBound !== "-");
   return `
     <div class="group-modal-form">
@@ -5450,7 +5308,7 @@ function detailModal(id) {
   return `
     <p><strong>单据编号：</strong>${id}</p>
     <p><strong>AI 解析流程：</strong>意图识别 → 上下文构建 → AI 解析订单 → 结果校验 → 执行下单</p>
-    <div class="table-scroll">${reviewTable([...salesTasks, ...purchaseOrderTasks, ...purchaseTasks].filter((task) => task.id === id), id?.startsWith("PO-") ? "purchase-order" : "sales")}</div>
+    <div class="table-scroll">${reviewTable([...purchaseOrderTasks, ...purchaseTasks].filter((task) => task.id === id), id?.startsWith("PO-") ? "purchase-order" : "purchase")}</div>
   `;
 }
 

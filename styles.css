@@ -124,6 +124,7 @@ button {
   font-size: 14px;
   position: relative;
   text-align: left;
+  text-decoration: none;
 }
 
 .side-item + .side-item {
@@ -277,6 +278,7 @@ button {
   text-align: left;
   white-space: nowrap;
   font-size: 14px;
+  text-decoration: none;
 }
 
 .side-flyout-item:hover,
@@ -1130,6 +1132,8 @@ body.home-mode .content {
   flex-direction: column;
   justify-content: space-between;
   text-align: left;
+  color: inherit;
+  text-decoration: none;
 }
 
 .agent-card .agent-head:only-child {
