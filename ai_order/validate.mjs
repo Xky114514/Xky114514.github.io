@@ -175,7 +175,7 @@ for (const marker of ['pre-split', '拆单待确认']) {
 
 for (const file of ['task-detail.html', 'task-detail-single.html', 'task-detail-normal.html', 'task-detail-normal-presplit.html']) {
   const html = fs.readFileSync(path.join(dir, file), 'utf8');
-  for (const marker of ['data-modal="customFieldModal"', 'id="customFieldModal"', 'class="modal custom-field-modal"', '自定义字段设置', '配置录单系统已有字段和观麦同步的用户自定义字段', '共 <b>24</b> 个字段', '可选字段', '已显示字段', '拖拽调整展示顺序', '录单系统已有字段', '观麦同步的用户自定义字段', 'SPU 名称', '商品编码', '一级分类', '二级分类', '自定义编码', '报价单', 'data-field-id="system-spu"', 'data-field-id="system-product-code"', 'data-field-id="system-category-1"', 'data-field-id="system-category-2"', 'data-field-id="system-custom-code"', 'data-field-id="system-quotation"', '演示字段1', '演示字段18', 'data-field-source="system"', 'data-field-source="guanmai"', 'data-custom-field-search', 'data-custom-field-choice', 'data-custom-field-selected-list', 'draggable="true"', 'data-custom-field-reset', 'data-custom-field-save', 'data-custom-field-table', 'function customFieldCellValue(row,rowIndex,field,fieldIndex)', 'function applyCustomFieldColumns(modal)', "document.addEventListener('dragstart'", '字段设置已保存，商品列表顺序已更新']) {
+  for (const marker of ['data-modal="customFieldModal"', 'id="customFieldModal"', 'class="modal custom-field-modal"', '自定义字段设置', '配置录单系统已有字段和观麦同步的用户自定义字段', '可选字段', '已显示字段', '拖拽调整展示顺序', '录单系统已有字段', '观麦同步的用户自定义字段', 'SPU 名称', '商品编码', '一级分类', '二级分类', '自定义编码', '报价单', 'data-field-id="system-spu"', 'data-field-id="system-product-code"', 'data-field-id="system-category-1"', 'data-field-id="system-category-2"', 'data-field-id="system-custom-code"', 'data-field-id="system-quotation"', '演示字段1', '演示字段18', 'data-field-source="system"', 'data-field-source="guanmai"', 'data-custom-field-search', 'data-custom-field-choice', 'data-custom-field-selected-list', 'draggable="true"', 'data-custom-field-reset', 'data-custom-field-save', 'data-custom-field-table', 'function customFieldCellValue(row,rowIndex,field,fieldIndex)', 'function applyCustomFieldColumns(modal)', "document.addEventListener('dragstart'", '字段设置已保存，商品列表顺序已更新']) {
     if (!html.includes(marker)) interactionMarkers.push(`${file} -> 自定义字段设置缺少 ${marker}`);
   }
   const modalCount = (html.match(/id="customFieldModal"/g) || []).length;
@@ -183,6 +183,9 @@ for (const file of ['task-detail.html', 'task-detail-single.html', 'task-detail-
   const bodyMarkup = html.split('<script>')[0];
   if (bodyMarkup.includes('<th>SPU 名称</th>')) interactionMarkers.push(`${file} -> SPU 名称应由字段设置动态控制，不应保留固定表头`);
   if (bodyMarkup.indexOf('录单系统已有字段') > bodyMarkup.indexOf('观麦同步的用户自定义字段')) interactionMarkers.push(`${file} -> 录单系统已有字段应排在观麦同步字段之前`);
+  for (const marker of ['共 <b>24</b> 个字段', 'data-custom-field-count', '<small>6 个</small>', '<small>18 个</small>']) {
+    if (bodyMarkup.includes(marker)) interactionMarkers.push(`${file} -> 自定义字段弹窗不应显示数量信息：${marker}`);
+  }
 }
 
 const result = { tenantPages: tenantPages.length, missingLinks, missingAssets, replacementChars, interactionMarkers, pageControls };
