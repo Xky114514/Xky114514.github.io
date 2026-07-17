@@ -50,7 +50,7 @@ for (const file of tenantPages) {
 
 for (const file of ['task-detail.html', 'task-detail-single.html']) {
   const html = fs.readFileSync(path.join(dir, file), 'utf8');
-  const required = ['图框联动识别', 'data-panel="auditBase"', 'detail-left-tab combined', 'data-link-row', 'qty-unit', 'price-box', '人工删除/不下单', 'data-source-zoom="out"', 'data-source-zoom="reset"', 'data-source-zoom="in"', 'data-source-binary', 'function setSourceZoom(root,value)', 'function zoomSourceAt(root,value,clientX,clientY)', 'function centerSourceBox(root,box,autoZoom=false)', "document.addEventListener('wheel'", "document.addEventListener('pointerdown'", "document.addEventListener('pointermove'", "document.addEventListener('pointerup'", 'e.target.closest(\'.source-box\')', 'touch-action:none', 'cursor:grabbing!important', '.source-image-viewport.binary .source-canvas img', 'border:0!important', 'background:rgba(31,41,55,.42)!important', 'border:2px solid #0958d9!important', 'background:rgba(22,119,255,.42)!important', '@keyframes rowBlueBreath', 'background:linear-gradient(90deg,#fff,rgba(22,119,255,.2),#fff)!important'];
+  const required = ['图框联动识别', 'data-panel="auditBase"', 'detail-left-tab combined', 'data-link-row', 'qty-unit', 'price-box', '人工删除/不下单', 'data-source-zoom="out"', 'data-source-zoom="reset"', 'data-source-zoom="in"', 'data-source-binary', 'data-source-enhancement-chip', 'data-enhancement-state=', 'function refreshSourceEnhancement(root,source)', 'refreshSourceEnhancement(root,source)', '.source-enhance-chip[hidden]{display:none}', 'function setSourceZoom(root,value)', 'function zoomSourceAt(root,value,clientX,clientY)', 'function centerSourceBox(root,box,autoZoom=false)', "document.addEventListener('wheel'", "document.addEventListener('pointerdown'", "document.addEventListener('pointermove'", "document.addEventListener('pointerup'", 'e.target.closest(\'.source-box\')', 'touch-action:none', 'cursor:grabbing!important', '.source-image-viewport.binary .source-canvas img', 'border:0!important', 'background:rgba(31,41,55,.42)!important', 'border:2px solid #0958d9!important', 'background:rgba(22,119,255,.42)!important', '@keyframes rowBlueBreath', 'background:linear-gradient(90deg,#fff,rgba(22,119,255,.2),#fff)!important'];
   const missing = required.filter((marker) => !html.includes(marker));
   if (missing.length) interactionMarkers.push(`${file} -> ${missing.join(', ')}`);
   if (html.includes('AI重新识别')) interactionMarkers.push(`${file} -> 不应包含 AI重新识别`);
@@ -74,9 +74,12 @@ for (const file of ['task-detail.html', 'task-detail-single.html']) {
 }
 
 const multiDetail = fs.readFileSync(path.join(dir, 'task-detail.html'), 'utf8');
-for (const marker of ['2026.07.15_14.31.49.jpg', '人工新增', 'data-source-count="2"', 'SKU-LINK-0004', 'deletedItem', '李锦记蒸鱼豉油', '一次性手套', 'data-source-step="prev"', 'data-source-step="next"', 'data-unlinked="true"', '该原图区域暂无对应商品，请核对是否漏单', 'function sourceSequence(root)', 'function stepSource(root,direction)']) {
+for (const marker of ['2026.07.15_14.31.49.jpg', '人工新增', 'data-source-count="2"', 'SKU-LINK-0004', 'deletedItem', '李锦记蒸鱼豉油', '一次性手套', 'data-source-step="prev"', 'data-source-step="next"', 'data-unlinked="true"', '该原图区域暂无对应商品，请核对是否漏单', 'function sourceSequence(root)', 'function stepSource(root,direction)', 'class="source-enhance-chip"', 'data-enhancement-state="processed"', 'data-enhancement-state="none"', '>图片已校正</span>', '系统已自动校正倾斜或变形的订单图片，并基于校正后的图片完成识别。此功能会产生额外识别成本。']) {
   if (!multiDetail.includes(marker)) interactionMarkers.push(`task-detail.html -> ${marker}`);
 }
+const singleDetail = fs.readFileSync(path.join(dir, 'task-detail-single.html'), 'utf8');
+if (!singleDetail.includes('data-enhancement-state="none"')) interactionMarkers.push('task-detail-single.html -> 未使用自动校正时应记录 none 状态');
+if (!singleDetail.includes('data-source-enhancement-chip tabindex="0"') || !singleDetail.includes('hidden>图片已校正</span>')) interactionMarkers.push('task-detail-single.html -> 未使用自动校正时标签应隐藏');
 const sourceBoxCount = (multiDetail.match(/<button class="source-box/g) || []).length;
 if (sourceBoxCount < 11) interactionMarkers.push(`task-detail.html -> 原图标注框不足 11 个（当前 ${sourceBoxCount} 个）`);
 const itemOrder = [...multiDetail.matchAll(/<tr data-link-row data-item="([^"]+)"/g)].map((match) => match[1]);
@@ -94,17 +97,29 @@ for (const marker of ['跨分组移动（稳定商品ID）', '复制商品不复
 }
 
 const settingsPage = fs.readFileSync(path.join(dir, 'settings.html'), 'utf8');
-for (const marker of ['功能设置', '图框联动识别', '基础适用范围', '倾斜图片增强识别', '高成本增强项', '在订单审核详情中，将原图标注区域与识别商品进行双向定位。', '用于处理倾斜、旋转或透视变形的订单图片，仅在图框联动范围内生效。启用后识别成本更高，具体额度以实际计费规则为准。', 'data-help-tip', 'data-help-trigger', 'role="tooltip"', 'aria-expanded="false"', '.feature-help-tip:hover .feature-help-pop', 'data-feature-toggle', 'data-feature-list="group"', 'data-feature-list="customer"', 'data-feature-select-all="group"', 'data-feature-select-all="customer"', 'data-tilt-toggle', 'data-tilt-scope', 'data-tilt-scope-mode="same"', 'data-tilt-scope-mode="selected"', 'data-tilt-selected-scope', 'data-tilt-list="group"', 'data-tilt-list="customer"', 'data-combined-feature-save', 'function syncTiltChoices(root)', '搜索并添加群聊', '搜索并添加客户', '.feature-scope[hidden]', '统一保存图框联动与倾斜增强配置', '请至少选择一个倾斜增强适用对象']) {
+const settingsMarkup = settingsPage.split('<script>')[0];
+for (const marker of ['功能设置', 'class="feature-static-line"', '图框联动识别', '在订单审核详情中，将原图标注区域与识别商品进行双向定位。该功能对全部客户和群聊开放。', '倾斜图片自动校正', '额外计费', '自动校正倾斜、旋转或透视变形的订单图片，并基于校正后的图片进行识别。启用后会产生额外识别成本，可单独指定适用客户和群聊。', 'data-help-tip', 'data-help-trigger', 'role="tooltip"', 'aria-expanded="false"', '.feature-help-tip:hover .feature-help-pop', 'data-tilt-toggle', 'data-tilt-scope', '选择自动校正的适用客户和群聊', 'data-tilt-selected-scope', 'data-tilt-list="group"', 'data-tilt-list="customer"', 'class="tilt-choice-select"', 'data-tilt-add="group"', 'data-tilt-add="customer"', '搜索并选择群聊...', '搜索并选择客户...', "e.target.closest('[data-tilt-add]')", '已加入自动校正范围', 'data-combined-feature-save', '请至少选择一个自动校正适用对象', 'AI录单测试群-BD', '潭文测试邮件群', '城隍阁', '张三超市']) {
   if (!settingsPage.includes(marker)) interactionMarkers.push(`settings.html -> ${marker}`);
 }
 const featureCardCount = (settingsPage.match(/class="feature-settings feature-settings-card" data-feature-settings/g) || []).length;
-if (featureCardCount !== 1) interactionMarkers.push(`settings.html -> 图框联动与倾斜增强应合并为 1 个功能卡片（当前 ${featureCardCount} 个）`);
-if (!settingsPage.includes('class="switch" data-tilt-toggle aria-label="启用倾斜图片增强识别"')) interactionMarkers.push('settings.html -> 倾斜图片增强识别应作为默认关闭的子功能');
+if (featureCardCount !== 1) interactionMarkers.push(`settings.html -> 图框联动与倾斜图片自动校正应合并为 1 个功能卡片（当前 ${featureCardCount} 个）`);
+if (!settingsPage.includes('class="switch" data-tilt-toggle aria-label="启用倾斜图片自动校正"')) interactionMarkers.push('settings.html -> 倾斜图片自动校正应作为默认关闭的子功能');
+for (const marker of ['class="tilt-choice-title-actions"', 'data-tilt-select-all="group"', 'data-tilt-select-all="customer"', 'aria-pressed="false">全选</button>', 'function refreshTiltSelection(root)', "e.target.closest('[data-tilt-select-all]')", "selectAll.textContent=allSelected?'取消全选':'全选'", "document.querySelectorAll('[data-feature-settings]').forEach(refreshTiltSelection)"]) {
+  if (!settingsPage.includes(marker)) interactionMarkers.push(`settings.html -> 群聊与客户全选功能缺少 ${marker}`);
+}
+const tiltSelectAllCount = (settingsPage.match(/data-tilt-select-all="(?:group|customer)"/g) || []).length;
+if (tiltSelectAllCount !== 2) interactionMarkers.push(`settings.html -> 群聊与客户应各有 1 个全选按钮（当前 ${tiltSelectAllCount} 个）`);
 for (const marker of ['<div class="feature-description">', '<div class="subfeature-help">', '<div class="feature-cost-note">']) {
   if (settingsPage.includes(marker)) interactionMarkers.push(`settings.html -> 说明文字应收纳到问号提示中，不应常驻显示：${marker}`);
 }
-for (const marker of ['功能能力：', '启用状态：', '规则说明：', '在订单审核详情页中，实现销售订单原图标注框与AI识别商品的双向定位。', '不使用群聊录单的客户']) {
-  if (settingsPage.includes(marker)) interactionMarkers.push(`settings.html -> 不应显示 ${marker}`);
+for (const marker of ['功能能力：', '启用状态：', '规则说明：', '在订单审核详情页中，实现销售订单原图标注框与AI识别商品的双向定位。', '不使用群聊录单的客户', '基础适用范围', '基础功能·不增加成本', '全部客户和群聊均可使用', '无需配置适用范围', '增强功能·增加成本', '图框联动基础功能始终对全部客户和群聊开放', 'aria-label="图框联动识别已对全部客户和群聊开放"', '与图框联动范围一致', '指定部分范围', 'data-feature-toggle', 'data-feature-selected-scope', 'data-feature-list="group"', 'data-feature-list="customer"']) {
+  if (settingsMarkup.includes(marker)) interactionMarkers.push(`settings.html -> 不应显示 ${marker}`);
+}
+for (const file of ['settings.html', 'task-detail.html', 'task-detail-single.html']) {
+  const html = fs.readFileSync(path.join(dir, file), 'utf8');
+  for (const marker of ['倾斜图片增强识别', '倾斜图片增强', '>倾斜增强</span>', '增强未完成', '图片校正未完成', '自动校正未完成', '已按原图识别']) {
+    if (html.includes(marker)) interactionMarkers.push(`${file} -> 旧命名未替换：${marker}`);
+  }
 }
 
 for (const file of ['customers.html', 'groups.html', 'customer-groups.html', 'group-detail.html']) {
@@ -118,13 +133,13 @@ const groupsPage = fs.readFileSync(path.join(dir, 'groups.html'), 'utf8');
 if (!groupsPage.includes('href="group-detail.html"')) interactionMarkers.push('groups.html -> 群聊列表缺少群聊详情入口');
 
 const groupDetailPage = fs.readFileSync(path.join(dir, 'group-detail.html'), 'utf8');
-for (const marker of ['华南小学订单群', '成员数', '绑定客户', '机器人发言', '下单时段', '审核员', 'data-subtab="groupCustomers"', 'data-subtab="groupMembers"', 'data-subtab="groupSplit"', '客户列表', '群成员', '拆单设置', 'S3877081', 'S3883292', 'S3877082', 'S3886664', 'wxid_oik8mjxu2ogw21', 'wxid_bv3uqcdttaj22', '允许按规则拆单', '拆单执行时机', '审核前自动拆单', '确认下单时询问', 'data-split-timing="before"', 'data-split-timing="confirm"', 'data-modal="splitRuleModal"', 'id="splitRuleModal"', 'data-category-check', 'aria-pressed="false"', '默认继承父组客户', '仅可选择该群已绑定的门店', '西餐用品', '粮油副食', '厨房用品', '肉禽蛋']) {
+for (const marker of ['华南小学订单群', '成员数', '绑定客户', '机器人发言', '下单时段', '审核员', 'data-subtab="groupCustomers"', 'data-subtab="groupMembers"', 'data-subtab="groupSplit"', '客户列表', '群成员', '拆单设置', 'S3877081', 'S3883292', 'S3877082', 'S3886664', 'wxid_oik8mjxu2ogw21', 'wxid_bv3uqcdttaj22', '允许按规则拆单', '何时执行拆单', '审核前自动拆单', '先按规则拆成订单组，再开始审核', '确认下单时再选择', '先审核完整订单，再选择是否拆单', '商品分类拆单规则', 'data-split-timing="before"', 'data-split-timing="confirm"', 'data-modal="splitRuleModal"', 'id="splitRuleModal"', 'data-category-check', 'aria-pressed="false"', '默认继承父组客户', '仅可选择该群已绑定的门店', '西餐用品', '粮油副食', '厨房用品', '肉禽蛋']) {
   if (!groupDetailPage.includes(marker)) interactionMarkers.push(`group-detail.html -> ${marker}`);
 }
 if (!groupDetailPage.includes('class="btn link red" data-row-remove')) interactionMarkers.push('group-detail.html -> 客户删除操作不可交互');
 const groupDetailMarkup = groupDetailPage.split('<script>')[0];
-for (const marker of ['仅正常订单', '选择拆单规则在订单审核流程中的生效节点', 'AI 识别完成后立即应用规则', '先核对完整订单', '图框联动识别订单不受此选项影响']) {
-  if (groupDetailMarkup.includes(marker)) interactionMarkers.push(`group-detail.html -> 拆单执行时机不应显示说明：${marker}`);
+for (const marker of ['class="split-rule-limit"', '当前仅支持按商品分类拆单。', '商品将按照已配置的分类规则生成不同的订单分组']) {
+  if (groupDetailMarkup.includes(marker)) interactionMarkers.push(`group-detail.html -> 应删除底部说明：${marker}`);
 }
 
 const normalTasksPage = fs.readFileSync(path.join(dir, 'tasks.html'), 'utf8');
@@ -146,12 +161,28 @@ for (const file of ['task-detail-normal.html', 'task-detail-normal-presplit.html
   }
 }
 const confirmSplitPage = fs.readFileSync(path.join(dir, 'task-detail-normal.html'), 'utf8');
-for (const marker of ['确认下单时询问', 'id="normalSplitConfirm"', 'data-normal-confirm', 'data-normal-direct', 'data-normal-split', '不拆单，直接下单', '按规则拆单']) {
+for (const marker of ['订单已核对完成，本次需要拆单吗？', 'id="normalSplitConfirm"', 'data-normal-confirm', 'data-normal-direct', 'data-normal-split', '不拆单，直接下单', '按规则拆单']) {
   if (!confirmSplitPage.includes(marker)) interactionMarkers.push(`task-detail-normal.html -> ${marker}`);
+}
+const confirmSplitMarkup = confirmSplitPage.split('<script>')[0];
+for (const marker of ['当前群聊设置为', '保持当前完整订单，不生成订单分组并直接提交。', '暂不提交，先按现有分类规则生成 4 个订单分组供再次核对。']) {
+  if (confirmSplitMarkup.includes(marker)) interactionMarkers.push(`task-detail-normal.html -> 拆单弹窗不应显示说明：${marker}`);
 }
 const preSplitPage = fs.readFileSync(path.join(dir, 'task-detail-normal-presplit.html'), 'utf8');
 for (const marker of ['pre-split', '拆单待确认']) {
   if (!preSplitPage.includes(marker)) interactionMarkers.push(`task-detail-normal-presplit.html -> ${marker}`);
+}
+
+for (const file of ['task-detail.html', 'task-detail-single.html', 'task-detail-normal.html', 'task-detail-normal-presplit.html']) {
+  const html = fs.readFileSync(path.join(dir, file), 'utf8');
+  for (const marker of ['data-modal="customFieldModal"', 'id="customFieldModal"', 'class="modal custom-field-modal"', '自定义字段设置', '配置录单系统已有字段和观麦同步的用户自定义字段', '共 <b>24</b> 个字段', '可选字段', '已显示字段', '拖拽调整展示顺序', '录单系统已有字段', '观麦同步的用户自定义字段', 'SPU 名称', '商品编码', '一级分类', '二级分类', '自定义编码', '报价单', 'data-field-id="system-spu"', 'data-field-id="system-product-code"', 'data-field-id="system-category-1"', 'data-field-id="system-category-2"', 'data-field-id="system-custom-code"', 'data-field-id="system-quotation"', '演示字段1', '演示字段18', 'data-field-source="system"', 'data-field-source="guanmai"', 'data-custom-field-search', 'data-custom-field-choice', 'data-custom-field-selected-list', 'draggable="true"', 'data-custom-field-reset', 'data-custom-field-save', 'data-custom-field-table', 'function customFieldCellValue(row,rowIndex,field,fieldIndex)', 'function applyCustomFieldColumns(modal)', "document.addEventListener('dragstart'", '字段设置已保存，商品列表顺序已更新']) {
+    if (!html.includes(marker)) interactionMarkers.push(`${file} -> 自定义字段设置缺少 ${marker}`);
+  }
+  const modalCount = (html.match(/id="customFieldModal"/g) || []).length;
+  if (modalCount !== 1) interactionMarkers.push(`${file} -> 自定义字段弹窗应只有 1 个（当前 ${modalCount} 个）`);
+  const bodyMarkup = html.split('<script>')[0];
+  if (bodyMarkup.includes('<th>SPU 名称</th>')) interactionMarkers.push(`${file} -> SPU 名称应由字段设置动态控制，不应保留固定表头`);
+  if (bodyMarkup.indexOf('录单系统已有字段') > bodyMarkup.indexOf('观麦同步的用户自定义字段')) interactionMarkers.push(`${file} -> 录单系统已有字段应排在观麦同步字段之前`);
 }
 
 const result = { tenantPages: tenantPages.length, missingLinks, missingAssets, replacementChars, interactionMarkers, pageControls };
