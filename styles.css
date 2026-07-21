@@ -4866,10 +4866,6 @@ body.entry-mode .content {
   text-align: center;
 }
 
-.po-link-table .selected-row {
-  background: #f6ffed;
-}
-
 .po-row-main {
   display: flex;
   flex-direction: column;

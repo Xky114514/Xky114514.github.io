@@ -1075,7 +1075,7 @@ let pageAnnotations = {
       "字段【标题问号说明】位于关联采购单和采购入库明细标题右侧，鼠标悬浮或键盘聚焦时展示补充规则，不再占用卡片正文空间。",
       "字段【提交结果】在已提交详情顶部持续展示独立提交或补单结果，说明仍需前往观麦审核。",
       "字段【采购单同步说明】仅采购单详情展示，说明采购单提交观麦后等待审核，未审核期间可被采购入库单关联。",
-      "字段【关联采购单-选择】仅采购入库单详情展示，最多单选一张观麦待处理采购单，也可不选；当前单据提交后不可修改。",
+      "字段【关联采购单-选择】仅采购入库单详情展示，使用复选框勾选或取消关联，最多关联一张观麦待处理采购单，也可不选；当前单据提交后不可修改。",
       "字段【采购单时间】默认选择近 1 天，可切换近 3 天、近 7 天或全部时间；供应商输入生效后重新筛选采购单。",
       "字段【关联采购单-采购单】展示可关联的观麦采购单号、来源和采购日期，用于判断是否为本次到货对应的采购计划。",
       "字段【关联采购单-采购单关联状态】展示该采购单下是否已有采购入库单关联或提交，用于识别正常送货和同采购单分批送货。",
@@ -3623,8 +3623,8 @@ function purchaseAssociationSection(task) {
               const hasOtherInbounds = otherInboundIds.length > 0;
               const rowDisabled = readonlyAssociation || (!isSelected && !isGuanmaiOrderLinkable(order));
               return `
-                <tr class="${isSelected ? "selected-row" : ""}">
-                  <td class="check-col"><label class="check-only"><input type="radio" name="purchase-order-${task.id}" ${isSelected ? "checked" : ""} ${rowDisabled ? "disabled" : ""} data-link-po="${order.id}" data-inbound-id="${task.id}"></label></td>
+                <tr>
+                  <td class="check-col"><label class="check-only"><input type="checkbox" ${isSelected ? "checked" : ""} ${rowDisabled ? "disabled" : ""} data-link-po="${order.id}" data-inbound-id="${task.id}" aria-label="${isSelected ? "取消关联" : "关联"}采购单 ${order.id}"></label></td>
                   <td>
                     <div class="po-row-main">
                       <strong>${order.id}</strong>
