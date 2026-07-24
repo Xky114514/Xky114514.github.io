@@ -116,6 +116,9 @@ for (const marker of ['跨分组移动（稳定商品ID）', '复制商品不复
 
 const settingsPage = fs.readFileSync(path.join(dir, 'settings.html'), 'utf8');
 const settingsMarkup = settingsPage.split('<script>')[0];
+for (const marker of ['订单可见范围', '仅自己负责及未分配订单', '全部订单', '现有模式', '新模式', '仅管理员可修改', '订单可见范围设置已保存']) {
+  if (!settingsPage.includes(marker)) interactionMarkers.push(`settings.html -> 订单可见范围缺少 ${marker}`);
+}
 for (const marker of ['功能设置', 'class="feature-static-line"', '图框联动识别', '在订单审核详情中，将原图标注区域与识别商品进行双向定位。该功能对全部客户和群聊开放。', '倾斜图片自动校正', '自动校正倾斜、旋转或透视变形的订单图片，并基于校正后的图片进行识别。可单独指定适用客户和群聊。', 'data-help-tip', 'data-help-trigger', 'role="tooltip"', 'aria-expanded="false"', '.feature-help-tip:hover .feature-help-pop', 'data-tilt-toggle', 'data-tilt-scope', '选择自动校正的适用客户和群聊', 'data-tilt-selected-scope', 'data-tilt-list="group"', 'data-tilt-list="customer"', 'class="tilt-choice-select"', 'data-tilt-add="group"', 'data-tilt-add="customer"', '搜索并选择群聊...', '搜索并选择客户...', "e.target.closest('[data-tilt-add]')", '已加入自动校正范围', 'data-combined-feature-save', '请至少选择一个自动校正适用对象', 'AI录单测试群-BD', '潭文测试邮件群', '城隍阁', '张三超市']) {
   if (!settingsPage.includes(marker)) interactionMarkers.push(`settings.html -> ${marker}`);
 }
@@ -179,6 +182,11 @@ for (const file of ['task-detail.html', 'task-detail-single.html', 'task-detail-
 
 const groupsPage = fs.readFileSync(path.join(dir, 'groups.html'), 'utf8');
 if (!groupsPage.includes('href="group-detail.html"')) interactionMarkers.push('groups.html -> 群聊列表缺少群聊详情入口');
+
+const promptsPage = fs.readFileSync(path.join(dir, 'prompts.html'), 'utf8');
+for (const marker of ['data-subtab="customerView"', '>客户视图</button>', 'data-panel="customerView"', '已配置客户', '订单解析提示词', '意图识别提示词', '启用模板数', 'data-prompt-customer-search', 'S3866318', '城隍阁', '特殊模板格式', 'function toast(s)', "e.target.closest('[data-prompt-customer-search]')"]) {
+  if (!promptsPage.includes(marker)) interactionMarkers.push(`prompts.html -> 客户视图缺少 ${marker}`);
+}
 
 const groupDetailPage = fs.readFileSync(path.join(dir, 'group-detail.html'), 'utf8');
 for (const marker of ['华南小学订单群', '成员数', '绑定客户', '机器人发言', '下单时段', '审核员', 'data-subtab="groupCustomers"', 'data-subtab="groupMembers"', 'data-subtab="groupSplit"', '客户列表', '群成员', '>拆单设置</button>', 'data-panel="groupSplit"', 'class="group-split-panel"', '<span>启用拆单</span>', '查看拆单适用范围', '订单只有一个原始分组时可按设置执行；存在多个原始分组时需逐组确认是否拆单，不支持全部确认下单。', '执行时间', '审核前自动拆单', '订单进入审核前，系统依据已配置规则自动生成订单分组。', '确认下单时选择', '订单审核完成后，由审核人员选择是否执行拆单。', '商品分类拆单规则', 'data-split-timing="before"', 'data-split-timing="confirm"', 'data-modal="splitGroupRuleModal"', 'id="splitGroupRuleModal"', 'data-category-check', '继承当前群聊绑定客户', '当前群聊的拆单设置已保存', 'S3877081', 'S3883292', 'S3877082', 'S3886664', 'wxid_oik8mjxu2ogw21', 'wxid_bv3uqcdttaj22']) {
