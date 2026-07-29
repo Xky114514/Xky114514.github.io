@@ -3,7 +3,7 @@ import path from 'node:path';
 
 const dir = path.dirname(new URL(import.meta.url).pathname.replace(/^\/(?:([A-Za-z]):)/, '$1:'));
 const tenantPages = [
-  'home.html', 'chat-simulator.html', 'tasks.html', 'order-board.html',
+  'home.html', 'chat-simulator.html', 'deployment-pricing.html', 'tasks.html', 'order-board.html',
   'task-detail.html', 'task-detail-single.html', 'task-detail-standard.html', 'task-detail-normal.html', 'task-detail-normal-presplit.html', 'task-detail-normal-multigroup.html',
   'customers.html', 'groups.html', 'group-detail.html',
   'customer-groups.html', 'sku.html', 'prompts.html', 'memory.html',
