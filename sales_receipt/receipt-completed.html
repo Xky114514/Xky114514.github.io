@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="销售回单应用前端交互原型">
+  <title>回单详情｜销售回单</title>
+  <link rel="stylesheet" href="./styles.css">
+  <link rel="stylesheet" href="./reference.css">
+</head>
+<body data-page="detail-completed" data-receipt-id="SR-20260726-012" data-order-id="SO-20260726-1066" data-readonly="true">
+  <div class="shell">
+    <aside class="sider">
+      <a class="brand" href="index.html" title="原型总览">AI</a>
+      <nav class="nav" aria-label="销售回单主导航">
+        <a class="nav-item " href="home.html" data-title="销售回单首页" aria-label="销售回单首页">
+          <span class="nav-symbol">⌂</span>
+        </a>
+
+        <a class="nav-item active" href="receipts.html" data-title="回单任务" aria-label="回单任务">
+          <span class="nav-symbol">▤</span>
+        </a>
+
+        <a class="nav-item " href="receipt-entry.html" data-title="回单录入" aria-label="回单录入">
+          <span class="nav-symbol">✎</span>
+        </a>
+
+        <a class="nav-item " href="merchants.html" data-title="商户管理" aria-label="商户管理">
+          <span class="nav-symbol">♙</span>
+        </a>
+
+        <a class="nav-item " href="groups.html" data-title="群聊管理" aria-label="群聊管理">
+          <span class="nav-symbol">♧</span>
+        </a>
+
+        <a class="nav-item " href="stats.html" data-title="数据统计" aria-label="数据统计">
+          <span class="nav-symbol">▥</span>
+        </a>
+
+        <a class="nav-item " href="settings.html" data-title="系统设置" aria-label="系统设置">
+          <span class="nav-symbol">✺</span>
+        </a>
+      </nav>
+      <div class="nav-spacer"></div>
+      <a class="nav-item" href="requirements.html" data-title="需求框架" aria-label="需求框架"><span class="nav-symbol">?</span></a>
+    </aside>
+    <main class="workspace">
+      <header class="topbar">
+        <div class="tenant"><strong>销售回单应用</strong><span>AI 回单测试站点</span></div>
+        <div class="top-actions">
+          <a class="back-app" href="index.html">← 返回应用中心</a>
+          <button class="btn text" type="button" data-spec-toggle>业务说明</button>
+          <span class="user-chip">系统管理员</span>
+          <button class="refresh-icon" type="button" data-toast="页面已刷新" aria-label="刷新页面">↻</button>
+        </div>
+      </header>
+      <div class="route-tabs">
+        <a class="route-tab" href="home.html" aria-label="首页">⌂</a>
+        <span class="route-tab active">回单详情　×</span>
+      </div>
+      <section class="content">
+        <div class="page detail-page">
+
+    <div class="receipt-reference-layout">
+      <aside class="card source-card receipt-source-pane" data-tabs>
+        <div class="source-tabs">
+          <button type="button" data-tab-target="basic">基本信息</button>
+          <button class="active" type="button" data-tab-target="messages">群聊消息</button>
+          <button type="button" data-tab-target="location">定位来源</button>
+        </div>
+        <div class="tab-panel source-info-panel" data-tab-panel="basic">
+          <dl class="source-info-list">
+            <div><dt>回单编号</dt><dd data-detail-receipt-id>SR-20260726-012</dd></div>
+            <div><dt>门店</dt><dd data-detail-merchant>华南鲜食店</dd></div>
+            <div><dt>来源群聊</dt><dd data-detail-source>华南鲜食店收货群</dd></div>
+            <div><dt>签收时间</dt><dd data-detail-sign-time>2026-07-26 09:28:18</dd></div>
+            <div><dt>处理状态</dt><dd data-task-status-text>已完成</dd></div>
+          </dl>
+        </div>
+        <div class="tab-panel active" data-tab-panel="messages">
+          <section class="receipt-source-section">
+            <div class="source-section-title"><span></span><strong>原始文件</strong><span></span></div>
+            <button class="source-file-row" type="button" data-toast="正在下载原始回单图片">
+              <span class="file-icon">▱</span>
+              <span class="file-name" data-detail-file-name>SR_20260726_012_RECEIPT.jpg</span>
+              <span class="file-action">下载</span>
+            </button>
+          </section>
+          <section class="receipt-source-section">
+            <div class="source-section-title"><span></span><strong>原始消息</strong><span></span></div>
+            <div class="source-message-preview" data-detail-message>
+              <p>--- 2026-07-26 / 华南鲜食店收货群 ---</p>
+              <p>今天这单有两样数量不对，我把实收数写在送货单上了，请按回单结算。</p>
+              <p>大白菜实收 22 斤；青椒字迹有点模糊，请回单岗核对；油麦菜实收 18.5 斤。</p>
+              <p>单据下方另写了“土豆 5 斤”，大白菜还有一处“21 斤”，请一起核对。</p>
+              <p>收货人：刘店长<br>送货司机：陈师傅</p>
+              <p>--- 回单补充说明 ---</p>
+              <p>青椒有一筐压坏，最终以纸质回单的商户实收数为准。</p>
+              <span>刘店长 · 2026-07-26 09:28:18</span>
+            </div>
+          </section>
+        </div>
+        <div class="tab-panel source-location-panel" data-tab-panel="location">
+          <div class="location-marker">⌖</div>
+          <strong>已定位到原始群聊消息</strong>
+          <p data-detail-location>华南鲜食店收货群<br>2026-07-26 09:28:18 · 刘店长</p>
+          <button class="btn primary" type="button" data-toast="已定位到群聊原消息">查看消息上下文</button>
+        </div>
+      </aside>
+
+      <main class="receipt-main-pane">
+        <section class="receipt-record-summary">
+          <div class="receipt-record-title">
+            <h2>回单详情</h2>
+            <span class="status completed" data-task-status data-state="已完成"><span class="status-dot"></span>已完成</span>
+          </div>
+          <div class="receipt-record-meta">
+            <span>群聊：<strong data-detail-group>华南鲜食店收货群</strong></span>
+            <span>下单员：<strong data-detail-operator>王明</strong></span>
+            <span>创建时间：<strong data-detail-created>2026-07-26 09:28:18</strong></span>
+          </div>
+        </section>
+
+        <section class="table-card candidate-order-panel">
+          <div class="candidate-order-head">
+            <h3>关联销售订单</h3>
+            <label class="candidate-time-select"><span>下单时间</span><select data-order-period aria-label="下单时间范围"><option value="today">今天</option><option value="7" selected>近7天</option><option value="30">近一个月</option><option value="90">近三个月</option></select></label>
+          </div>
+          <div class="table-wrap">
+            <table class="candidate-order-table">
+              <thead><tr><th>选择</th><th>销售订单号</th><th>门店</th><th>下单时间</th><th>状态</th></tr></thead>
+              <tbody>
+                <tr data-order-candidate data-order-number="SO-20260726-1066" data-order-merchant="华南鲜食店" data-order-time="2026-07-26T08:05"><td><input type="radio" name="candidate-order" aria-label="选择销售订单 SO-20260726-1066" data-select-order="SO-20260726-1066" data-order-merchant="华南鲜食店" checked></td><td><strong>SO-20260726-1066</strong></td><td>华南鲜食店</td><td>2026-07-26 08:05</td><td>已签收</td></tr>
+                <tr data-order-candidate data-order-number="SO-20260727-1120" data-order-merchant="华南鲜食店" data-order-time="2026-07-27T07:46"><td><input type="radio" name="candidate-order" aria-label="选择销售订单 SO-20260727-1120" data-select-order="SO-20260727-1120" data-order-merchant="华南鲜食店"></td><td><strong>SO-20260727-1120</strong></td><td>华南鲜食店</td><td>2026-07-27 07:46</td><td>配送中</td></tr>
+                <tr data-order-candidate data-order-number="SO-20260725-1028" data-order-merchant="华南鲜食店" data-order-time="2026-07-25T08:32"><td><input type="radio" name="candidate-order" aria-label="销售订单 SO-20260725-1028 已关联其他回单" data-select-order="SO-20260725-1028" data-order-merchant="华南鲜食店" data-locked="true" disabled></td><td><strong>SO-20260725-1028</strong></td><td>华南鲜食店</td><td>2026-07-25 08:32</td><td>已签收</td></tr>
+                <tr class="empty-row hidden" data-order-candidate-empty><td colspan="5">未找到匹配的销售订单</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="table-card related-order-panel">
+          <div class="related-order-toolbar">
+            <div class="related-order-title">
+              <h3>回单组</h3>
+            </div>
+            <div class="order-group-actions">
+              <button class="btn" type="button" data-save-now>保存</button>
+              <button class="btn primary" type="button" data-confirm-submit>确认提交</button>
+            </div>
+          </div>
+        </section>
+        <div class="relation-transaction-result hidden" data-reassociation-result></div>
+
+        <section class="table-card receipt-ai-panel">
+          <div class="receipt-form-grid">
+            <label><span>门店</span><input value="华南鲜食店" readonly data-order-merchant-display></label>
+            <label class="sign-time-field"><span>签收时间</span><span class="sign-time-control"><input type="date" value="2026-07-26" aria-label="签收日期" data-detail-sign-date><input type="time" value="09:28" aria-label="签收时间" data-detail-sign-clock></span></label>
+            <label class="document-number-field"><span>单据编号</span><input value="SO-20260726-1066" readonly data-order-id-display></label>
+            <label class="wide"><span>备注</span><input value="青椒有压坏，按商户实收数调整" data-detail-remark></label>
+          </div>
+          <div class="table-wrap">
+            <table class="quantity-table receipt-reference-table">
+              <thead><tr><th>序号</th><th>识别文本</th><th>商品名称</th><th class="right">出库数量</th><th>实际出库数</th><th class="right">差异</th><th>单位</th><th>备注</th><th>操作</th></tr></thead>
+              <tbody data-quantity-body hidden>
+        <tr class="row-short" data-quantity-row data-order-line data-outbound="25" data-unit="斤" data-box="box-1" data-current-diff="3">
+          <td>1</td>
+          <td><span class="receipt-recognition-text">大白菜 22斤</span><span class="cell-sub">已匹配</span></td>
+          <td><strong>大白菜</strong><span class="cell-sub">散装 · SKU-10021</span></td>
+          <td class="right"><strong>25</strong></td>
+          <td>
+            <div class="quantity-input-wrap">
+              <input
+                class="quantity-input actual-input"
+                inputmode="decimal"
+                value="22"
+                placeholder="请填写"
+                aria-label="大白菜实际出库数"
+                data-item-id="SKU-10021"
+
+              >
+              <span class="unit-suffix">斤</span>
+            </div>
+          </td>
+          <td class="right"><span class="variance short" data-variance>3 斤</span></td>
+          <td>斤</td>
+          <td><input class="detail-remark-input" value="按商户实收数调整" placeholder="填写备注" aria-label="大白菜备注"></td>
+        </tr>
+
+        <tr class="row-short" data-quantity-row data-order-line data-outbound="12" data-unit="斤" data-box="box-2" data-current-diff="2">
+          <td>2</td>
+          <td><span class="receipt-recognition-text">青椒 10斤</span><span class="cell-sub">已匹配</span></td>
+          <td><strong>青椒</strong><span class="cell-sub">中号 · SKU-10083</span></td>
+          <td class="right"><strong>12</strong></td>
+          <td>
+            <div class="quantity-input-wrap">
+              <input
+                class="quantity-input actual-input"
+                inputmode="decimal"
+                value="10"
+                placeholder="请填写"
+                aria-label="青椒实际出库数"
+                data-item-id="SKU-10083"
+
+              >
+              <span class="unit-suffix">斤</span>
+            </div>
+          </td>
+          <td class="right"><span class="variance short" data-variance>2 斤</span></td>
+          <td>斤</td>
+          <td><input class="detail-remark-input" value="按商户实收数调整" placeholder="填写备注" aria-label="青椒备注"></td>
+        </tr>
+
+        <tr class="row-over" data-quantity-row data-order-line data-outbound="18" data-unit="斤" data-box="box-3" data-current-diff="-0.5">
+          <td>3</td>
+          <td><span class="receipt-recognition-text">油麦菜 18.5斤</span><span class="cell-sub">已匹配</span></td>
+          <td><strong>油麦菜</strong><span class="cell-sub">散装 · SKU-10126</span></td>
+          <td class="right"><strong>18</strong></td>
+          <td>
+            <div class="quantity-input-wrap">
+              <input
+                class="quantity-input actual-input"
+                inputmode="decimal"
+                value="18.5"
+                placeholder="请填写"
+                aria-label="油麦菜实际出库数"
+                data-item-id="SKU-10126"
+
+              >
+              <span class="unit-suffix">斤</span>
+            </div>
+          </td>
+          <td class="right"><span class="variance over" data-variance>-0.5 斤</span></td>
+          <td>斤</td>
+          <td><input class="detail-remark-input" value="按商户实收数调整" placeholder="填写备注" aria-label="油麦菜备注"></td>
+        </tr>
+        <tr class="exception-section-row"><td colspan="8"><strong>AI 未匹配条目（2）</strong></td></tr>
+        <tr class="exception-row" data-unmatched-row>
+          <td>附加 1</td>
+          <td><span class="receipt-recognition-text">土豆 5斤</span><span class="cell-sub">订单无此商品</span></td>
+          <td><strong>土豆</strong><span class="cell-sub">AI 新增条目</span></td>
+          <td class="right">--</td><td>--</td><td class="right">--</td><td>斤</td><td>不回写</td>
+        </tr>
+        <tr class="exception-row" data-unmatched-row>
+          <td>附加 2</td>
+          <td><span class="receipt-recognition-text">大白菜 21斤</span><span class="cell-sub">重复识别</span></td>
+          <td><strong>大白菜</strong><span class="cell-sub">多余的第 2 条 AI 结果</span></td>
+          <td class="right">--</td><td>--</td><td class="right">--</td><td>斤</td><td>不回写</td>
+        </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="add-product-bar"><button type="button" data-add-product>＋ 新增商品</button></div>
+        </section>
+      </main>
+    </div>
+
+        </div>
+      </section>
+    </main>
+  </div>
+  <template id="pageSpec">
+  <h3>1. 页面目标与状态边界</h3>
+  <p>查看已经确认提交并成功写入销售订单的回单结果。已完成是当前流程终态，本页只读，不承担修正、重新关联或再次提交。</p>
+  <h3>2. 只读范围</h3>
+  <ul><li>来源区、群聊、下单员、创建时间和状态仅展示。</li><li>关联销售订单列表保留用于追溯；销售订单单选框全部禁用，不允许更换关联。</li><li>门店、签收时间、单据编号、备注、商品名称、实际出库数和商品备注全部只读。</li><li>不展示保存、确认提交、新增商品、行内新增和行内删除入口。</li><li>下单时间筛选仅过滤候选展示，不改变关联和业务数据。</li></ul>
+  <h3>3. 展示字段与口径</h3>
+  <table><thead><tr><th>字段</th><th>数据来源</th><th>展示规则</th></tr></thead><tbody>
+    <tr><td>关联销售订单</td><td>提交成功时的最终关联</td><td>以禁用的选中单选框标识。</td></tr>
+    <tr><td>出库数量</td><td>销售订单</td><td>展示提交时对应订单商品的系统数量。</td></tr>
+    <tr><td>实际出库数</td><td>确认提交成功值</td><td>展示已经写入销售订单的最终值。</td></tr>
+    <tr><td>差异</td><td>系统计算</td><td>差异＝出库数量－实际出库数。</td></tr>
+    <tr><td>操作员</td><td>任务处理记录</td><td>展示最终提交人；自动提交显示“系统自动处理”。</td></tr>
+  </tbody></table>
+  <h3>4. 商品顺序与追溯</h3>
+  <ul><li>订单内商品保持销售订单商品顺序。</li><li>AI 多识别商品和多余重复项仍排列在订单商品之后，保留提交时结果，不在只读页重新匹配。</li><li>AI 漏识别商品保留订单原位置，实际出库数展示提交值 0。</li></ul>
+  <h3>5. 异常与反馈</h3>
+  <ul><li>详情加载失败时不展示可编辑控件，提示“回单详情加载失败，请重试”。</li><li>历史关联订单不可用或已停用时仍按提交快照回显，不允许重新选择。</li><li>任何脚本或快捷操作尝试修改字段时均不保存、不改变销售订单和任务状态。</li></ul>
+  <h3>6. 验收标准</h3>
+  <ul><li>从任务列表点击已完成回单“查看”后进入本页。</li><li>所有销售订单单选框不可选择，全部业务输入框不可编辑。</li><li>页面没有保存、确认提交、新增商品、行新增和行删除按钮。</li><li>刷新或返回列表后，销售订单实际出库数与任务状态均保持不变。</li></ul>
+</template>
+
+  <div class="modal-backdrop" id="reassociateConfirm">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="reassociateConfirmTitle">
+      <div class="modal-head"><span id="reassociateConfirmTitle">确认更换关联</span><button class="modal-close" type="button" data-close-modal>×</button></div>
+      <div class="modal-body">
+        <p>将 <b data-reassociate-old>SO-20260726-1066</b> 更换为 <b data-reassociate-new>--</b>。系统会撤销旧订单影响，并按原始 AI 结果重建商品匹配。</p>
+        <p class="muted">失败时恢复原关联和原订单数据。</p>
+      </div>
+      <div class="modal-foot"><button class="btn" type="button" data-close-modal>取消</button><button class="btn primary" type="button" data-confirm-reassociate>确认更换并重新匹配</button></div>
+    </div>
+  </div>
+
+
+  <div class="drawer-mask" id="drawerMask"></div>
+  <aside class="spec-drawer" id="specDrawer" aria-hidden="true" aria-label="业务说明">
+    <div class="spec-drawer-head">
+      <strong>当前页面业务说明</strong>
+      <button class="modal-close" type="button" data-spec-close aria-label="关闭业务说明">×</button>
+    </div>
+    <div class="spec-drawer-body" id="specDrawerBody"></div>
+  </aside>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="./app.js"></script>
+</body>
+</html>

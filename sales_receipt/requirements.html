@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="销售回单应用前端交互原型">
+  <title>需求框架｜销售回单</title>
+  <link rel="stylesheet" href="./styles.css">
+  <link rel="stylesheet" href="./reference.css">
+</head>
+<body data-page="requirements" >
+  <div class="shell">
+    <aside class="sider">
+      <a class="brand" href="index.html" title="原型总览">AI</a>
+      <nav class="nav" aria-label="销售回单主导航">
+        <a class="nav-item " href="home.html" data-title="销售回单首页" aria-label="销售回单首页">
+          <span class="nav-symbol">⌂</span>
+        </a>
+
+        <a class="nav-item " href="receipts.html" data-title="回单任务" aria-label="回单任务">
+          <span class="nav-symbol">▤</span>
+        </a>
+
+        <a class="nav-item " href="receipt-entry.html" data-title="回单录入" aria-label="回单录入">
+          <span class="nav-symbol">✎</span>
+        </a>
+
+        <a class="nav-item " href="merchants.html" data-title="商户管理" aria-label="商户管理">
+          <span class="nav-symbol">♙</span>
+        </a>
+
+        <a class="nav-item " href="groups.html" data-title="群聊管理" aria-label="群聊管理">
+          <span class="nav-symbol">♧</span>
+        </a>
+
+        <a class="nav-item " href="stats.html" data-title="数据统计" aria-label="数据统计">
+          <span class="nav-symbol">▥</span>
+        </a>
+
+        <a class="nav-item " href="settings.html" data-title="系统设置" aria-label="系统设置">
+          <span class="nav-symbol">✺</span>
+        </a>
+      </nav>
+      <div class="nav-spacer"></div>
+      <a class="nav-item" href="requirements.html" data-title="需求框架" aria-label="需求框架"><span class="nav-symbol">?</span></a>
+    </aside>
+    <main class="workspace">
+      <header class="topbar">
+        <div class="tenant"><strong>销售回单应用</strong><span>AI 回单测试站点</span></div>
+        <div class="top-actions">
+          <a class="back-app" href="index.html">← 返回应用中心</a>
+          <button class="btn text" type="button" data-spec-toggle>业务说明</button>
+          <span class="user-chip">系统管理员</span>
+          <button class="refresh-icon" type="button" data-toast="页面已刷新" aria-label="刷新页面">↻</button>
+        </div>
+      </header>
+      <div class="route-tabs">
+        <a class="route-tab" href="home.html" aria-label="首页">⌂</a>
+        <span class="route-tab active">需求框架　×</span>
+      </div>
+      <section class="content">
+        <div class="page ">
+
+
+  <div class="page-head">
+    <div>
+      <h1>销售回单应用需求框架</h1>
+      <p>V1.0 · 当前原型基线</p>
+    </div>
+    <div class="page-actions"><a class="btn" href="index.html">返回原型总览</a><a class="btn primary" href="home.html">进入应用</a></div>
+  </div>
+
+    <div class="spec-grid">
+      <aside class="card spec-toc"><div class="card-head"><strong>目录</strong></div><div class="card-body"><a href="#scope">目标与范围</a><a href="#objects">对象关系</a><a href="#association">订单关联</a><a href="#matching">商品匹配</a><a href="#quantity">数量口径</a><a href="#reassociation">更换关联</a><a href="#autosave">保存与提交</a><a href="#flow">处理流程</a><a href="#states">状态</a><a href="#pages">页面地图</a><a href="#task-spec">回单任务说明</a><a href="#detail-spec">回单详情说明</a><a href="#acceptance">验收基线</a></div></aside>
+      <article class="card spec-document">
+        <h1>销售回单应用</h1><p>承接回单材料接收、AI 识别、订单关联、实际出库数更新和结果查询，不创建新的销售订单。</p>
+        <h2 id="scope">目标与范围</h2><ul><li>接收图片、文字、PDF、Excel 等回单材料。</li><li>AI 识别商户实收数并填入实际出库数。</li><li>员工直接修改实际出库数，修改即保存。</li><li>写入销售订单成功后，回单立即变为已完成。</li><li>只使用识别中、待处理、已完成三个状态。</li></ul>
+        <h2 id="objects">对象关系</h2><p><code>一张销售订单 ↔ 一张销售回单</code>，两者为一对一关系；同一销售订单不能同时关联多张回单。销售回单直接修改销售订单中的“实际出库数”。</p>
+        <h2 id="association">订单关联</h2><ol><li>销售订单编号与销售出库单编号一致，回单详情统一使用“单据编号”。</li><li>系统使用门店、AI 识别的单据编号、回单商品及数量联合筛选候选销售订单。</li><li>候选订单直接展示在回单详情上方，仅限门店一致且状态为“配送中”或“已签收”的销售订单；等待分拣订单不进入候选。</li><li>候选列表使用单选下拉提供今天、近7天、近一个月、近三个月四档下单时间筛选，分别覆盖当前自然日、当前日及前6日、当前日及前29日、当前日及前89日，默认近7天。</li><li>操作员修改门店或单据编号后，系统将两项与时间范围组合，立即刷新候选列表。</li><li>若唯一匹配且销售订单未关联其他回单，系统默认选中并加载该销售订单商品明细。</li><li>若未匹配或存在多张候选，进入待处理，由操作员人工单选。</li><li>已被其他回单关联的销售订单单选控件置灰；订单状态仍按实际业务状态展示为已签收或配送中。</li></ol>
+        <h2 id="matching">商品匹配</h2><ol><li>未关联销售订单时，商品明细保持 AI 原始识别顺序。</li><li>关联后，商品列表以销售订单商品顺序为基准，AI 商品与订单商品按商品名称一一匹配，不允许多对多。</li><li>AI 漏识别的订单商品仍保留在订单原顺序中，“实际出库数”填 0，不增加漏识别标签或说明。</li><li>AI 识别出但订单明细不存在的商品，以及无法继续一一对应的多余重复项，按 AI 原始顺序追加在订单商品之后，默认不回写销售订单。</li><li>商品行支持在当前行后新增空白行，也支持删除当前回单中的商品行。</li></ol>
+        <h2 id="quantity">数量口径</h2><div class="table-wrap"><table><thead><tr><th>字段</th><th>来源</th><th>可编辑</th><th>业务规则</th></tr></thead><tbody><tr><td>出库数量</td><td>观麦系统</td><td>否</td><td>差异计算基准</td></tr><tr><td>实际出库数</td><td>AI 识别，员工可修改</td><td>是</td><td>修改后自动保存</td></tr><tr><td>差异</td><td>系统计算</td><td>否</td><td>出库数量－实际出库数</td></tr></tbody></table></div>
+        <h2 id="reassociation">更换关联</h2><ol><li>下单员在候选列表中单选新的销售订单时，系统先提示旧、新销售订单。</li><li>确认后先撤销当前回单对旧销售订单“实际出库数”的影响，并重新计算旧订单。</li><li>清除旧订单的商品匹配结果和本次回单上的人工修改，以新销售订单商品明细重建列表。</li><li>使用原始 AI 识别结果重新进行一一匹配，再将有效实收数应用到新销售订单。</li><li>以上步骤按一个事务处理；任一步失败时恢复旧关联及旧订单原数据，不保留部分更新。</li></ol>
+        <h2 id="autosave">保存与提交</h2><ol><li>输入时实时计算差异。</li><li>停止输入约 600 毫秒、失焦或按 Enter 后保存；点击“保存”立即保存当前有效数量。</li><li>“确认提交”校验已选择销售订单，且人工新增行已填写商品名称和实际出库数；校验通过后提交当前回单结果。</li><li>实际出库数写入销售订单成功后，任务立即变为已完成；对已完成回单重复确认提交保持幂等。</li><li>失败时保留输入并进入待处理，修正后可再次保存或确认提交。</li></ol>
+        <h2 id="flow">处理流程</h2><ol><li>接收回单材料，任务进入识别中。</li><li>AI 识别客户、订单号、商品和实收数，并匹配可用销售订单。</li><li>无法唯一匹配时进入待处理，由操作员选择销售订单。</li><li>系统加载订单商品，按名称一一匹配并填入实际出库数。</li><li>操作员修改后自动保存；确认提交并成功写入销售订单后即已完成，失败则保持待处理。</li></ol>
+        <h2 id="states">状态</h2><div class="table-wrap"><table><thead><tr><th>状态</th><th>进入条件</th></tr></thead><tbody><tr><td>识别中</td><td>正在解析回单材料</td></tr><tr><td>待处理</td><td>订单未唯一关联、实际出库数未成功写入或保存失败</td></tr><tr><td>已完成</td><td>实际出库数已成功写入关联销售订单</td></tr></tbody></table></div>
+        <h2 id="pages">页面地图</h2><p>首页、回单录入、回单任务、三态详情、商户、群聊、统计和设置均提供独立 HTML 页面，并可从原型总览访问。</p>
+        <h2 id="task-spec">回单任务业务说明</h2>
+        <h3>页面范围</h3><p>回单任务列表只承接“待处理”和“已完成”数据。识别中任务继续存在于业务状态中，但不进入任务列表，也不提供状态筛选项。</p>
+        <h3>筛选与列表</h3><div class="table-wrap"><table><thead><tr><th>项目</th><th>规则</th></tr></thead><tbody><tr><td>状态</td><td>全部状态、待处理、已完成；默认全部状态。</td></tr><tr><td>门店</td><td>选项来自当前数据权限内门店；默认全部门店。</td></tr><tr><td>时间范围</td><td>按回单进入系统的时间筛选，开始日和结束日均包含；开始日期不得晚于结束日期。</td></tr><tr><td>操作员</td><td>选项来自任务处理人，包含系统自动处理；默认全部操作员。</td></tr><tr><td>查询</td><td>按状态、门店、时间范围和操作员的交集刷新列表、结果数和分页总数。</td></tr><tr><td>重置</td><td>恢复默认筛选并立即刷新。</td></tr><tr><td>刷新</td><td>保留当前筛选条件重新读取数据。</td></tr></tbody></table></div>
+        <h3>业务场景示例</h3><div class="table-wrap"><table><thead><tr><th>业务场景</th><th>任务状态</th><th>示例说明</th></tr></thead><tbody><tr><td>候选订单不唯一</td><td>待处理</td><td>单据编号字迹模糊，同时推荐 SO-20260725-1028 与 SO-20260727-1120，需人工确认唯一订单。</td></tr><tr><td>AI 识别完整，人工确认提交</td><td>已完成</td><td>AI 完整识别订单、商品和实收数量，操作员核对后点击确认提交。</td></tr><tr><td>AI 多识别关联订单外商品</td><td>待处理</td><td>关联订单中没有“土豆”，AI 额外识别“土豆 5 斤”，该条目追加在订单商品末尾等待核对。</td></tr><tr><td>AI 漏识别商品</td><td>待处理</td><td>订单包含青椒，但 AI 未识别青椒实收数，系统填 0 并等待操作员核对。</td></tr><tr><td>已有单据编号，唯一关联</td><td>待处理</td><td>AI 准确识别系统已有单据编号 SO-20260725-1028，系统仅命中并自动选中这一张订单，等待人工确认。</td></tr><tr><td>仅识别已有门店，多候选</td><td>待处理</td><td>AI 未获得可唯一定位的单据编号，只识别出已有门店“华南鲜食店”，该门店近 7 天存在多张配送中或已签收订单。</td></tr></tbody></table></div>
+        <h3>状态与操作</h3><div class="table-wrap"><table><thead><tr><th>任务状态</th><th>列表可见</th><th>查看详情</th><th>编辑</th><th>保存/提交</th></tr></thead><tbody><tr><td>识别中</td><td>否</td><td>否</td><td>否</td><td>否</td></tr><tr><td>待处理</td><td>是</td><td>可编辑详情</td><td>是</td><td>是</td></tr><tr><td>已完成</td><td>是</td><td>只读详情</td><td>否</td><td>否</td></tr></tbody></table></div>
+        <h3>异常与验收</h3><ul><li>无命中数据时显示空态，列表数量和分页总数均为 0。</li><li>查询失败保留筛选条件与原列表；删除失败保留原行。</li><li>查询/重置位于筛选栏，列表工具栏仅保留刷新。</li></ul>
+        <h2 id="detail-spec">回单详情业务说明</h2>
+        <h3>待处理详情</h3><ol><li>来源材料和回单摘要只读；候选销售订单按门店、单据编号、商品及数量产生。</li><li>门店和单据编号默认使用 AI 识别值，均可修改；修改后与下单时间范围共同刷新候选列表。</li><li>操作员单选唯一销售订单后，商品明细按销售订单顺序重建；AI 漏识别商品填 0，多识别和多余重复项追加到底部。</li><li>出库数量始终只读；实际出库数允许 0 和小数，差异按“出库数量－实际出库数”实时计算。</li><li>保存只保存有效编辑，不改变待处理状态；确认提交成功写入销售订单后，任务立即变为已完成。</li><li>更换关联必须原子处理：撤销旧影响、清除旧匹配和人工修改、基于原始 AI 结果重建；失败时完整恢复。</li></ol>
+        <h3>已完成详情</h3><ol><li>已完成详情仅用于追溯提交结果，关联销售订单、门店、签收时间、单据编号、备注、实际出库数和商品行均只读。</li><li>关联订单单选框禁用；保存、确认提交、新增商品、行新增和行删除入口不展示。</li><li>下单时间筛选只过滤候选展示，不改变关联或业务数据。</li><li>历史关联对象停用或不可用时仍按提交快照回显，不允许重新选择。</li></ol>
+        <h3>失败与恢复</h3><ul><li>校验失败不保存、不提交，保留输入并定位错误字段。</li><li>保存或提交失败时任务保持待处理，保留当前输入并允许重试。</li><li>确认提交重复触发按同一回单编号幂等处理。</li></ul>
+        <h2 id="acceptance">验收基线</h2><ol><li>回单录入仅在群聊模式显示紧凑客户下拉；切回客户模式后立即隐藏。</li><li>群聊模式下未选择群聊或对应客户时禁止发送。</li><li>回单任务列表和状态筛选均不展示识别中任务。</li><li>回单任务支持按操作员筛选，并与状态、门店、时间范围按交集生效。</li><li>任务页查询/重置位于筛选栏，列表工具栏仅保留刷新。</li><li>点击已完成回单“查看”进入只读详情；关联订单、门店、签收时间、单据编号、备注、实际出库数和商品行均不可修改。</li><li>详情顶部展示来源群聊名称、下单员和创建时间，不再展示顶部门店。</li><li>待处理回单的门店和单据编号可以修改，修改后立即与下单时间范围共同刷新候选销售订单。</li><li>候选订单卡片通过下拉框提供今天、近7天、近一个月、近三个月四档筛选，默认近7天。</li><li>候选订单表不展示销售出库单号；订单时间命名为下单时间；状态只出现已签收和配送中。</li><li>回单组不展示折叠图标；表单中不展示订单状态字段。</li><li>出库数量是销售订单已有数据且只读；实际出库数与 AI 识别商户实收数共用一个可编辑字段，差异实时计算。</li><li>未关联时按 AI 原始顺序展示；关联后完整展示销售订单商品并保持订单顺序，AI 漏识别的实际出库数为 0。</li><li>AI 新增商品和多余重复项按 AI 原始顺序展示在销售订单商品最下方且不回写。</li><li>识别文本和商品名称单元格不展示匹配说明、规格或 SKU 等第二行解释。</li><li>每一行都可在当前行后新增空白行或删除当前行，操作后序号连续更新；回单组底部的“新增商品”在末尾新增空白行。</li><li>确认提交前校验已选择销售订单，且人工新增行已填写商品名称和实际出库数。</li><li>每条 AI 结果至多对应一条销售订单商品，每条销售订单商品至多对应一条 AI 结果。</li><li>同一销售订单或销售回单不能产生第二条有效关联。</li><li>实际出库数成功写入销售订单后，任务立即进入已完成。</li><li>更换关联成功后，旧订单不残留本回单影响，新列表不沿用旧匹配或人工修改。</li><li>更换关联失败时，旧关联和旧订单数据保持原状。</li><li>保存失败不丢输入并进入待处理；全局不出现第四种任务状态。</li><li>操作员绩效仅展示处理客户数、提交回单数和提交商品数，不展示平均处理时长。</li></ol>
+      </article>
+    </div>
+
+        </div>
+      </section>
+    </main>
+  </div>
+  <template id="pageSpec">
+  <h3>页面目标</h3>
+  <p>集中展示当前原型的业务基线，便于产品、研发和测试对齐。</p>
+  <h3>字段与业务含义</h3>
+  <ul><li>数量口径、对象关系、状态和页面地图均来自已确认需求。</li><li>完整规格保存在项目根目录 Markdown 文件中。</li></ul>
+  <h3>交互与业务规则</h3>
+  <ul><li>本页只读，不承担业务数据修改。</li><li>点击目录定位对应章节。</li></ul>
+
+</template>
+
+
+  <div class="drawer-mask" id="drawerMask"></div>
+  <aside class="spec-drawer" id="specDrawer" aria-hidden="true" aria-label="业务说明">
+    <div class="spec-drawer-head">
+      <strong>当前页面业务说明</strong>
+      <button class="modal-close" type="button" data-spec-close aria-label="关闭业务说明">×</button>
+    </div>
+    <div class="spec-drawer-body" id="specDrawerBody"></div>
+  </aside>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="./app.js"></script>
+</body>
+</html>

@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="销售回单应用前端交互原型">
+  <title>系统设置｜销售回单</title>
+  <link rel="stylesheet" href="./styles.css">
+  <link rel="stylesheet" href="./reference.css">
+</head>
+<body data-page="settings" >
+  <div class="shell">
+    <aside class="sider">
+      <a class="brand" href="index.html" title="原型总览">AI</a>
+      <nav class="nav" aria-label="销售回单主导航">
+        <a class="nav-item " href="home.html" data-title="销售回单首页" aria-label="销售回单首页">
+          <span class="nav-symbol">⌂</span>
+        </a>
+
+        <a class="nav-item " href="receipts.html" data-title="回单任务" aria-label="回单任务">
+          <span class="nav-symbol">▤</span>
+        </a>
+
+        <a class="nav-item " href="receipt-entry.html" data-title="回单录入" aria-label="回单录入">
+          <span class="nav-symbol">✎</span>
+        </a>
+
+        <a class="nav-item " href="merchants.html" data-title="商户管理" aria-label="商户管理">
+          <span class="nav-symbol">♙</span>
+        </a>
+
+        <a class="nav-item " href="groups.html" data-title="群聊管理" aria-label="群聊管理">
+          <span class="nav-symbol">♧</span>
+        </a>
+
+        <a class="nav-item " href="stats.html" data-title="数据统计" aria-label="数据统计">
+          <span class="nav-symbol">▥</span>
+        </a>
+
+        <a class="nav-item active" href="settings.html" data-title="系统设置" aria-label="系统设置">
+          <span class="nav-symbol">✺</span>
+        </a>
+      </nav>
+      <div class="nav-spacer"></div>
+      <a class="nav-item" href="requirements.html" data-title="需求框架" aria-label="需求框架"><span class="nav-symbol">?</span></a>
+    </aside>
+    <main class="workspace">
+      <header class="topbar">
+        <div class="tenant"><strong>销售回单应用</strong><span>AI 回单测试站点</span></div>
+        <div class="top-actions">
+          <a class="back-app" href="index.html">← 返回应用中心</a>
+          <button class="btn text" type="button" data-spec-toggle>业务说明</button>
+          <span class="user-chip">系统管理员</span>
+          <button class="refresh-icon" type="button" data-toast="页面已刷新" aria-label="刷新页面">↻</button>
+        </div>
+      </header>
+      <div class="route-tabs">
+        <a class="route-tab" href="home.html" aria-label="首页">⌂</a>
+        <span class="route-tab active">系统设置　×</span>
+      </div>
+      <section class="content">
+        <div class="page ">
+
+
+  <div class="page-head">
+    <div>
+      <h1>系统设置</h1>
+    </div>
+
+  </div>
+
+      <section class="table-card" data-tabs>
+        <div class="tabs"><button class="tab-button active" type="button" data-tab-target="robots">信道设置</button><button class="tab-button" type="button" data-tab-target="replies">回复设置</button><button class="tab-button" type="button" data-tab-target="notifications">通知设置</button><button class="tab-button" type="button" data-tab-target="rules">功能设置</button></div>
+        <div class="tab-panel active" data-tab-panel="robots">
+          <div class="table-toolbar"><strong>回单机器人</strong><button class="btn" type="button" data-toast="机器人状态已刷新">刷新</button></div>
+          <div class="table-wrap"><table><thead><tr><th>名称</th><th>渠道</th><th>状态</th><th class="right">绑定群聊</th><th>操作</th></tr></thead><tbody><tr><td class="strong">销售回单机器人</td><td><span class="tag blue">企业微信</span></td><td><span class="tag green">在线</span></td><td class="right">42</td><td><button class="text-btn" type="button" data-toast="机器人详情已打开">详情</button></td></tr><tr><td class="strong">微信回单助手</td><td><span class="tag purple">微信</span></td><td><span class="tag green">在线</span></td><td class="right">28</td><td><button class="text-btn" type="button" data-toast="机器人详情已打开">详情</button></td></tr></tbody></table></div>
+        </div>
+        <div class="tab-panel" data-tab-panel="replies">
+          <div class="setting-section"><div class="setting-row"><div class="setting-copy"><strong>收到回单</strong><span>回复“已收到回单，正在识别商品实收数量。”</span></div><button class="switch on" type="button" role="switch" aria-checked="true"></button></div><div class="setting-row"><div class="setting-copy"><strong>需要人工处理</strong><span>通知回单岗处理订单未匹配或数量未写入任务</span></div><button class="switch on" type="button" role="switch" aria-checked="true"></button></div><div class="setting-row"><div class="setting-copy"><strong>完成通知</strong><span>实际出库数写入成功后回复处理结果</span></div><button class="switch" type="button" role="switch" aria-checked="false"></button></div><div class="setting-row"><div class="setting-copy"><strong>保存失败通知</strong><span>实际出库数回写失败时通知处理人</span></div><button class="switch on" type="button" role="switch" aria-checked="true"></button></div></div><div class="modal-foot"><button class="btn primary" type="button" data-toast="回复通知设置已保存">保存设置</button></div>
+        </div>
+        <div class="tab-panel" data-tab-panel="rules">
+          <div class="setting-section"><div class="setting-row"><div class="setting-copy"><strong>自动识别回单</strong><span>收到符合回单意图的材料后自动创建任务</span></div><button class="switch on" type="button" role="switch" aria-checked="true"></button></div><div class="setting-row"><div class="setting-copy"><strong>自动关联销售订单</strong><span>唯一匹配时自动关联，非唯一时进入待处理</span></div><button class="switch on" type="button" role="switch" aria-checked="true"></button></div><div class="setting-row"><div class="setting-copy"><strong>实际出库数修改即保存</strong><span>写入成功后任务立即完成</span></div><span class="tag blue">固定开启</span></div><div class="setting-row"><div class="setting-copy"><strong>数量小数位</strong><span>原型统一演示最多两位小数</span></div><select class="control" style="width:160px"><option>最多 2 位</option><option>整数</option></select></div></div><div class="modal-foot"><button class="btn primary" type="button" data-toast="处理规则已保存">保存设置</button></div>
+        </div>
+        <div class="tab-panel" data-tab-panel="notifications">
+          <div class="setting-section"><div class="setting-row"><div class="setting-copy"><strong>待处理任务通知</strong><span>订单未匹配、数量缺失或保存失败时通知回单岗</span></div><button class="switch on" type="button" role="switch" aria-checked="true"></button></div><div class="setting-row"><div class="setting-copy"><strong>每日汇总</strong><span>每天 18:00 推送当日回单量和差异情况</span></div><button class="switch on" type="button" role="switch" aria-checked="true"></button></div></div>
+        </div>
+      </section>
+
+        </div>
+      </section>
+    </main>
+  </div>
+  <template id="pageSpec">
+  <h3>页面目标</h3>
+  <p>配置销售回单机器人、群回复、自动识别和自动保存。</p>
+  <h3>字段与业务含义</h3>
+  <ul><li>修改即保存：回单详情的固定规则，不在此处关闭。</li><li>写入完成：实际出库数写入销售订单成功后立即进入已完成。</li></ul>
+  <h3>交互与业务规则</h3>
+  <ul><li>设置页使用保存按钮；回单详情修改自动保存，并保留立即保存入口。</li><li>关闭通知不影响回单任务实际处理。</li></ul>
+
+</template>
+
+
+  <div class="drawer-mask" id="drawerMask"></div>
+  <aside class="spec-drawer" id="specDrawer" aria-hidden="true" aria-label="业务说明">
+    <div class="spec-drawer-head">
+      <strong>当前页面业务说明</strong>
+      <button class="modal-close" type="button" data-spec-close aria-label="关闭业务说明">×</button>
+    </div>
+    <div class="spec-drawer-body" id="specDrawerBody"></div>
+  </aside>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="./app.js"></script>
+</body>
+</html>
