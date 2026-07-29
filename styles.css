@@ -210,6 +210,7 @@ button {
 }
 
 .purchase-sider .side-menu {
+  height: calc(100vh - 64px);
   gap: 6px;
   padding: 8px 0;
   overflow: visible;
@@ -220,12 +221,25 @@ button {
 }
 
 .purchase-agent-switcher {
-  position: relative;
-  margin-top: auto;
-  padding-top: 8px;
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  z-index: 190;
+  width: 52px;
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 0;
+  background: var(--sider);
 }
 
 .purchase-agent-switcher summary {
+  width: 44px;
+  height: 44px;
+  margin: 4px;
+  display: flex;
+  color: #fff;
+  background: var(--primary);
+  border-radius: 10px;
   list-style: none;
 }
 
@@ -236,6 +250,11 @@ button {
 .purchase-agent-switcher[open] summary {
   color: #fff;
   background: var(--primary);
+}
+
+.purchase-agent-switcher summary:hover,
+.purchase-agent-switcher[open] summary:hover {
+  background: #4096ff;
 }
 
 .purchase-agent-switcher .agent-center-mark {
@@ -305,6 +324,10 @@ button {
 
 .purchase-agent-icon.sales {
   background: linear-gradient(135deg, #3db5ff, #1677ff);
+}
+
+.purchase-agent-icon.platform {
+  background: linear-gradient(135deg, #627eea, #354fc7);
 }
 
 .purchase-agent-icon.receipt {
@@ -1187,6 +1210,301 @@ body.home-mode .content {
 .home-dashboard-page .metric-value {
   font-size: 24px;
   line-height: 30px;
+}
+
+body.platform-mode {
+  --bg: #ffffff;
+  background: #fff;
+}
+
+body.platform-mode .app-shell {
+  min-height: 100vh;
+  display: flex;
+  background: #fff;
+}
+
+body.platform-mode .sider {
+  width: 196px;
+  min-height: 100vh;
+  flex: 0 0 196px;
+  display: flex;
+  background: #001a2e;
+}
+
+body.platform-mode .platform-sider .brand {
+  height: 60px;
+  padding: 0 16px;
+  border-bottom: 0;
+  background: transparent;
+  cursor: default;
+  pointer-events: none;
+}
+
+body.platform-mode .platform-sider .brand-mark {
+  display: none;
+}
+
+body.platform-mode .platform-sider .brand-text {
+  display: inline;
+  color: #fff;
+  font-size: 20px;
+  letter-spacing: 0.02em;
+}
+
+body.platform-mode .platform-sider .side-menu {
+  padding: 0 10px 18px;
+}
+
+body.platform-mode .platform-menu {
+  padding-top: 2px;
+}
+
+body.platform-mode .platform-menu .side-item {
+  height: 42px;
+  padding: 0 14px;
+  color: rgba(255, 255, 255, 0.88);
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+body.platform-mode .platform-menu .side-icon {
+  display: none;
+}
+
+body.platform-mode .platform-menu .side-item.active {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+body.platform-mode .topbar,
+body.platform-mode .tabbar,
+body.platform-mode .annotation-panel {
+  display: none;
+}
+
+body.platform-mode .main {
+  min-height: 100vh;
+  background: #fff;
+}
+
+body.platform-mode .content {
+  min-height: 100vh;
+  margin: 0;
+  padding: 28px 32px 48px;
+  background: #fff;
+}
+
+.platform-home-page {
+  max-width: 1120px;
+  gap: 26px;
+}
+
+.platform-quota-block h1,
+.platform-page-header h1 {
+  margin: 0;
+  color: #1f1f1f;
+  font-size: 24px;
+  line-height: 34px;
+  font-weight: 600;
+}
+
+.platform-quota-block h2,
+.platform-app-center > h2 {
+  margin: 14px 0 16px;
+  color: #262626;
+  font-size: 17px;
+  line-height: 24px;
+  font-weight: 600;
+}
+
+.platform-quota-summary {
+  min-height: 102px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.platform-quota-summary .ring {
+  width: 78px;
+  height: 78px;
+  flex: 0 0 78px;
+}
+
+.platform-quota-summary .ring-inner {
+  width: 60px;
+  height: 60px;
+  font-size: 14px;
+}
+
+.platform-quota-copy {
+  display: grid;
+  align-content: center;
+}
+
+.platform-quota-copy > strong {
+  color: #38c300;
+  font-size: 28px;
+  line-height: 32px;
+  font-weight: 700;
+}
+
+.platform-quota-copy > span {
+  margin-top: 2px;
+  color: var(--muted);
+}
+
+.platform-quota-copy p {
+  margin: 7px 0 0;
+  color: #8c8c8c;
+}
+
+.platform-quota-copy p i {
+  width: 1px;
+  height: 12px;
+  margin: 0 8px;
+  display: inline-block;
+  vertical-align: -2px;
+  background: #d9d9d9;
+}
+
+.platform-app-center > h2 {
+  margin-top: 0;
+  font-size: 22px;
+  line-height: 32px;
+}
+
+.platform-app-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(210px, 260px));
+  gap: 18px;
+}
+
+.platform-app-card {
+  min-width: 0;
+  height: 236px;
+  padding: 10px;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+  color: var(--text);
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  text-decoration: none;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease;
+}
+
+.platform-app-card:hover,
+.platform-app-card:focus-visible {
+  border-color: #91caff;
+  box-shadow: 0 8px 22px rgba(22, 119, 255, 0.13);
+  transform: translateY(-2px);
+  outline: none;
+}
+
+.platform-app-card > strong {
+  padding: 14px 4px 0;
+  font-size: 16px;
+  line-height: 24px;
+}
+
+.platform-app-cover {
+  min-height: 168px;
+  padding: 22px;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: #16325c;
+  background: linear-gradient(135deg, #e9f3ff, #f7fbff);
+}
+
+.platform-app-cover::before,
+.platform-app-cover::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.58);
+}
+
+.platform-app-cover::before {
+  width: 116px;
+  height: 116px;
+  right: -42px;
+  top: -46px;
+}
+
+.platform-app-cover::after {
+  width: 82px;
+  height: 82px;
+  right: 22px;
+  bottom: -50px;
+}
+
+.platform-app-cover.purchase {
+  color: #15543b;
+  background: linear-gradient(135deg, #e6faf2, #f7fffb);
+}
+
+.platform-app-cover.receipt {
+  color: #6c302c;
+  background: linear-gradient(135deg, #fff0ed, #fff9f7);
+}
+
+.platform-app-cover .app-icon {
+  width: 48px;
+  height: 48px;
+  flex: 0 0 48px;
+  border-radius: 14px;
+  position: relative;
+  z-index: 1;
+  font-size: 22px;
+}
+
+.platform-cover-copy {
+  min-width: 0;
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 5px;
+}
+
+.platform-cover-copy b {
+  font-size: 17px;
+}
+
+.platform-cover-copy small {
+  color: currentColor;
+  opacity: 0.62;
+  white-space: nowrap;
+}
+
+.platform-subpage {
+  gap: 20px;
+}
+
+.platform-page-header {
+  padding-bottom: 18px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.platform-page-header p {
+  margin: 5px 0 0;
+  color: var(--muted);
+}
+
+.platform-surface {
+  min-width: 0;
+  border: 1px solid #ececec;
+  border-radius: 6px;
+  padding: 0 16px 12px;
+  background: #fff;
+}
+
+.platform-subpage .quota-available-panel {
+  padding-top: 16px;
 }
 
 .section-title {
@@ -6049,6 +6367,19 @@ select:focus {
 }
 
 @media (max-width: 980px) {
+  body.platform-mode .sider {
+    width: 168px;
+    flex-basis: 168px;
+  }
+
+  body.platform-mode .content {
+    padding: 24px 22px 40px;
+  }
+
+  .platform-app-grid {
+    grid-template-columns: repeat(2, minmax(210px, 260px));
+  }
+
   .main-workspace {
     grid-template-columns: 1fr;
   }
@@ -6203,6 +6534,58 @@ select:focus {
 }
 
 @media (max-width: 640px) {
+  body.platform-mode .app-shell {
+    display: block;
+  }
+
+  body.platform-mode .sider {
+    width: 100%;
+    min-height: auto;
+    flex-basis: auto;
+  }
+
+  body.platform-mode .platform-sider .brand {
+    width: 100%;
+    height: 52px;
+    justify-content: flex-start;
+  }
+
+  body.platform-mode .platform-sider .brand-text {
+    display: inline;
+    font-size: 18px;
+  }
+
+  body.platform-mode .platform-sider .side-menu {
+    padding: 0 10px 10px;
+  }
+
+  body.platform-mode .platform-menu {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 4px;
+  }
+
+  body.platform-mode .platform-menu .side-item {
+    margin: 0;
+    padding: 0 8px;
+    justify-content: center;
+    font-size: 14px;
+  }
+
+  body.platform-mode .content {
+    min-height: auto;
+    padding: 20px 14px 32px;
+  }
+
+  .platform-app-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .platform-app-card {
+    width: 100%;
+    max-width: 360px;
+  }
+
   .calc-priority-pane {
     padding: 16px 12px 22px;
   }

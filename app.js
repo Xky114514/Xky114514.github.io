@@ -7,6 +7,8 @@ const FIELD_SPEC_MARKDOWN_FALLBACK_URLS = [
 ];
 const SALES_APP_URL = "./ai_order/home.html";
 const RECEIPT_APP_URL = "./sales_receipt/home.html";
+const PLATFORM_HOME_URL = "./index.html#home";
+const PLATFORM_ROUTES = new Set(["home", "tenant-quota", "tenant-members"]);
 const legacySalesRoutes = new Set([
   "sales-entry",
   "sales-review",
@@ -60,7 +62,7 @@ const routes = {
   projects: { label: "PRD 项目库", module: "projects", title: "PRD 展示平台" },
   "process-flow": { label: "流程图与说明", module: "projects", title: "流程图与说明" },
   "field-spec": { label: "字段说明 PRD", module: "projects", title: "字段说明 PRD" },
-  home: { label: "项目首页", module: "home", title: "AI 录单系统" },
+  home: { label: "首页", module: "home", title: "AI录单平台" },
   "purchase-home": { label: "首页", tabLabel: "采购首页", module: "purchase", title: "采购录单" },
   "purchase-order-entry": { label: "采购单录入", module: "purchase", title: "采购录单" },
   "purchase-order-review": { label: "采购单审核", module: "purchase", title: "采购录单" },
@@ -1492,6 +1494,7 @@ function getRouteFromHash() {
 function render() {
   ensureAppShell();
   state.route = getRouteFromHash();
+  const isPlatformRoute = PLATFORM_ROUTES.has(state.route);
   if (state.annotationTargetRoute && state.annotationTargetRoute !== state.route) {
     state.annotationTargetId = "";
     state.annotationTargetRoute = "";
@@ -1501,7 +1504,9 @@ function render() {
   document.body.classList.toggle("entry-mode", state.route === "purchase-order-entry" || state.route === "purchase-entry" || state.route === "purchase-detail");
   document.body.classList.toggle("project-mode", routes[state.route]?.module === "projects");
   document.body.classList.toggle("home-mode", state.route === "home");
+  document.body.classList.toggle("platform-mode", isPlatformRoute);
   document.body.classList.toggle("annotation-open", state.annotationOpen && state.route !== "projects");
+  document.title = isPlatformRoute ? `${routes[state.route].label} - AI录单平台` : "PRD 前端展示平台";
   normalizeTabsForRoute();
   ensureTab(state.route);
   renderSideMenu();
@@ -1558,24 +1563,41 @@ function bindGlobalInteractions() {
 function renderSideMenu() {
   const route = routes[state.route];
   const sider = document.querySelector(".sider");
+  const isPlatformRoute = PLATFORM_ROUTES.has(state.route);
   sider?.classList.toggle("purchase-sider", route.module === "purchase");
-  if (route.module === "home" || route.module === "projects") {
+  sider?.classList.toggle("platform-sider", isPlatformRoute);
+  const brand = document.querySelector(".brand");
+  const brandMark = brand?.querySelector(".brand-mark");
+  const brandText = brand?.querySelector(".brand-text");
+  if (brand) {
+    brand.dataset.route = isPlatformRoute ? "home" : "projects";
+    brand.title = isPlatformRoute ? "AI录单平台" : "项目库";
+  }
+  if (brandMark) brandMark.textContent = isPlatformRoute ? "AI" : "PRD";
+  if (brandText) brandText.textContent = isPlatformRoute ? "AI录单平台" : "PRD 平台";
+  if (route.module === "projects") {
     document.getElementById("sideMenu").innerHTML = "";
     return;
   }
   const activeKey = state.route === "purchase-detail"
     ? state.activeDetailId?.startsWith("PO-") ? "purchase-order-review" : "purchase-review"
     : state.route;
-  const globalMenuItems = route.module === "settings" && state.route !== "settings"
+  const globalMenuItems = isPlatformRoute
     ? [
         { key: "home", label: "首页", icon: "home", module: "home" },
         { key: "tenant-quota", label: "额度管理", icon: "setting", module: "settings" },
         { key: "tenant-members", label: "成员管理", icon: "group", module: "settings" },
       ]
-    : primaryMenus;
+    : route.module === "settings" && state.route !== "settings"
+      ? [
+          { key: "home", label: "首页", icon: "home", module: "home" },
+          { key: "tenant-quota", label: "额度管理", icon: "setting", module: "settings" },
+          { key: "tenant-members", label: "成员管理", icon: "group", module: "settings" },
+        ]
+      : primaryMenus;
   const globalHtml = route.module !== "purchase" ? `
-    <div class="side-group">
-      <div class="side-section">全局能力</div>
+    <div class="side-group ${isPlatformRoute ? "platform-menu" : ""}">
+      ${isPlatformRoute ? "" : `<div class="side-section">全局能力</div>`}
       ${globalMenuItems.map((item) => `
         <button class="side-item side-primary ${item.key === activeKey || (state.route === "settings" && item.key === "settings") ? "active" : ""}" data-route="${item.key}" title="${item.label}" aria-label="${item.label}">
           <span class="side-icon" aria-hidden="true">${iconSvg[item.icon] || iconSvg.home}</span>
@@ -1624,6 +1646,10 @@ function renderPurchaseIconMenu(activeKey) {
       </summary>
       <div class="purchase-agent-popover">
         <div class="purchase-agent-title">切换 Agent</div>
+        <a class="purchase-agent-link" href="${PLATFORM_HOME_URL}">
+          <span class="purchase-agent-icon platform">台</span>
+          <span class="purchase-agent-copy"><strong>录单平台首页</strong><span>返回应用中心</span></span>
+        </a>
         <a class="purchase-agent-link" href="${SALES_APP_URL}">
           <span class="purchase-agent-icon sales">销</span>
           <span class="purchase-agent-copy"><strong>销售订单录单</strong><span>进入销售录单首页</span></span>
@@ -2864,65 +2890,46 @@ function escapeAttribute(value) {
 
 function homePage() {
   return `
-    <div class="page home-dashboard-page">
-      <section class="banner">
-        <h1>AI 录单系统应用中心</h1>
-        <p>应用入口与公共配置</p>
+    <div class="page platform-home-page">
+      <section class="platform-quota-block" aria-labelledby="overallQuotaTitle">
+        <h1 id="overallQuotaTitle">整体额度</h1>
+        <h2>额度使用概览</h2>
+        <div class="platform-quota-summary">
+          <div class="ring"><div class="ring-inner">62%<span>已用</span></div></div>
+          <div class="platform-quota-copy">
+            <strong>3,820</strong>
+            <span>剩余额度</span>
+            <p><b>6,180</b> 已用 <i></i> <b>10,000</b> 总额</p>
+          </div>
+        </div>
       </section>
 
-      <div class="section-title"><h2>应用中心</h2></div>
-      <div class="grid two">
-        <a class="agent-card" href="${SALES_APP_URL}">
-          <span class="agent-head">
-            <span class="app-icon sales-grad">销</span>
-            <span>
-              <h3>销售订单录单</h3>
-              <p>销售录单审核</p>
+      <section class="platform-app-center" aria-labelledby="appCenterTitle">
+        <h2 id="appCenterTitle">应用中心</h2>
+        <div class="platform-app-grid">
+          <a class="platform-app-card" href="${SALES_APP_URL}">
+            <span class="platform-app-cover sales">
+              <span class="app-icon sales-grad">销</span>
+              <span class="platform-cover-copy"><b>AI 销售录单</b><small>识别 · 录入 · 审核</small></span>
             </span>
-          </span>
-        </a>
-        <button class="agent-card" data-route="purchase-home">
-          <span class="agent-head">
-            <span class="app-icon purchase-grad">采</span>
-            <span>
-              <h3>采购录单</h3>
-              <p>采购入库协同</p>
+            <strong>销售订单录单</strong>
+          </a>
+          <button class="platform-app-card" data-route="purchase-home">
+            <span class="platform-app-cover purchase">
+              <span class="app-icon purchase-grad">采</span>
+              <span class="platform-cover-copy"><b>AI 采购录单</b><small>下单 · 入库 · 协同</small></span>
             </span>
-          </span>
-        </button>
-        <a class="agent-card" href="${RECEIPT_APP_URL}">
-          <span class="agent-head">
-            <span class="app-icon receipt-grad">回</span>
-            <span>
-              <h3>销售回单录单</h3>
-              <p>回单识别与实收数量核对</p>
+            <strong>采购录单</strong>
+          </button>
+          <a class="platform-app-card" href="${RECEIPT_APP_URL}">
+            <span class="platform-app-cover receipt">
+              <span class="app-icon receipt-grad">回</span>
+              <span class="platform-cover-copy"><b>AI 销售回单</b><small>识别 · 核对 · 提交</small></span>
             </span>
-          </span>
-        </a>
-      </div>
-
-      <div class="section-title"><h2>整体额度</h2></div>
-      <div class="grid dashboard">
-        <section class="card">
-          <div class="card-header">
-            <h3>额度使用概览</h3>
-          </div>
-          <div class="quota-layout">
-            <div class="ring"><div class="ring-inner">62%<span>已用</span></div></div>
-            <div>
-              <div class="quota-num">3,820</div>
-              <div class="muted">剩余额度</div>
-              <p><b>6,180</b> 已用 <span class="divider">|</span> <b>10,000</b> 总额</p>
-            </div>
-          </div>
-        </section>
-      </div>
-
-      <div class="section-title"><h2>全局入口</h2></div>
-      <div class="grid two">
-        ${configCard("tenant-quota", "额", "额度管理", "额度与消耗")}
-        ${configCard("tenant-members", "员", "成员管理", "成员与权限")}
-      </div>
+            <strong>销售回单录单</strong>
+          </a>
+        </div>
+      </section>
     </div>
   `;
 }
@@ -4911,11 +4918,12 @@ function memberManagementPage() {
     { username: "wangming", name: "王明", role: "回单操作员", status: "启用", actions: true },
   ];
   return `
-    <div class="page wide-page tenant-config-page">
-      <section class="table-card member-management-card">
-        <div class="tenant-config-tabs">
-          <button class="subtab active">成员管理</button>
-        </div>
+    <div class="page wide-page tenant-config-page platform-subpage">
+      <header class="platform-page-header">
+        <h1>成员管理</h1>
+        <p>统一管理三个录单应用的成员与角色权限</p>
+      </header>
+      <section class="platform-surface member-management-card">
         <div class="toolbar member-toolbar">
           <div class="stat-strip" style="margin:0"><span>总操作员 <b>${members.length}</b></span><span class="divider">|</span><span>已启用 <b>${members.filter((item) => item.status === "启用").length}</b></span></div>
           <button class="btn primary" data-modal="operator">新增成员</button>
@@ -4941,11 +4949,12 @@ function memberManagementPage() {
 
 function quotaManagementPage() {
   return `
-    <div class="page wide-page quota-management-page">
-      <section class="table-card quota-console-card">
-        <div class="tabs quota-tabs">
-          <button class="subtab active">录单额度</button>
-        </div>
+    <div class="page wide-page quota-management-page platform-subpage">
+      <header class="platform-page-header">
+        <h1>额度管理</h1>
+        <p>查看三个录单应用共用的额度与消耗明细</p>
+      </header>
+      <section class="platform-surface quota-console-card">
         <section class="quota-available-panel">
           <div class="card-header">
             <h3>可用额度 <span class="pill blue">共享主租户池</span></h3>

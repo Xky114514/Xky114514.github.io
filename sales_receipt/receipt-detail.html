@@ -6,7 +6,7 @@
   <meta name="description" content="销售回单应用前端交互原型">
   <title>回单详情｜销售回单</title>
   <link rel="stylesheet" href="./styles.css">
-  <link rel="stylesheet" href="./reference.css">
+  <link rel="stylesheet" href="./reference.css?v=20260729-money">
 </head>
 <body data-page="detail-pending" data-receipt-id="SR-20260726-015" data-order-id="SO-20260725-1028">
   <div class="shell">
@@ -63,19 +63,18 @@
 
     <div class="receipt-reference-layout">
       <aside class="card source-card receipt-source-pane" data-tabs>
-        <div class="source-tabs">
+        <div class="source-tabs source-tabs-combined">
           <button type="button" data-tab-target="basic">基本信息</button>
-          <button class="active" type="button" data-tab-target="messages">群聊消息</button>
-          <button type="button" data-tab-target="location">定位来源</button>
+          <span class="source-message-tab-group">
+            <button class="active" type="button" data-tab-target="messages">群聊消息</button>
+            <button class="source-location-action" type="button" data-locate-source-inline>定位来源</button>
+          </span>
         </div>
-        <div class="tab-panel source-info-panel" data-tab-panel="basic">
-          <dl class="source-info-list">
-            <div><dt>回单编号</dt><dd data-detail-receipt-id>SR-20260726-015</dd></div>
-            <div><dt>门店</dt><dd data-detail-merchant>华南鲜食店</dd></div>
-            <div><dt>来源群聊</dt><dd data-detail-source>华南鲜食店收货群</dd></div>
-            <div><dt>签收时间</dt><dd data-detail-sign-time>2026-07-26 10:16:32</dd></div>
-            <div><dt>处理状态</dt><dd data-task-status-text>待处理</dd></div>
-          </dl>
+        <div class="tab-panel source-info-panel source-receipt-image-panel" data-tab-panel="basic">
+          <button class="source-receipt-image" type="button" data-receipt-image-open aria-label="查看纸质配送单大图">
+            <img src="assets/receipt-delivery-note.jpg" alt="纸质配送单回单">
+            <span class="source-receipt-image-hint">点击查看大图</span>
+          </button>
         </div>
         <div class="tab-panel active" data-tab-panel="messages">
           <section class="receipt-source-section">
@@ -100,12 +99,6 @@
             </div>
           </section>
         </div>
-        <div class="tab-panel source-location-panel" data-tab-panel="location">
-          <div class="location-marker">⌖</div>
-          <strong>已定位到原始群聊消息</strong>
-          <p data-detail-location>华南鲜食店收货群<br>2026-07-26 10:16:32 · 刘店长</p>
-          <button class="btn primary" type="button" data-toast="已定位到群聊原消息">查看消息上下文</button>
-        </div>
       </aside>
 
       <main class="receipt-main-pane">
@@ -121,28 +114,15 @@
           </div>
         </section>
 
-        <section class="table-card candidate-order-panel">
-          <div class="candidate-order-head">
-            <h3>选择销售订单</h3>
-            <label class="candidate-time-select"><span>下单时间</span><select data-order-period aria-label="下单时间范围"><option value="today">今天</option><option value="7" selected>近7天</option><option value="30">近一个月</option><option value="90">近三个月</option></select></label>
-          </div>
-          <div class="table-wrap">
-            <table class="candidate-order-table">
-              <thead><tr><th>选择</th><th>销售订单号</th><th>门店</th><th>下单时间</th><th>状态</th></tr></thead>
-              <tbody>
-                <tr data-order-candidate data-order-number="SO-20260725-1028" data-order-merchant="华南鲜食店" data-order-time="2026-07-25T08:32"><td><input type="radio" name="candidate-order" aria-label="选择销售订单 SO-20260725-1028" data-select-order="SO-20260725-1028" data-order-merchant="华南鲜食店" checked></td><td><strong>SO-20260725-1028</strong></td><td>华南鲜食店</td><td>2026-07-25 08:32</td><td>已签收</td></tr>
-                <tr data-order-candidate data-order-number="SO-20260727-1120" data-order-merchant="华南鲜食店" data-order-time="2026-07-27T07:46"><td><input type="radio" name="candidate-order" aria-label="选择销售订单 SO-20260727-1120" data-select-order="SO-20260727-1120" data-order-merchant="华南鲜食店"></td><td><strong>SO-20260727-1120</strong></td><td>华南鲜食店</td><td>2026-07-27 07:46</td><td>配送中</td></tr>
-                <tr data-order-candidate data-order-number="SO-20260726-1066" data-order-merchant="华南鲜食店" data-order-time="2026-07-26T08:05"><td><input type="radio" name="candidate-order" aria-label="销售订单 SO-20260726-1066 已关联其他回单" data-select-order="SO-20260726-1066" data-order-merchant="华南鲜食店" data-locked="true" disabled></td><td><strong>SO-20260726-1066</strong></td><td>华南鲜食店</td><td>2026-07-26 08:05</td><td>已签收</td></tr>
-                <tr class="empty-row hidden" data-order-candidate-empty><td colspan="5">未找到匹配的销售订单</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </section>
-
         <section class="table-card related-order-panel">
           <div class="related-order-toolbar">
             <div class="related-order-title">
               <h3>回单组</h3>
+              <div class="receipt-order-summary" data-order-summary hidden>
+                <span>实收金额 <strong data-summary-actual-amount>¥0.00</strong></span>
+                <span>金额差异 <strong data-summary-amount-difference>¥0.00</strong></span>
+                <span>数量差异 <strong data-summary-quantity-difference>0</strong></span>
+              </div>
             </div>
             <div class="order-group-actions">
               <button class="btn" type="button" data-save-now>保存</button>
@@ -150,18 +130,20 @@
             </div>
           </div>
         </section>
-        <div class="relation-transaction-result hidden" data-reassociation-result></div>
 
         <section class="table-card receipt-ai-panel">
           <div class="receipt-form-grid">
-            <label class="merchant-field"><span>门店</span><input value="华南鲜食店" data-order-merchant-display data-candidate-merchant-input></label>
-            <label class="sign-time-field"><span>签收时间</span><span class="sign-time-control"><input type="date" value="2026-07-26" aria-label="签收日期" data-detail-sign-date><input type="time" value="10:16" aria-label="签收时间" data-detail-sign-clock></span></label>
-            <label class="document-number-field"><span>单据编号</span><input value="SO-20260725-1028" data-order-id-display data-candidate-document-input></label>
+            <label class="merchant-field"><span>门店</span><input value="华南鲜食店" data-order-merchant-display></label>
+            <label class="document-number-field"><span>订单号</span><input value="SO-20260725-1028" data-order-id-display></label>
+            <label class="amount-field"><span>总金额</span><span class="amount-control"><b>¥</b><input type="number" min="0" step="0.01" value="1485.50" data-ai-total-amount aria-label="总金额"></span></label>
+            <div class="query-order-action"><button class="btn primary" type="button" data-open-order-query>查询订单</button></div>
+            <label class="order-time-field time-range-field"><span>下单时间</span><span class="datetime-range-control"><input type="datetime-local" value="2026-07-25T08:32" data-ai-order-start aria-label="下单开始时间"><i>→</i><input type="datetime-local" value="2026-07-25T08:40" data-ai-order-end aria-label="下单结束时间"></span></label>
+            <label class="receive-time-field time-range-field"><span>收货时间</span><span class="datetime-range-control"><input type="datetime-local" value="2026-07-26T09:30" data-ai-receive-start aria-label="收货开始时间"><i>→</i><input type="datetime-local" value="2026-07-26T11:00" data-ai-receive-end aria-label="收货结束时间"></span></label>
             <label class="wide"><span>备注</span><input value="青椒有压坏，按商户实收数调整" data-detail-remark></label>
           </div>
           <div class="table-wrap">
             <table class="quantity-table receipt-reference-table">
-              <thead><tr><th>序号</th><th>识别文本</th><th>商品名称</th><th class="right">出库数量</th><th>实际出库数</th><th class="right">差异</th><th>单位</th><th>备注</th><th>操作</th></tr></thead>
+              <thead><tr><th>序号</th><th>订单商品顺序</th><th>识别商品</th><th class="right">出库数量</th><th>实际出库数/实收数</th><th class="right">差异</th><th>单位</th><th>单价</th><th class="right">金额</th><th>备注</th><th>操作</th></tr></thead>
               <tbody data-quantity-body hidden>
         <tr class="row-short" data-quantity-row data-order-line data-outbound="25" data-unit="斤" data-box="box-1" data-current-diff="3">
           <td>1</td>
@@ -210,7 +192,7 @@
           <td><input class="detail-remark-input" value="AI 漏识别，待人工填写" placeholder="填写备注" aria-label="青椒备注"></td>
         </tr>
 
-        <tr class="row-over" data-quantity-row data-order-line data-outbound="18" data-unit="斤" data-box="box-3" data-current-diff="-0.5">
+        <tr class="row-short" data-quantity-row data-order-line data-outbound="18" data-unit="斤" data-box="box-3" data-current-diff="0.5">
           <td>3</td>
           <td><span class="receipt-recognition-text">油麦菜 18.5斤</span><span class="cell-sub">已匹配</span></td>
           <td><strong>油麦菜</strong><span class="cell-sub">散装 · SKU-10126</span></td>
@@ -229,7 +211,7 @@
               <span class="unit-suffix">斤</span>
             </div>
           </td>
-          <td class="right"><span class="variance over" data-variance>-0.5 斤</span></td>
+          <td class="right"><span class="variance short" data-variance>0.5 斤</span></td>
           <td>斤</td>
           <td><input class="detail-remark-input" value="按商户实收数调整" placeholder="填写备注" aria-label="油麦菜备注"></td>
         </tr>
@@ -271,39 +253,53 @@
     </main>
   </div>
   <template id="pageSpec">
-  <h3>1. 页面目标与前置条件</h3>
-  <p>供下单员处理“待处理”销售回单：核对来源材料、确定唯一销售订单、修正实际出库数并确认提交。页面进入时必须已经完成 AI 识别；识别中的回单不可进入本页。</p>
-  <h3>2. 页面分区</h3>
-  <ul><li>来源区：展示基本信息、原始文件、群聊消息和定位来源，只读。</li><li>回单摘要：展示群聊名称、下单员、创建时间和当前状态。</li><li>候选销售订单：系统按门店、单据编号、商品及数量筛选，仅展示状态为配送中或已签收的订单。</li><li>回单组：展示门店、签收时间、单据编号、备注和商品明细，承担编辑、保存与确认提交。</li></ul>
-  <h3>3. 关键字段</h3>
-  <table><thead><tr><th>字段</th><th>来源</th><th>编辑性</th><th>业务规则</th></tr></thead><tbody>
-    <tr><td>关联销售订单</td><td>候选销售订单列表</td><td>待处理可单选</td><td>一张回单只能关联一张订单；已占用订单置灰。</td></tr>
-    <tr><td>门店</td><td>AI 识别，操作员可修正</td><td>待处理可编辑</td><td>修改后立即按门店名称刷新候选销售订单。</td></tr>
-    <tr><td>签收时间</td><td>AI 识别，操作员可修正</td><td>待处理可编辑</td><td>日期和时间共同组成签收时间。</td></tr>
-    <tr><td>单据编号</td><td>AI 识别，操作员可修正</td><td>待处理可编辑</td><td>销售订单编号与销售出库单编号一致；修改后立即按编号刷新候选销售订单。</td></tr>
-    <tr><td>出库数量</td><td>销售订单</td><td>只读</td><td>作为差异计算基准，不允许回单页面修改。</td></tr>
-    <tr><td>实际出库数</td><td>AI 识别的客户实收数或人工录入</td><td>待处理可编辑</td><td>允许 0 和小数，不允许空值、负数或非数字；AI 漏识别的订单商品填 0。</td></tr>
-    <tr><td>差异</td><td>系统计算</td><td>只读</td><td>差异＝出库数量－实际出库数，输入时实时刷新。</td></tr>
-    <tr><td>备注</td><td>AI 识别或人工录入</td><td>待处理可编辑</td><td>用于记录破损、字迹模糊和人工调整原因。</td></tr>
+  <h3>1. 页面目标与状态边界</h3>
+  <p>供操作员处理“待处理”销售回单：核对原始材料、修正 AI 识别字段、主动查询并确认唯一销售订单、核对商品实收数，最后写入销售订单实际出库数。识别中的任务不进入本页；提交成功后立即变为已完成。</p>
+  <h3>2. 页面结构</h3>
+  <ul><li>来源区：保留“基本信息”“群聊消息”两个页签；“定位来源”与群聊消息并列，用于定位原始凭证。</li><li>回单摘要：展示群聊、下单员、创建时间和任务状态。</li><li>回单组：常驻展示 AI 识别字段、备注和商品明细；关联销售订单后，在标题区展示实收金额、金额差异和数量差异。</li><li>订单查询弹窗：仅在点击“查询订单”后出现，展示本次查询的候选订单并要求人工确认关联。</li></ul>
+  <h3>3. AI 识别字段</h3>
+  <table><thead><tr><th>字段</th><th>来源</th><th>编辑性</th><th>查询作用</th></tr></thead><tbody>
+    <tr><td>门店</td><td>AI 识别</td><td>待处理可编辑</td><td>辅助匹配订单归属门店。</td></tr>
+    <tr><td>订单号</td><td>AI 识别</td><td>待处理可编辑</td><td>优先精确匹配；系统订单号一对一。</td></tr>
+    <tr><td>下单时间</td><td>AI 识别的开始/结束时间</td><td>待处理可编辑</td><td>与系统订单下单时间判断区间重叠。</td></tr>
+    <tr><td>收货时间</td><td>AI 识别的开始/结束时间</td><td>待处理可编辑</td><td>与系统订单收货时间判断区间重叠。</td></tr>
+    <tr><td>总金额</td><td>AI 识别</td><td>待处理可编辑</td><td>订单号未唯一命中时用于辅助排序。</td></tr>
+    <tr><td>备注</td><td>AI 识别或人工补充</td><td>待处理可编辑</td><td>记录字迹模糊、破损及人工调整依据，不作为订单关联条件。</td></tr>
   </tbody></table>
-  <h3>4. 商品匹配与排序</h3>
-  <ul><li>未关联销售订单时，商品行按 AI 原始识别顺序展示。</li><li>关联后，以销售订单商品顺序重建明细；AI 商品与订单商品按名称一一匹配，不允许一条结果同时匹配多行。</li><li>AI 漏识别的订单商品保留原订单位置，实际出库数填 0，不显示额外漏识别标签。</li><li>AI 多识别商品和无法继续一一对应的重复项，按 AI 原始顺序追加到订单商品之后，默认不回写销售订单。</li></ul>
-  <h3>5. 操作与状态变化</h3>
-  <ul><li>时间筛选：支持今天、近7天、近一个月、近三个月，分别包含当前自然日、当前日及前6日、当前日及前29日、当前日及前89日；默认近7天，按下单时间过滤候选订单。</li><li>门店或单据编号修改：与时间条件共同过滤候选列表，不直接改变当前关联。</li><li>更换单选订单：先确认旧、新订单；确认后撤销旧订单影响，清除旧匹配和人工修改，再用原始 AI 结果重建新订单商品明细。</li><li>行内＋：在当前行后新增空白行；行内－：删除当前回单商品行；底部“新增商品”在末尾新增空白行。</li><li>自动保存：实际出库数或备注修改后约 600 毫秒、失焦或按 Enter 时保存；“保存”立即保存当前有效数据，不改变任务状态。</li><li>确认提交：校验已关联销售订单、实际出库数合法、人工新增行商品名称与数量完整；写入销售订单成功后，任务从待处理变为已完成。</li></ul>
-  <h3>6. 异常与恢复</h3>
-  <ul><li>字段校验失败：不保存、不提交，保留输入并定位错误字段。</li><li>更换关联任一步失败：恢复原关联、原匹配和旧销售订单数据，不保留部分更新。</li><li>保存或提交失败：任务保持待处理，保留当前输入，提示失败原因并允许重试。</li><li>重复点击确认提交：提交期间按钮不可重复触发；成功结果按同一回单编号幂等处理。</li></ul>
-  <h3>7. 验收标准</h3>
-  <ul><li>关联前、关联后、AI 漏识别和AI 多识别四种场景的行顺序符合上述规则。</li><li>出库数量不可编辑，差异随实际出库数即时计算。</li><li>保存成功不改变待处理状态；确认提交写入成功后立即变为已完成。</li><li>进入已完成详情后，关联订单和全部业务字段均不可修改。</li></ul>
+  <p>以上字段修改后只更新当前回单草稿，不实时查询、不自动切换销售订单。操作员点击“查询订单”时，系统才读取当时的字段值执行查询。</p>
+  <h3>4. 查询与关联销售订单</h3>
+  <ul><li>只查询状态为“配送中”或“已签收”的销售订单。</li><li>订单号精确命中时返回唯一订单；未精确命中时综合订单号片段、门店、两个时间范围和总金额生成候选。</li><li>门店能命中系统门店时优先在该门店订单内查询；门店无匹配时不直接判定失败，回退到其他字段继续查询。</li><li>查询结果无论一张还是多张，都在弹窗中展示门店、订单号、下单时间、收货时间和总金额，由操作员决定是否关联。</li><li>候选为一张时默认选中；候选为多张时必须人工单选；点击“关联订单”后才改变当前关联。</li><li>无查询结果、关闭弹窗或未确认关联时，保留当前字段、商品数据和已有订单关联。</li></ul>
+  <h3>5. 更换已有订单与商品重匹配</h3>
+  <ul><li>更换已有订单时，保留当前页面已经修改的商品数据，不回退到最初的 AI 识别结果。</li><li>保留内容包括当前识别商品名称、实际出库数/实收数、订单外商品单价、单位、备注和人工新增行。</li><li>系统加载新订单商品，以新订单商品顺序为主，与保留商品按名称一一匹配，不存在多对多。</li><li>新订单中未匹配到的商品保留订单位置，实际出库数填 0；保留商品中未被新订单使用的条目按当前顺序追加到末尾。</li><li>新订单的出库数量和系统单价覆盖为新订单只读值；操作员已修改的实收数与备注在匹配成功时继续保留。</li></ul>
+  <h3>6. 商品字段与数量口径</h3>
+  <table><thead><tr><th>字段</th><th>来源</th><th>规则</th></tr></thead><tbody>
+    <tr><td>订单商品顺序</td><td>销售订单</td><td>关联后按订单顺序展示；订单外条目显示“--”并追加到底部。</td></tr>
+    <tr><td>识别商品</td><td>AI 识别或人工补录</td><td>用于与订单商品名称一一匹配。</td></tr>
+    <tr><td>出库数量</td><td>销售订单</td><td>只读，不允许在回单页修改。</td></tr>
+    <tr><td>实际出库数/实收数</td><td>AI 识别或人工修正</td><td>允许 0 和小数；确认提交后写入销售订单实际出库数。</td></tr>
+    <tr><td>差异</td><td>系统计算</td><td>差异＝|出库数量－实际出库数/实收数|；订单外条目显示“--”。</td></tr>
+    <tr><td>单价</td><td>销售订单或人工录入</td><td>订单商品使用系统单价且只读；订单外商品和人工新增商品允许修改。</td></tr>
+    <tr><td>金额</td><td>系统计算</td><td>金额＝实际出库数/实收数×单价，按两位小数展示。</td></tr>
+  </tbody></table>
+  <p>关联订单后：实收金额为订单商品各行金额之和；金额差异＝|销售订单总金额－实收金额|；数量差异为订单商品各行绝对数量差异之和，不跨计量单位换算。</p>
+  <h3>7. 保存、提交与异常恢复</h3>
+  <ul><li>行内“＋”在当前行后新增空白行；“－”删除当前回单商品行；底部“新增商品”在末尾增加空白行。</li><li>“保存”只保存草稿，不写入销售订单、不改变待处理状态。</li><li>“确认提交”校验已人工确认关联唯一订单、订单商品实收数合法、人工新增行的商品名称、实收数、单位和单价完整；写入成功后任务立即变为已完成并只读。</li><li>查询失败不改变关联；重匹配失败恢复原关联与原商品列表；保存或提交失败保留当前输入，任务保持待处理。</li><li>提交期间按钮禁用，按回单编号做幂等控制，避免重复写入。</li></ul>
+  <h3>8. 验收标准</h3>
+  <ul><li>编辑五个 AI 字段不会自动查询或更换订单；点击“查询订单”才弹出列表。</li><li>查询结果字段完整，单候选和多候选都需要人工确认关联。</li><li>更换订单后，新订单商品按订单顺序排列，当前人工修改的实收数、备注和订单外单价仍被用于重新匹配。</li><li>AI 漏识别商品实际出库数为 0 且无额外标签；AI 多识别和未匹配条目排列在订单商品之后。</li><li>系统商品单价不可修改；新增商品单价可修改，行金额与三项关联订单汇总随实收数变化即时更新。</li><li>保存不改变状态；确认提交成功后任务立即变为已完成，已完成详情不可修改。</li></ul>
 </template>
 
-  <div class="modal-backdrop" id="reassociateConfirm">
-    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="reassociateConfirmTitle">
-      <div class="modal-head"><span id="reassociateConfirmTitle">确认更换关联</span><button class="modal-close" type="button" data-close-modal>×</button></div>
+  <div class="modal-backdrop" id="orderQueryModal">
+    <div class="modal wide order-query-modal" role="dialog" aria-modal="true" aria-labelledby="orderQueryModalTitle">
+      <div class="modal-head"><span id="orderQueryModalTitle">查询销售订单</span><button class="modal-close" type="button" data-close-modal>×</button></div>
       <div class="modal-body">
-        <p>将 <b data-reassociate-old>SO-20260725-1028</b> 更换为 <b data-reassociate-new>--</b>。系统会撤销旧订单影响，并按原始 AI 结果重建商品匹配。</p>
-        <p class="muted">失败时恢复原关联和原订单数据。</p>
+        <div class="table-wrap">
+          <table class="order-query-table">
+            <thead><tr><th>选择</th><th>门店</th><th>订单号</th><th>下单时间</th><th>收货时间</th><th class="right">总金额</th></tr></thead>
+            <tbody data-order-query-body></tbody>
+          </table>
+        </div>
       </div>
-      <div class="modal-foot"><button class="btn" type="button" data-close-modal>取消</button><button class="btn primary" type="button" data-confirm-reassociate>确认更换并重新匹配</button></div>
+      <div class="modal-foot"><button class="btn" type="button" data-close-modal>取消</button><button class="btn primary" type="button" data-confirm-order-link>关联订单</button></div>
     </div>
   </div>
 
@@ -318,6 +314,6 @@
   </aside>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-  <script src="./app.js"></script>
+  <script src="./app.js?v=20260729-money"></script>
 </body>
 </html>

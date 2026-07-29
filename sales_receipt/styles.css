@@ -191,6 +191,10 @@ a {
   background: linear-gradient(135deg, #3db5ff, #1677ff);
 }
 
+.agent-app-icon.platform {
+  background: linear-gradient(135deg, #627eea, #354fc7);
+}
+
 .agent-app-icon.purchase {
   background: linear-gradient(135deg, #35d8a0, #18b87c);
 }
