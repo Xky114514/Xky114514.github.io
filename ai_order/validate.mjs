@@ -275,6 +275,12 @@ for (const file of ['task-detail.html', 'task-detail-single.html', 'task-detail-
   for (const marker of ['function chooseProductOption(option)', 'function saveOrderDraft()', 'function restoreOrderDraft()', 'position:fixed', '.product-option[hidden]{display:none}']) {
     if (!html.includes(marker)) interactionMarkers.push(`${file} -> 商品规格交互缺少 ${marker}`);
   }
+  for (const marker of ['<span>描述</span><span>报价单</span>', 'data-quotation-id=', 'data-quotation-ids=', 'data-quotation-open=', 'data-quotation-more', 'quotation-popover', 'id="quotationDetailModal"', '报价单详情', 'function openQuotationDetail(id,productName)', 'function syncQuotationCell(row)', 'quotation-product-highlight']) {
+    if (!html.includes(marker)) interactionMarkers.push(`${file} -> 报价单展示与联动缺少 ${marker}`);
+  }
+  for (const removedMarker of ['data-quotation-effective', 'data-quotation-operation', '<th>运营时间</th>', '黄色高亮行为当前商品。']) {
+    if (html.includes(removedMarker)) interactionMarkers.push(`${file} -> 报价单详情仍包含已移除内容 ${removedMarker}`);
+  }
 }
 
 for (const file of ['task-detail.html', 'task-detail-single.html', 'task-detail-standard.html', 'task-detail-normal.html', 'task-detail-normal-presplit.html', 'task-detail-normal-multigroup.html']) {
