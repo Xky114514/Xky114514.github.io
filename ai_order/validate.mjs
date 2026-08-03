@@ -4,7 +4,7 @@ import path from 'node:path';
 const dir = path.dirname(new URL(import.meta.url).pathname.replace(/^\/(?:([A-Za-z]):)/, '$1:'));
 const tenantPages = [
   'home.html', 'chat-simulator.html', 'deployment-pricing.html', 'tasks.html', 'order-board.html',
-  'task-detail.html', 'task-detail-single.html', 'task-detail-standard.html', 'task-detail-normal.html', 'task-detail-normal-presplit.html', 'task-detail-normal-multigroup.html',
+  'task-detail.html', 'task-detail-single.html', 'task-detail-standard.html', 'task-detail-normal.html', 'task-detail-normal-presplit.html', 'task-detail-normal-precategory.html', 'task-detail-normal-multigroup.html', 'task-detail-normal-unconfirmed.html',
   'customers.html', 'groups.html', 'group-detail.html',
   'customer-groups.html', 'sku.html', 'prompts.html', 'memory.html',
   'stats.html', 'decision-dashboard.html', 'settings.html',
@@ -170,7 +170,7 @@ for (const marker of ['>客户便签</th>', 'class="customer-note-cell"', 'class
 }
 if (customersPage.includes('客户备忘')) interactionMarkers.push('customers.html -> 应统一使用“客户便签”，不应保留“客户备忘”');
 
-for (const file of ['task-detail.html', 'task-detail-single.html', 'task-detail-standard.html', 'task-detail-normal.html', 'task-detail-normal-presplit.html', 'task-detail-normal-multigroup.html']) {
+for (const file of ['task-detail.html', 'task-detail-single.html', 'task-detail-standard.html', 'task-detail-normal.html', 'task-detail-normal-presplit.html', 'task-detail-normal-multigroup.html', 'task-detail-normal-unconfirmed.html']) {
   const html = fs.readFileSync(path.join(dir, file), 'utf8');
   for (const marker of ['class="order-info-layout"', 'class="order-info-main"', 'class="customer-note-card"', 'class="customer-note-display-btn"', 'aria-expanded="false"', '>显示全部</button>', 'data-customer-note-input', 'data-customer-note-display', 'data-customer-note-limit="150"', 'placeholder="请输入客户便签，记录备忘信息"', 'class="customer-note-empty-action"', 'data-customer-note-empty', 'aria-label="添加客户便签"', 'title="添加客户便签"', '<path d="M6 3.5h9l3 3V20H6zM15 3.5V7h3M9 11h6M9 15h5"/>', 'function normalizeCustomerNote(value=', 'function syncCustomerNoteEmptyState(card,editing=false)', 'function toggleCustomerNoteDisplay(trigger)', '.customer-note-card.is-expanded', '.customer-note-card.is-empty textarea', 'overflow-y:auto', '.delivery-row .gm-recommend{margin-left:0}', 'grid-template-columns:minmax(560px,1fr) 380px', 'width:380px', 'color:var(--text)']) {
     if (!html.includes(marker)) interactionMarkers.push(`${file} -> 销售录单客户便签缺少 ${marker}`);
@@ -201,78 +201,115 @@ for (const marker of ['data-customer-prompt-edit', 'id="customerPromptEdit"', '>
 }
 
 const groupDetailPage = fs.readFileSync(path.join(dir, 'group-detail.html'), 'utf8');
-for (const marker of ['华南小学订单群', '成员数', '绑定客户', '机器人发言', '下单时段', '审核员', 'data-subtab="groupCustomers"', 'data-subtab="groupMembers"', 'data-subtab="groupSplit"', '客户列表', '群成员', '>拆单设置</button>', 'data-panel="groupSplit"', 'class="group-split-panel"', '<span>启用拆单</span>', '查看拆单适用范围', '订单只有一个原始分组时可按设置执行；存在多个原始分组时需逐组确认是否拆单，不支持全部确认下单。', '执行时间', '审核前自动拆单', '订单进入审核前，系统依据已配置规则自动生成订单分组。', '确认下单时选择', '订单审核完成后，由审核人员选择是否执行拆单。', '商品分类拆单规则', 'data-split-timing="before"', 'data-split-timing="confirm"', 'data-modal="splitGroupRuleModal"', 'id="splitGroupRuleModal"', 'data-category-check', '继承当前群聊绑定客户', '当前群聊的拆单设置已保存', 'S3877081', 'S3883292', 'S3877082', 'S3886664', 'wxid_oik8mjxu2ogw21', 'wxid_bv3uqcdttaj22']) {
+for (const marker of ['华南小学订单群', 'data-subtab="groupSplit"', '>拆单设置</button>', 'class="group-split-panel"', '商品分类拆单执行时间', 'AI识别后自动拆单', '确认提交时执行', 'data-split-timing="before"', 'data-split-timing="confirm"', '首次确认提交时，再在每个现有订单组内按运营时间生成拆单预览', '首次确认提交时，在每个原始订单组内先按商品分类、再按运营时间生成拆单预览', '商品分类拆单规则', '每张报价单只对应一个运营时间', '运营时间拆单在确认提交时必执行', 'data-modal="splitGroupRuleModal"', '当前群聊的拆单设置已保存']) {
   if (!groupDetailPage.includes(marker)) interactionMarkers.push(`group-detail.html -> ${marker}`);
 }
-if (!groupDetailPage.includes('class="btn link red" data-row-remove')) interactionMarkers.push('group-detail.html -> 客户删除操作不可交互');
 const groupDetailMarkup = groupDetailPage.split('<script>')[0];
-for (const marker of ['class="group-split-status"', 'href="settings.html#function"', '前往功能设置', '管理群聊拆单设置', '拆单方案', '学校客户分类拆单', '仅影响当前群聊的正常订单', '何时执行拆单']) {
-  if (groupDetailMarkup.includes(marker)) interactionMarkers.push(`group-detail.html -> 群聊内直接配置拆单，不应保留 ${marker}`);
+for (const marker of ['确认下单时选择', '系统先自动按运营时间拆单，再由审核人员选择是否继续按商品分类拆单', '请选择是否按商品分类拆单']) {
+  if (groupDetailMarkup.includes(marker)) interactionMarkers.push(`group-detail.html -> 不应保留旧拆单交互：${marker}`);
+}
+
+const overrideSource = fs.readFileSync(path.join(dir, 'tenant-overrides.mjs'), 'utf8');
+for (const marker of ['function productSkuCode(name,index=0)', 'function splitItemsByOperationTime(', 'function splitItemsByCategoryRule(', 'function splitItemsByCategoryThenOperationTime(', 'function operationTimeParts(', 'const grouped=new Map()', 'a.start-b.start||a.end-b.end', 'function normalBlockingRows(', 'rowQuotationIds(row).length!==1||!row.dataset.operationTime', 'function normalResultMode(', 'function showNormalSplitResults(', "root.classList.add('split-result')", 'function previewNormalOrder(', 'function submitNormalResultCard(', 'function submitAllNormalResults(', "group.classList.add('group-previewed')", "card.classList.add('result-submitted')", "root.dataset.splitResult=mode==='category-time'?'category-then-operation-time':'operation-time'", "const mode=normalResultMode(root)"]) {
+  if (!overrideSource.includes(marker)) interactionMarkers.push(`tenant-overrides.mjs -> 拆单实现缺少 ${marker}`);
+}
+for (const marker of ['.normal-result-order-info{display:block', '.normal-result-table-wrap{display:block;width:100%', 'function normalResultCard(', 'function normalResultTable(', 'function normalSplitResults(']) {
+  if (!overrideSource.includes(marker)) interactionMarkers.push(`tenant-overrides.mjs -> 纵向拆单结果缺少 ${marker}`);
+}
+
+function normalResultCardCount(markup, sourceGroup, mode) {
+  const startMarker = `class="normal-result-source" data-normal-result-source="${sourceGroup}" data-result-mode="${mode}"`;
+  const start = markup.indexOf(startMarker);
+  if (start < 0) return -1;
+  const next = markup.indexOf('class="normal-result-source"', start + startMarker.length);
+  const endFallback = markup.indexOf('class="single-add-group"', start + startMarker.length);
+  const end = next >= 0 ? next : endFallback >= 0 ? endFallback : markup.length;
+  return (markup.slice(start, end).match(/data-normal-result-card/g) || []).length;
 }
 
 const normalTasksPage = fs.readFileSync(path.join(dir, 'tasks.html'), 'utf8');
-for (const marker of ['href="task-detail-normal.html"', 'href="task-detail-normal-presplit.html"', 'href="task-detail-normal-multigroup.html"', '正常订单·确认时拆单', '正常订单·审核前拆单', '正常订单·多分组逐组拆单', '已有2个原始分组，确认下单时需逐组选择是否拆单']) {
-  if (!normalTasksPage.includes(marker)) interactionMarkers.push(`tasks.html -> 正常订单示例缺少 ${marker}`);
+for (const marker of ['href="task-detail-normal-unconfirmed.html"', 'href="task-detail-normal-presplit.html"', 'href="task-detail-normal-precategory.html"', 'href="task-detail-normal.html"', 'href="task-detail-normal-multigroup.html"', '正常订单·商品待人工确认', '正常订单·仅运营时间拆单', '正常订单·AI后分类→确认时运营时间', '正常订单·确认时分类→运营时间', '正常订单·多原始组确认时分类→运营时间', '同名商品命中多张报价单，未选定前禁止确认提交', '确认时自动按3个完整运营时间段拆单', 'AI识别后已按分类生成4组；确认时在每组内按运营时间拆', '保留1个原始组；确认时先按商品分类、再按运营时间拆', '保留2个原始组；各组内先按分类、再按运营时间拆']) {
+  if (!normalTasksPage.includes(marker)) interactionMarkers.push(`tasks.html -> 正常订单场景缺少 ${marker}`);
 }
 
-for (const file of ['task-detail-normal.html', 'task-detail-normal-presplit.html']) {
+const normalScenarioFiles = ['task-detail-normal.html', 'task-detail-normal-presplit.html', 'task-detail-normal-precategory.html', 'task-detail-normal-multigroup.html', 'task-detail-normal-unconfirmed.html'];
+for (const file of normalScenarioFiles) {
   const html = fs.readFileSync(path.join(dir, file), 'utf8');
-  for (const marker of ['华南中心小学（老师）', '一次性餐盒', '可口可乐', '五常大米', '不锈钢菜刀', '鲜鸡蛋', '订单分组 1', '订单分组 4', '¥1,769.00', 'class="detail-layout normal-order-detail', 'normal-audit-left', 'normal-audit-right', '基本信息', '群聊消息', 'assets/order-source.jpg', '原始消息', 'normal-order-group-head', '识别文本', '数量 / 单位', 'data-normal-final', 'data-normal-submit-group', 'data-normal-submit-count', 'data-normal-item=', 'data-normal-field=', 'data-normal-group-only', '确认下单', '全部确认下单']) {
+  const markup = html.split('<script>')[0];
+  for (const marker of ['华南中心小学（老师）', '一次性餐盒', '可口可乐', '五常大米', '不锈钢菜刀', '鲜鸡蛋', 'class="detail-layout normal-order-detail', 'normal-audit-left', 'normal-audit-right', '基本信息', '群聊消息', 'assets/order-source.jpg', '原始消息', 'normal-order-group-head', '识别文本', '数量 / 单位', 'data-normal-submit-count', 'data-normal-item=', 'data-normal-field=', 'data-normal-group-only', '确认提交']) {
     if (!html.includes(marker)) interactionMarkers.push(`${file} -> ${marker}`);
   }
-  if (html.includes('class="detail-layout linked-detail"')) interactionMarkers.push(`${file} -> 正常订单示例不应使用图框联动详情结构`);
-  const bodyMarkup = html.split('<script>')[0];
-  if (bodyMarkup.includes('<button class="source-box')) interactionMarkers.push(`${file} -> 正常订单左侧不应出现图框联动标注框`);
-  const pageMarkup = bodyMarkup.split('<body>')[1] || bodyMarkup;
-  for (const marker of ['<span class="tag blue">正常订单</span>', '<span class="tag green">确认下单时询问</span>', '<span class="tag purple">审核前自动拆单</span>', 'class="normal-flow-note"', '完整订单·尚未拆单']) {
-    if (pageMarkup.includes(marker)) interactionMarkers.push(`${file} -> 应删除红框内容：${marker}`);
+  for (const marker of ['class="normal-after" data-normal-results', '拆单后订单预览', 'data-normal-result-submit-all', 'class="normal-result-card"', 'data-normal-result-status>待提交', 'data-normal-result-submit', 'class="normal-result-order-info"', '<b>订单组</b>', '<b>运营时间</b>', '<b>门店</b>', '<b>收货时间</b>', '<b>备注</b>', 'class="normal-result-table-wrap"', 'class="normal-result-table"']) {
+    if (!markup.includes(marker)) interactionMarkers.push(`${file} -> 首次确认提交后的拆单预览缺少 ${marker}`);
   }
+  const resultMarkup = markup.slice(markup.indexOf('data-normal-results'));
+  if (resultMarkup.indexOf('class="normal-result-order-info"') > resultMarkup.indexOf('class="normal-result-table-wrap"')) interactionMarkers.push(`${file} -> 拆单结果必须先展示订单信息，再展示商品明细表`);
+  const readonlyResultMarkup = resultMarkup.slice(0, resultMarkup.indexOf('class="single-add-group"'));
+  for (const editableMarker of ['<input', '<select', '<textarea', 'contenteditable=', 'data-normal-field=']) {
+    if (readonlyResultMarkup.includes(editableMarker)) interactionMarkers.push(`${file} -> 拆单结果应只读，不应包含 ${editableMarker}`);
+  }
+  for (const removedMarker of ['class="normal-split-result-head"', '>拆单结果</strong>', 'class="normal-result-quotation-list"', 'data-normal-result-quotation']) {
+    if (readonlyResultMarkup.includes(removedMarker)) interactionMarkers.push(`${file} -> 拆单结果不应保留提示或报价单标签：${removedMarker}`);
+  }
+  const bodyMarkup = (markup.split('</style>')[1] || markup);
+  if (bodyMarkup.includes('class="normal-split-card"') || bodyMarkup.includes('审核前自动拆单')) interactionMarkers.push(`${file} -> 不应保留旧拆单预览或审核前拆单`);
+  if (bodyMarkup.includes('确认下单')) interactionMarkers.push(`${file} -> 按钮和提示应统一使用“确认提交”`);
+  if (html.includes('class="detail-layout linked-detail"') || markup.includes('<button class="source-box')) interactionMarkers.push(`${file} -> 正常订单不应使用图框联动结构`);
 }
-const confirmSplitPage = fs.readFileSync(path.join(dir, 'task-detail-normal.html'), 'utf8');
-for (const marker of ['订单已核对完成，请选择是否拆单。', 'id="normalSplitConfirm"', 'class="modal normal-split-modal"', 'data-normal-confirm="group"', 'data-normal-confirm="all"', 'data-normal-split-choice="no"', 'data-normal-split-choice="yes"', 'aria-pressed="false"', 'data-normal-split-next disabled', '>下一步</button>', 'modal.dataset.splitChoice=\'\'', "modal.querySelector('[data-normal-split-next]').disabled=false", '<strong>拆单预览</strong>', '已生成当前订单组的拆单预览', '已按原订单组分别生成拆单预览', "final.textContent=remaining?'全部确认下单':'已全部提交'", 'function openNormalSplitModal(trigger)', 'function refreshNormalSubmitState(root)', 'function normalInputKey(input)', 'function syncNormalPreviewFromOriginal(root)', 'function submitNormalOriginal(root,scope,sourceGroup)', 'function enterNormalSplitPreview(root,scope,sourceGroup)']) {
-  if (!confirmSplitPage.includes(marker)) interactionMarkers.push(`task-detail-normal.html -> ${marker}`);
-}
-const confirmSplitMarkup = confirmSplitPage.split('<script>')[0];
-const confirmSplitBody = confirmSplitMarkup.split('</style>')[1] || confirmSplitMarkup;
-for (const marker of ['当前群聊设置为', '保持当前完整订单，不生成订单分组并直接提交。', '暂不提交，先按现有分类规则生成 4 个订单分组供再次核对。', 'class="normal-confirm-scope"', 'data-normal-scope-title', 'data-normal-scope-copy', '全部未提交订单</b>', '拆单时按原订单组逐组应用分类规则，不跨原订单组合并。', 'class="tag green">规则：']) {
-  if (confirmSplitMarkup.includes(marker)) interactionMarkers.push(`task-detail-normal.html -> 拆单弹窗不应显示说明：${marker}`);
-}
-for (const marker of ['>按规则拆单</strong>', '确认本组', '>提交本组</button>', '确认全部 4 组并下单', '拆单预览 · 尚未提交', '当前页面已完整展示拆单结果', '可提交单个订单组', 'data-normal-preview-panel', 'data-normal-preview-back', 'data-normal-preview-review', '进入订单组核对', '拆单异常说明']) {
-  if (confirmSplitMarkup.includes(marker)) interactionMarkers.push(`task-detail-normal.html -> 应使用拆单预览流程，不应保留旧入口：${marker}`);
-}
-for (const marker of ['data-normal-direct', 'data-normal-preview', 'id="normalReturnConfirm"', 'data-normal-back', '返回完整订单', '继续预览', '保留修改并返回']) {
-  if (confirmSplitBody.includes(marker)) interactionMarkers.push(`task-detail-normal.html -> 拆单选择或预览页不应保留旧交互：${marker}`);
-}
-const preSplitPage = fs.readFileSync(path.join(dir, 'task-detail-normal-presplit.html'), 'utf8');
-for (const marker of ['pre-split', '拆单待确认']) {
-  if (!preSplitPage.includes(marker)) interactionMarkers.push(`task-detail-normal-presplit.html -> ${marker}`);
-}
-const multiGroupPage = fs.readFileSync(path.join(dir, 'task-detail-normal-multigroup.html'), 'utf8');
-for (const marker of ['multi-original', '订单1组 · 食堂补给', '订单2组 · 小卖部补给', '0/2 组已提交', 'data-normal-original-group="1"', 'data-normal-original-group="2"', 'class="normal-multi-group-note"', '当前订单包含 2 个原始分组，需逐组确认是否拆单；暂不支持全部确认下单。', 'data-normal-confirm="group"', 'data-normal-all-disabled', 'disabled aria-disabled="true" title="多分组订单需逐组确认是否拆单"', '客户下单时已明确分为两个订单组。', '当前配置为确认下单时选择拆单，需逐个原始分组确认。', 'id="normalSplitConfirm"', '当前原始分组拆单预览', 'data-normal-source-group="1"', 'data-normal-source-group="2"', '订单1组 · 西餐用品', '订单2组 · 饮料', 'function completeNormalMultiGroupPreview(root)', "root.classList.remove('split-preview')", "const multiSource=root.classList.contains('multi-original')?root.dataset.previewSourceGroup:''", '当前原始分组已完成，请继续处理其他订单组', '全部原始分组已确认下单']) {
-  if (!multiGroupPage.includes(marker)) interactionMarkers.push(`task-detail-normal-multigroup.html -> ${marker}`);
-}
-const multiGroupMarkup = multiGroupPage.split('<script>')[0];
-for (const marker of ['class="detail-layout normal-order-detail', 'normal-audit-left', 'normal-audit-right', '基本信息', '群聊消息', 'assets/order-source.jpg', '原始消息', 'normal-order-group-head', '识别文本', '数量 / 单位', 'data-normal-submit-count', 'data-normal-item=', 'data-normal-field=', 'data-normal-group-only', '确认下单', '全部确认下单']) {
-  if (!multiGroupPage.includes(marker)) interactionMarkers.push(`task-detail-normal-multigroup.html -> ${marker}`);
-}
-if (multiGroupMarkup.includes('data-normal-confirm="all"') || multiGroupMarkup.includes('data-normal-existing-confirm="all"')) interactionMarkers.push('task-detail-normal-multigroup.html -> 多原始分组不应提供可用的全部确认入口');
-if ((multiGroupMarkup.match(/data-normal-confirm="group"/g) || []).length !== 2) interactionMarkers.push('task-detail-normal-multigroup.html -> 应为两个原始分组分别提供确认下单入口');
-if ((multiGroupMarkup.match(/data-normal-all-disabled/g) || []).length !== 1) interactionMarkers.push('task-detail-normal-multigroup.html -> 全部确认下单应保持禁用');
-if ((multiGroupMarkup.match(/data-normal-source-group="1"/g) || []).length !== 3) interactionMarkers.push('task-detail-normal-multigroup.html -> 订单1组应展示3个拆单预览分组');
-if ((multiGroupMarkup.match(/data-normal-source-group="2"/g) || []).length !== 2) interactionMarkers.push('task-detail-normal-multigroup.html -> 订单2组应展示2个拆单预览分组');
-if (multiGroupPage.includes('class="detail-layout linked-detail"')) interactionMarkers.push('task-detail-normal-multigroup.html -> 正常订单示例不应使用图框联动详情结构');
-if (multiGroupMarkup.includes('<button class="source-box')) interactionMarkers.push('task-detail-normal-multigroup.html -> 正常订单左侧不应出现图框联动标注框');
-const multiOriginalCount = (multiGroupMarkup.match(/data-normal-original-group="(?:1|2)"/g) || []).length;
-if (multiOriginalCount !== 2) interactionMarkers.push(`task-detail-normal-multigroup.html -> 应展示 2 个原始订单组（当前 ${multiOriginalCount} 个）`);
 
-for (const file of ['task-detail.html', 'task-detail-single.html', 'task-detail-standard.html', 'task-detail-normal.html', 'task-detail-normal-presplit.html', 'task-detail-normal-multigroup.html']) {
+const categoryPage = fs.readFileSync(path.join(dir, 'task-detail-normal.html'), 'utf8');
+for (const marker of ['data-category-timing="confirm"', '当前群聊设置为确认提交时执行分类拆单', '先按商品分类、再按报价单运营时间生成拆单预览', 'data-time-split-count="3"', 'data-category-time-split-count="5"']) {
+  if (!categoryPage.includes(marker)) interactionMarkers.push(`task-detail-normal.html -> ${marker}`);
+}
+const categoryMarkup = categoryPage.split('<script>')[0];
+if (normalResultCardCount(categoryMarkup, '1', 'time') !== 3) interactionMarkers.push('task-detail-normal.html -> 仅按运营时间应生成 3 个结果组');
+if (normalResultCardCount(categoryMarkup, '1', 'category-time') !== 5) interactionMarkers.push('task-detail-normal.html -> 先分类后运营时间应生成 5 个结果组');
+if (overrideSource.includes("category?tag(category,'purple')")) interactionMarkers.push('tenant-overrides.mjs -> 拆单结果不应展示商品分类标签');
+for (const marker of ['id="normalSplitConfirm"', '请选择是否按商品分类拆单', '<strong>按商品分类拆单</strong>', '<strong>不按商品分类拆单</strong>', '>下一步</button>']) {
+  if (categoryMarkup.includes(marker)) interactionMarkers.push(`task-detail-normal.html -> 确认提交不应再弹出拆单选择：${marker}`);
+}
+
+const timeOnlyPage = fs.readFileSync(path.join(dir, 'task-detail-normal-presplit.html'), 'utf8');
+for (const marker of ['data-category-timing="disabled"', '未启用商品分类拆单；首次确认提交后，系统仅按报价单的完整运营时间生成拆单预览。', 'data-time-split-count="3"']) {
+  if (!timeOnlyPage.includes(marker)) interactionMarkers.push(`task-detail-normal-presplit.html -> ${marker}`);
+}
+if (timeOnlyPage.split('<script>')[0].includes('id="normalSplitConfirm"')) interactionMarkers.push('task-detail-normal-presplit.html -> 未启用分类规则时不应弹出选择框');
+if (normalResultCardCount(timeOnlyPage.split('<script>')[0], '1', 'time') !== 3) interactionMarkers.push('task-detail-normal-presplit.html -> 应生成 3 个完整运营时间结果组');
+
+const unconfirmedPage = fs.readFileSync(path.join(dir, 'task-detail-normal-unconfirmed.html'), 'utf8');
+for (const marker of ['data-category-timing="disabled"', '标红商品仍关联多张报价单', 'data-quotation-ids="quote-school,quote-daily,quote-premium"', '请先将标红商品修改为唯一报价单商品，再确认提交']) {
+  if (!unconfirmedPage.includes(marker)) interactionMarkers.push(`task-detail-normal-unconfirmed.html -> ${marker}`);
+}
+
+const preCategoryPage = fs.readFileSync(path.join(dir, 'task-detail-normal-precategory.html'), 'utf8');
+const preCategoryMarkup = preCategoryPage.split('<script>')[0];
+for (const marker of ['data-category-timing="before"', 'AI 识别完成后已按商品分类规则生成 4 个订单组', '首次确认提交时，系统分别在每个订单组内按运营时间生成拆单预览', '0/4 组待预览']) {
+  if (!preCategoryPage.includes(marker)) interactionMarkers.push(`task-detail-normal-precategory.html -> ${marker}`);
+}
+if ((preCategoryMarkup.match(/data-normal-original-group=/g) || []).length !== 4) interactionMarkers.push('task-detail-normal-precategory.html -> 应展示 4 个 AI 分类后的现有订单组');
+for (const [sourceGroup, count] of [['category-1', 2], ['category-2', 1], ['category-3', 1], ['category-4', 1]]) {
+  if (normalResultCardCount(preCategoryMarkup, sourceGroup, 'time') !== count) interactionMarkers.push(`task-detail-normal-precategory.html -> 现有订单组 ${sourceGroup} 的运营时间结果组数量应为 ${count}`);
+}
+
+const multiGroupPage = fs.readFileSync(path.join(dir, 'task-detail-normal-multigroup.html'), 'utf8');
+const multiGroupMarkup = multiGroupPage.split('<script>')[0];
+for (const marker of ['multi-original', 'data-category-timing="confirm"', '订单1组 · 食堂补给', '订单2组 · 小卖部补给', '0/2 组待预览', 'data-normal-original-group="1" data-time-split-count="2" data-category-time-split-count="3"', 'data-normal-original-group="2" data-time-split-count="2" data-category-time-split-count="2"', '当前订单包含 2 个原始订单组', '在每个原始订单组内先按商品分类、再按运营时间生成拆单预览', 'data-normal-confirm="all"']) {
+  if (!multiGroupPage.includes(marker)) interactionMarkers.push(`task-detail-normal-multigroup.html -> ${marker}`);
+}
+if ((multiGroupMarkup.match(/data-normal-confirm="group"/g) || []).length !== 2) interactionMarkers.push('task-detail-normal-multigroup.html -> 应为两个原始分组分别提供确认提交入口');
+for (const [sourceGroup, timeCount, categoryCount] of [['1', 2, 3], ['2', 2, 2]]) {
+  if (normalResultCardCount(multiGroupMarkup, sourceGroup, 'time') !== timeCount) interactionMarkers.push(`task-detail-normal-multigroup.html -> 原订单组 ${sourceGroup} 的运营时间结果组数量应为 ${timeCount}`);
+  if (normalResultCardCount(multiGroupMarkup, sourceGroup, 'category-time') !== categoryCount) interactionMarkers.push(`task-detail-normal-multigroup.html -> 原订单组 ${sourceGroup} 的分类后运营时间结果组数量应为 ${categoryCount}`);
+}
+
+for (const file of ['task-detail.html', 'task-detail-single.html', 'task-detail-standard.html', 'task-detail-normal.html', 'task-detail-normal-presplit.html', 'task-detail-normal-precategory.html', 'task-detail-normal-multigroup.html', 'task-detail-normal-unconfirmed.html']) {
   const html = fs.readFileSync(path.join(dir, file), 'utf8');
   const bodyMarkup = html.split('<script>')[0];
-  for (const marker of ['<th>商品名称</th>', 'data-product-picker', 'class="product-picker-menu"', '<span>商品名称</span><span>销售规格</span><span>商品规格</span><span>描述</span>', 'data-product-display=', 'data-sales-spec=', 'data-spec-description', 'data-product-description', 'data-field-id="system-sales-spec"', 'data-field-id="system-spec-description"', 'data-field-id="system-product-description"']) {
+  for (const marker of ['<th>商品名称</th>', 'data-product-picker', 'class="product-picker-menu"', '<span>商品名称</span><span>SKU编码</span><span>销售规格</span><span>商品规格</span><span>描述</span>', 'data-product-display=', 'data-sku-code=', 'class="product-option-field product-option-sku"', 'data-sales-spec=', 'data-spec-description', 'data-product-description', 'data-field-id="system-sales-spec"', 'data-field-id="system-spec-description"', 'data-field-id="system-product-description"']) {
     if (!bodyMarkup.includes(marker)) interactionMarkers.push(`${file} -> 商品规格与描述字段缺少 ${marker}`);
   }
   if (bodyMarkup.includes('<th>销售规格</th>')) interactionMarkers.push(`${file} -> 销售规格不应保留独立固定列`);
-  for (const marker of ['function chooseProductOption(option)', 'function saveOrderDraft()', 'function restoreOrderDraft()', 'position:fixed', '.product-option[hidden]{display:none}']) {
+  for (const marker of ['function chooseProductOption(option)', 'option.dataset.skuCode', 'function saveOrderDraft()', 'function restoreOrderDraft()', 'position:fixed', '.product-option[hidden]{display:none}']) {
     if (!html.includes(marker)) interactionMarkers.push(`${file} -> 商品规格交互缺少 ${marker}`);
   }
   for (const marker of ['<span>描述</span><span>报价单</span>', 'data-quotation-id=', 'data-quotation-ids=', 'data-quotation-open=', 'data-quotation-more', 'quotation-popover', 'id="quotationDetailModal"', '报价单详情', 'function openQuotationDetail(id,productName)', 'function syncQuotationCell(row)', 'quotation-product-highlight']) {
@@ -283,9 +320,9 @@ for (const file of ['task-detail.html', 'task-detail-single.html', 'task-detail-
   }
 }
 
-for (const file of ['task-detail.html', 'task-detail-single.html', 'task-detail-standard.html', 'task-detail-normal.html', 'task-detail-normal-presplit.html', 'task-detail-normal-multigroup.html']) {
+for (const file of ['task-detail.html', 'task-detail-single.html', 'task-detail-standard.html', 'task-detail-normal.html', 'task-detail-normal-presplit.html', 'task-detail-normal-precategory.html', 'task-detail-normal-multigroup.html', 'task-detail-normal-unconfirmed.html']) {
   const html = fs.readFileSync(path.join(dir, file), 'utf8');
-  for (const marker of ['data-modal="customFieldModal"', 'id="customFieldModal"', 'class="modal custom-field-modal"', '自定义字段设置', '配置录单系统已有字段和自定义字段', '可选字段', '已显示字段', '拖拽调整展示顺序', '录单系统已有字段', '<div class="custom-field-group-title"><span>自定义字段</span>', '销售规格', '商品规格', '描述', 'SPU 名称', '商品编码', '一级分类', '二级分类', '自定义编码', '报价单', '品牌', '产地', '商品等级', '包装规格', '包装方式', '保质期', '储存方式', '客户商品编码', '供应商商品编码', '配送温层', '加工要求', '称重方式', '税率', '批次要求', '质检要求', '生产日期', '有效期至', '商品备注', 'data-field-id="system-sales-spec"', 'data-field-id="system-spec-description"', 'data-field-id="system-product-description"', 'data-field-id="system-spu"', 'data-field-id="system-product-code"', 'data-field-id="system-category-1"', 'data-field-id="system-category-2"', 'data-field-id="system-custom-code"', 'data-field-id="system-quotation"', 'data-field-source="system"', 'data-field-source="guanmai"', 'data-custom-field-search', 'data-custom-field-choice', 'data-custom-field-selected-list', 'draggable="true"', 'data-custom-field-reset', 'data-custom-field-save', 'data-custom-field-table', 'function customFieldCellValue(row,rowIndex,field)', 'function applyCustomFieldColumns(modal)', 'custom-field-input', "table.style.width=tableWidth+'px'", "document.addEventListener('dragstart'", '字段设置已保存，商品列表顺序已更新']) {
+  for (const marker of ['data-modal="customFieldModal"', 'id="customFieldModal"', 'class="modal custom-field-modal"', '自定义字段设置', '配置录单系统已有字段和自定义字段', '可选字段', '已显示字段', '拖拽调整展示顺序', '录单系统已有字段', '<div class="custom-field-group-title"><span>自定义字段</span>', '销售规格', '商品规格', '描述', 'SKU编码', 'SPU 名称', '商品编码', '一级分类', '二级分类', '自定义编码', '报价单', '品牌', '产地', '商品等级', '包装规格', '包装方式', '保质期', '储存方式', '客户商品编码', '供应商商品编码', '配送温层', '加工要求', '称重方式', '税率', '批次要求', '质检要求', '生产日期', '有效期至', '商品备注', 'data-field-id="system-sales-spec"', 'data-field-id="system-spec-description"', 'data-field-id="system-product-description"', 'data-field-id="system-sku-code"', 'data-field-id="system-spu"', 'data-field-id="system-product-code"', 'data-field-id="system-category-1"', 'data-field-id="system-category-2"', 'data-field-id="system-custom-code"', 'data-field-id="system-quotation"', 'data-field-source="system"', 'data-field-source="guanmai"', 'data-custom-field-search', 'data-custom-field-choice', 'data-custom-field-selected-list', 'draggable="true"', 'data-custom-field-reset', 'data-custom-field-save', 'data-custom-field-table', 'function customFieldCellValue(row,rowIndex,field)', "if(field.id==='system-sku-code')return row.dataset.skuCode", "if(field.id==='system-sku-code')input.readOnly=true", 'function applyCustomFieldColumns(modal)', 'custom-field-input', "table.style.width=tableWidth+'px'", "document.addEventListener('dragstart'", '字段设置已保存，商品列表顺序已更新']) {
     if (!html.includes(marker)) interactionMarkers.push(`${file} -> 自定义字段设置缺少 ${marker}`);
   }
   const modalCount = (html.match(/id="customFieldModal"/g) || []).length;
