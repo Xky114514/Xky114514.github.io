@@ -1278,6 +1278,19 @@ body.receipt-image-viewer-open {
   font-size: 14px;
 }
 
+.receipt-order-summary .summary-pending {
+  padding: 2px 7px;
+  color: #d46b08;
+  background: #fff7e6;
+  border-radius: 10px;
+  font-style: normal;
+  white-space: nowrap;
+}
+
+.receipt-order-summary .summary-pending[hidden] {
+  display: none;
+}
+
 .order-group-toggle {
   color: #595959;
   font-size: 18px;
@@ -1536,7 +1549,7 @@ body.receipt-image-viewer-open {
 }
 
 .receipt-reference-table {
-  min-width: 1460px;
+  min-width: 1360px;
 }
 
 .receipt-reference-table th,
@@ -1551,39 +1564,35 @@ body.receipt-image-viewer-open {
 }
 
 .receipt-reference-table th:nth-child(2) {
-  width: 170px;
+  width: 150px;
 }
 
 .receipt-reference-table th:nth-child(3) {
-  width: 130px;
+  width: 140px;
 }
 
 .receipt-reference-table th:nth-child(4),
 .receipt-reference-table th:nth-child(6) {
-  width: 98px;
+  width: 105px;
 }
 
 .receipt-reference-table th:nth-child(5) {
-  width: 150px;
+  width: 140px;
 }
 
 .receipt-reference-table th:nth-child(7) {
-  width: 64px;
+  width: 172px;
 }
 
 .receipt-reference-table th:nth-child(8) {
-  width: 112px;
+  width: 190px;
 }
 
 .receipt-reference-table th:nth-child(9) {
-  width: 112px;
-}
-
-.receipt-reference-table th:nth-child(10) {
   width: 180px;
 }
 
-.receipt-reference-table th:nth-child(11) {
+.receipt-reference-table th:nth-child(10) {
   width: 84px;
   text-align: center;
 }
@@ -1596,6 +1605,99 @@ body.receipt-image-viewer-open {
 
 .receipt-reference-table .quantity-input-wrap {
   width: 112px;
+}
+
+.after-sales-select {
+  width: 156px;
+  height: 34px;
+  padding: 5px 28px 5px 9px;
+  color: #262626;
+  background: #fff;
+  border: 1px solid #d9d9d9;
+  border-radius: 6px;
+  outline: 0;
+}
+
+.after-sales-select:focus {
+  border-color: #1677ff;
+  box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.1);
+}
+
+.after-sales-select.invalid,
+.exception-amount-input.invalid {
+  border-color: #ff4d4f;
+  box-shadow: 0 0 0 2px rgba(255, 77, 79, 0.1);
+}
+
+.after-sales-select:disabled {
+  color: #8c8c8c;
+  background: #f5f5f5;
+  cursor: default;
+}
+
+.after-sales-empty {
+  color: #8c8c8c;
+  white-space: nowrap;
+}
+
+.after-sales-empty.pending {
+  color: #d46b08;
+}
+
+.after-sales-field {
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: #595959;
+  white-space: nowrap;
+}
+
+.after-sales-field > span:first-child {
+  color: #8c8c8c;
+  font-size: 12px;
+}
+
+.after-sales-field strong {
+  color: #262626;
+}
+
+.after-sales-money {
+  height: 34px;
+  padding: 0 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: #8c8c8c;
+  border: 1px solid #d9d9d9;
+  border-radius: 6px;
+}
+
+.after-sales-money:focus-within {
+  border-color: #1677ff;
+}
+
+.exception-amount-input {
+  width: 72px;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  text-align: right;
+}
+
+.return-order-tag,
+.return-order-id {
+  padding: 2px 6px;
+  color: #d46b08;
+  background: #fff7e6;
+  border-radius: 10px;
+  font-size: 11px;
+  font-style: normal;
+}
+
+.return-order-id {
+  color: #1677ff;
+  background: #e6f4ff;
 }
 
 .price-input-wrap {
@@ -1729,13 +1831,84 @@ body[data-readonly="true"] .receipt-reference-table td:last-child {
 }
 
 body[data-readonly="true"] .receipt-reference-table {
-  min-width: 1360px;
+  min-width: 1260px;
 }
 
 body[data-readonly="true"] .receipt-ai-panel input[readonly] {
   color: #595959;
   background: #f7f7f7;
   cursor: default;
+}
+
+body[data-readonly="true"] .after-sales-select:disabled {
+  color: #595959;
+  background: #f7f7f7;
+}
+
+.submit-confirm-modal,
+.submit-result-modal {
+  width: min(560px, 94vw);
+}
+
+.submit-summary-order {
+  margin-bottom: 14px;
+  color: #595959;
+}
+
+.submit-summary-grid {
+  display: grid;
+  gap: 8px;
+}
+
+.submit-summary-grid span {
+  min-height: 42px;
+  padding: 9px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  background: #fafafa;
+  border-radius: 6px;
+}
+
+.submit-summary-grid b {
+  font-weight: 500;
+}
+
+.submit-return-notice {
+  margin: 14px 0 0;
+  padding: 9px 12px;
+  color: #ad6800;
+  background: #fffbe6;
+  border-radius: 6px;
+}
+
+.submit-result-success {
+  margin-bottom: 14px;
+  color: #389e0d;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.submit-result-modal dl {
+  margin: 0;
+}
+
+.submit-result-modal dl div {
+  padding: 8px 0;
+  display: grid;
+  grid-template-columns: 110px minmax(0, 1fr);
+  gap: 12px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.submit-result-modal dt {
+  color: #8c8c8c;
+}
+
+.submit-result-modal dd {
+  margin: 0;
+  color: #262626;
 }
 
 .receipt-reference-table tr.row-short td,

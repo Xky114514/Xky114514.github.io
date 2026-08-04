@@ -7,6 +7,22 @@
   let attachments = [];
   let pendingOrderId = "";
   let pendingDeleteRow = null;
+  let pendingSubmitPayload = null;
+
+  const afterSalesTypes = {
+    non_product_exception: {
+      label: "非商品异常",
+      fieldLabel: "异常金额",
+    },
+    product_exception: {
+      label: "商品异常—异常",
+      fieldLabel: "异常数",
+    },
+    product_return: {
+      label: "商品异常—退货",
+      fieldLabel: "应退数",
+    },
+  };
 
   const receiptOrderCatalog = {
     "SO-20260725-1028": {
@@ -284,6 +300,46 @@
     },
   };
 
+  const receiptAfterSalesCatalog = {
+    "SO-20260725-1028": {
+      "SKU-10021": { type: "product_exception" },
+      "SKU-10083": {
+        type: "product_return",
+        returnInboundId: "THRK-20260726-0081",
+      },
+      "SKU-10126": { type: "non_product_exception", exceptionAmount: "15.00" },
+      "SKU-10148": {
+        type: "product_return",
+        returnInboundId: "THRK-20260726-0081",
+      },
+    },
+    "SO-20260726-1066": {
+      "SKU-10021": { type: "product_exception" },
+      "SKU-10083": {
+        type: "product_return",
+        returnInboundId: "THRK-20260726-0086",
+      },
+      "SKU-10126": { type: "non_product_exception", exceptionAmount: "12.00" },
+    },
+    "SO-20260727-1120": {
+      "SKU-10021": { type: "product_exception" },
+      "SKU-10083": {
+        type: "product_return",
+        returnInboundId: "THRK-20260727-0093",
+      },
+      "SKU-10126": { type: "non_product_exception", exceptionAmount: "13.00" },
+      "SKU-10208": { type: "product_return" },
+      "SKU-10311": { type: "product_exception" },
+    },
+    "SO-20260726-2058": {
+      "SKU-20021": { type: "product_exception" },
+      "SKU-20126": { type: "product_return" },
+    },
+    "SO-20260726-3054": {
+      "SKU-30083": { type: "product_return" },
+    },
+  };
+
   const receiptAiExceptions = [
     {
       id: "AI-EXTRA-01",
@@ -478,11 +534,11 @@
       documentNumber: "SO-20260726-3054",
       orderId: "SO-20260726-3054",
       candidateIds: ["SO-20260726-3054"],
-      remark: "青椒未识别，实际出库数按规则填 0",
+      remark: "青椒未识别，签收数按规则填 0",
       messages: [
         "单据编号：SO-20260726-3054。",
         "AI 识别到大白菜实收 25 斤、油麦菜实收 18 斤。",
-        "销售订单中还有青椒，回单材料未识别到该商品，实际出库数填 0。",
+        "销售订单中还有青椒，回单材料未识别到该商品，签收数填 0。",
       ],
       author: "陈老师",
       exceptionIds: [],
@@ -563,7 +619,7 @@
       messages: [
         "回单上没有可识别的有效单据编号。",
         "AI 识别到系统已有门店“华南鲜食店”及商品实收数量。",
-        "该门店时间范围内有多张配送中或已签收订单，请人工选择。",
+        "该门店时间范围内有多张可处理状态的销售订单，请人工选择。",
       ],
       author: "刘店长",
       aiLines: [
@@ -693,8 +749,8 @@
       html: specHtml(
         "用于集中查询待人工处理和已经提交完成的销售回单。识别中的任务不进入列表，避免操作员处理尚未形成稳定识别结果的数据。",
         [
-          "待处理：允许进入可编辑详情，核对订单、商品和实际出库数。",
-          "已完成：销售订单实际出库数已写入，只允许查看只读详情。",
+          "待处理：允许进入可编辑详情，核对订单、商品签收数和售后处理。",
+          "已完成：三个售后字段已同步观麦，只允许查看只读详情。",
           "列表中的业务场景是演示样例，用于覆盖候选不唯一、完整识别、多识别、漏识别、单据编号唯一命中、仅门店多候选六类路径。",
         ],
         [
@@ -822,7 +878,7 @@
           "候选订单不唯一：系统给出多张候选，操作员单选确认。",
           "AI 识别完整：订单和商品均匹配，操作员核对后提交。",
           "AI 多识别：订单外条目追加在订单商品末尾，不直接回写。",
-          "AI 漏识别：订单商品仍按订单顺序保留，实际出库数置 0。",
+          "AI 漏识别：订单商品仍按订单顺序保留，签收数置 0。",
           "单据编号唯一命中：点击查询后只返回一张订单，仍需操作员确认关联。",
           "仅识别门店且候选不唯一：点击查询后按门店及其他已识别字段给出多张候选。",
         ],
@@ -852,7 +908,7 @@
         "从回单任务列表删除当前任务。",
         [
           "删除前必须二次确认并展示回单编号。",
-          "删除任务不等于撤销已经写入销售订单的数据；已完成任务的删除权限应由后端单独控制。",
+          "删除任务不等于撤销已经同步观麦的数据或退货入库单；已完成任务的删除权限应由后端单独控制。",
         ],
         ["确认成功后移除当前行并更新总数；取消不改变数据。"],
         ["失败时保留原行并提示原因；重复请求按同一任务幂等处理。"],
@@ -888,10 +944,11 @@
       selectors: [".receipt-record-summary"],
       title: "回单详情｜处理目标与状态",
       html: specHtml(
-        "操作员在本页核对原始回单、确认唯一销售订单、修正实际出库数并提交。",
+        "操作员在本页核对原始回单、确认唯一销售订单、修正签收数并完成售后分流。",
         [
-          "一张销售回单只关联一张销售订单；销售订单与销售出库单一对一，但本流程直接更新销售订单实际出库数。",
-          "待处理允许编辑和提交；确认提交并写入成功后立即变为已完成。",
+          "观麦是销售回单应用的关联系统，不属于 AI 录单系统；本页只读取订单并回写异常金额、异常数、应退数。",
+          "三种售后处理均不修改销售订单下单数；签收数仅作为差异计算和审核依据。",
+          "待处理允许编辑和提交；观麦字段及退货入库单同步成功后立即变为已完成。",
           "已完成详情只读，不允许再次修改或更换关联。",
         ],
         ["页面常驻来源材料、回单组和商品明细；候选订单仅在点击“查询订单”后以弹窗展示。"],
@@ -934,7 +991,7 @@
       html: specHtml(
         "操作员修改 AI 识别字段后，点击本按钮才发起销售订单查询；字段编辑本身不实时查询、不自动改关联。",
         [
-          "只查询状态为配送中或已签收的销售订单。",
+          "只查询状态为等待分拣、分拣中、配送中或已签收的销售订单。",
           "订单号精确命中时返回该唯一订单；未精确命中时综合门店、订单号片段、下单时间范围、收货时间范围和总金额生成候选。",
           "门店能命中系统门店时优先在该门店订单内查询；门店无匹配时不直接判定失败，回退到其他字段继续查询。",
           "无论查询到一张还是多张订单，都必须由操作员在弹窗中选择并点击“关联订单”。",
@@ -965,11 +1022,11 @@
       html: specHtml(
         "选择新的销售订单后，系统用当前页面已经修改过的商品数据重新匹配新订单，而不是回退到最初的 AI 识别结果。",
         [
-          "保留项包括当前识别商品名称、实际出库数/实收数、单位、备注和人工新增行。",
-          "新订单商品按销售订单商品顺序展示，并与保留商品按名称一一匹配；未匹配的新订单商品实际出库数填 0。",
+          "保留项包括当前识别商品名称、签收数、售后类型、异常金额、单位、备注和人工新增行。",
+          "新订单商品按销售订单商品顺序展示，并与保留商品按名称一一匹配；未匹配的新订单商品签收数填 0。",
           "未被新订单使用的当前商品按现有顺序追加到列表末尾，便于操作员继续排查。",
         ],
-        ["关联成功后更新订单商品顺序和出库数量，但不覆盖回单组上方的 AI 识别字段。"],
+        ["关联成功后更新订单商品顺序和下单数；签收数变化会重算差异及异常数/应退数，不覆盖 AI 识别字段。"],
         ["重匹配任一步失败时恢复原关联、原商品列表和原输入，不保留部分结果。"],
       ),
     },
@@ -982,11 +1039,11 @@
         [
           "门店、订单号、下单时间范围、收货时间范围和总金额均来自 AI 识别，待处理时可人工修正。",
           "字段修改只更新当前回单草稿；只有点击“查询订单”才会生成候选，不会实时改变已关联订单。",
-          "商品明细最终回写销售订单的实际出库数；出库数量和订单商品系统单价只读。",
-          "关联销售订单后，标题区展示实收金额、金额差异和数量差异；未关联时隐藏。",
+          "商品明细只向观麦回写异常金额、异常数、应退数；销售订单下单数始终只读且不被修改。",
+          "关联销售订单后，标题区汇总异常金额、异常数和应退数；不同计量单位分开展示。",
         ],
-        ["保存只保存草稿；确认提交才校验并写入销售订单。"],
-        ["未关联订单、数量不合法或人工新增行不完整时不得提交。"],
+        ["保存只保存 AI 录单平台草稿；确认提交才向观麦同步三个售后字段。"],
+        ["未关联订单、签收数不合法、差异行未选择售后类型或异常金额未填写时不得提交。"],
       ),
     },
     {
@@ -1061,102 +1118,103 @@
     {
       id: "detail-products",
       selectors: [".quantity-table"],
-      title: "商品明细｜匹配、排序与数量口径",
+      title: "商品明细｜匹配、差异与售后分流",
       html: specHtml(
-        "按关联销售订单商品顺序展示商品，并承载实际出库数的核对与回写。",
+        "按关联销售订单商品顺序展示商品，并承载签收数核对及三个观麦字段的售后分流。",
         [
           "未关联订单时按 AI 原始识别顺序；关联后按销售订单商品顺序重建。",
-          "AI 漏识别的订单商品保留原位置，实际出库数填 0，不增加漏识别标签。",
+          "AI 漏识别的订单商品保留原位置，签收数填 0。",
           "AI 多识别或无法一一匹配的重复条目按 AI 顺序追加到末尾，默认不回写。",
           "更换已有订单时保留当前已修改商品数据，以这些当前值重新匹配新订单，不回退到原始 AI 结果。",
-          "数量差异＝|出库数量－实际出库数/实收数|，输入时实时计算并始终显示非负值。",
-          "订单商品单价来自系统且只读；订单外商品和人工新增商品单价可编辑。行金额＝实收数×单价。",
+          "差异数＝下单数－签收数，输入时实时计算并保留正负号。",
+          "差异为 0 时无需售后；差异非 0 时每个观麦订单商品行必须选择一种售后类型。",
         ],
-        ["行内加号在当前行后新增空白行；减号删除当前回单商品行；底部新增商品追加空白行。"],
-        ["出库数量只读；实际出库数允许 0 和小数，不允许空值、负数或非数字。"],
+        ["订单商品行不可删除；行内加号和底部新增商品只补充本次回单识别内容，订单外条目不回写观麦。"],
+        ["下单数只读；签收数允许 0 和最多两位小数，不允许空值、负数或非数字。"],
       ),
     },
     {
       id: "detail-outbound",
       selectors: [".quantity-table th:nth-child(4)", "[data-quantity-row] td:nth-child(4)"],
-      title: "出库数量｜只读基准",
+      title: "下单数｜观麦只读基准",
       html: specHtml(
-        "来自销售订单的系统已有出库数量，是差异计算基准。",
+        "来自观麦销售订单，是差异计算基准。",
         ["回单页面不得修改；关联订单变化时随新订单商品明细更新。"],
-        ["用于实时计算差异。"],
-        ["订单外 AI 条目没有出库数量，显示“--”且不直接回写。"],
+        ["用于实时计算差异数，任何售后分支提交后均保持原值。"],
+        ["订单外 AI 条目没有下单数，显示“--”且不回写。"],
       ),
     },
     {
       id: "detail-actual",
       selectors: [".quantity-table th:nth-child(5)", ".actual-input"],
-      title: "实际出库数｜商户实收数回写字段",
+      title: "签收数｜AI 识别与人工确认",
       html: specHtml(
-        "AI 识别的商户实收数与销售订单实际出库数共用此字段，操作员在此直接修正。",
+        "AI 识别商户实收数并预填为签收数，操作员在此直接修正。",
         [
           "AI 匹配成功时预填识别数量；漏识别的订单商品填 0。",
           "允许 0 和小数，不允许空值、负数或非数字。",
-          "确认提交成功后写入销售订单实际出库数。",
+          "签收数保存在回单审核记录中，不覆盖观麦销售订单下单数。",
         ],
-        ["输入时实时更新差异；修改后自动保存草稿，保存按钮可立即保存。"],
-        ["校验失败保留输入并定位当前行，不写入销售订单。"],
+        ["输入时实时更新差异数和当前售后处理值；保存按钮只保存本应用草稿。"],
+        ["校验失败保留输入并定位当前行，不向观麦同步数据。"],
       ),
     },
     {
       id: "detail-difference",
       selectors: [".quantity-table th:nth-child(6)", ".variance"],
-      title: "差异｜实时计算口径",
+      title: "差异数｜实时计算口径",
       html: specHtml(
-        "用于反映原出库数量与客户实收数量之间的差额。",
-        ["差异＝|出库数量－实际出库数/实收数|，取绝对值；0 表示数量一致。"],
-        ["实际出库数变化时当前行立即重算。"],
-        ["订单外条目缺少出库数量时差异显示“--”。"],
+        "用于反映观麦下单数与商户签收数之间的有向差额。",
+        ["差异数＝下单数－签收数；正数表示少收，0 表示一致，负数表示多收。"],
+        ["签收数变化时当前行立即重算；异常数和应退数使用差异绝对量。"],
+        ["订单外条目缺少下单数时差异显示“--”，不允许选择售后类型。"],
       ),
     },
     {
-      id: "detail-unit-price",
+      id: "detail-after-sales-type",
+      selectors: [
+        ".quantity-table th:nth-child(7)",
+        ".after-sales-select",
+      ],
+      title: "售后类型｜行级单选",
+      html: specHtml(
+        "每个差异商品只能选择一种售后处理方式。",
+        [
+          "非商品异常对应观麦销售订单异常金额。",
+          "商品异常—异常对应观麦商品异常数。",
+          "商品异常—退货对应观麦商品应退数，并生成退货入库单。",
+        ],
+        ["差异为 0 时自动显示无需处理；切换类型时清空旧类型对应值。"],
+        ["差异数非 0 时三种售后类型均可选择；数量字段使用差异绝对量。"],
+      ),
+    },
+    {
+      id: "detail-after-sales-value",
       selectors: [
         ".quantity-table th:nth-child(8)",
-        ".unit-price-input",
+        "[data-after-sales-value]",
       ],
-      title: "单价｜系统值与新增商品录入",
+      title: "售后处理｜观麦字段映射",
       html: specHtml(
-        "用于计算当前商品的实收金额。",
-        [
-          "销售订单商品的单价来自系统销售订单，页面只读，不得被 AI 或操作员覆盖。",
-          "订单外 AI 商品与人工新增商品没有系统单价，允许操作员填写或修改。",
-        ],
-        ["新增商品单价变化时，当前行金额立即按“实收数×单价”重新计算。"],
-        ["单价仅允许非负数，最多两位小数；人工新增商品提交前必须填写单价。"],
-      ),
-    },
-    {
-      id: "detail-line-amount",
-      selectors: [
-        ".quantity-table th:nth-child(9)",
-        "[data-line-amount]",
-      ],
-      title: "金额｜行级实时计算",
-      html: specHtml(
-        "表示当前商品按商户实收数量计算的金额。",
-        ["金额＝实际出库数/实收数×单价，按两位小数展示。"],
-        ["实收数或可编辑单价变化时立即重算；金额本身不可编辑。"],
-        ["实收数或单价为空、格式非法时显示“--”，不得参与提交汇总。"],
+        "根据售后类型只展示当前需要处理的一个观麦字段。",
+        ["非商品异常的异常金额由操作员填写；异常数和应退数按差异绝对量自动计算并只读。"],
+        ["退货类型在提交确认中明确提示将生成退货入库单；完成后回显入库单号。"],
+        ["异常金额必须大于 0 且最多两位小数；其余未选字段保持空值，不参与同步。"],
       ),
     },
     {
       id: "detail-order-summary",
       selectors: [".receipt-order-summary"],
-      title: "关联订单汇总｜金额与数量差异",
+      title: "关联订单汇总｜三个观麦字段",
       html: specHtml(
-        "关联销售订单后，为操作员集中展示当前回单与系统订单的差异结果。",
+        "关联销售订单后，紧凑汇总本次将同步观麦的售后结果。",
         [
-          "实收金额＝关联订单商品各行“实收数×系统单价”之和；订单外商品不计入。",
-          "金额差异＝|销售订单总金额－实收金额|。",
-          "数量差异＝关联订单各商品绝对数量差异之和；不同单位不做换算，仅作为快速排查指标。",
+          "异常金额按所有非商品异常行求和后写入订单级异常金额。",
+          "异常数和应退数按计量单位分别汇总，不跨单位相加。",
+          "仍有差异行未选择售后类型时显示待选择数量。",
         ],
-        ["实收数变化时三项汇总立即重算；更换关联订单后按新订单单价和当前保留实收数重算。"],
-        ["未关联销售订单时不展示汇总；存在非法数量时不得提交。"],
+        ["签收数、售后类型或异常金额变化时立即重算。"],
+        ["未关联销售订单时不展示汇总；存在非法或未分类差异时不得提交。"],
       ),
     },
     {
@@ -1167,8 +1225,8 @@
         "用于补充 AI 未形成的商品条目或移除不应保留的回单行。",
         [
           "行内加号在当前行后插入空白行；底部新增商品在末尾追加。",
-          "减号只删除当前回单行，不删除销售订单原商品。",
-          "人工新增行提交前必须补全商品名称、实际出库数、单位和单价。",
+          "观麦订单商品行不允许删除；减号只用于删除订单外或人工新增回单行。",
+          "人工新增行提交前必须补全商品名称和签收数，但该行不回写三个观麦字段。",
         ],
         ["新增后聚焦商品名称；删除后重新编号并保存草稿。"],
         ["已完成任务禁用新增和删除；最后一条订单商品不可通过删除绕过订单完整性校验。"],
@@ -1179,7 +1237,7 @@
       selectors: ["[data-save-now]"],
       title: "保存｜草稿持久化",
       html: specHtml(
-        "保存当前关联、回单字段和商品编辑结果，但不写入销售订单、不改变任务状态。",
+        "保存当前关联、回单字段、签收数和售后选择，但不调用观麦接口、不改变任务状态。",
         ["仅保存通过字段级校验的数据；同一任务重复保存覆盖当前草稿版本。"],
         ["成功提示已保存；失败保留页面输入并允许重试。"],
         ["保存成功后任务仍为待处理；已完成任务不可保存。"],
@@ -1190,14 +1248,15 @@
       selectors: ["[data-confirm-submit]"],
       title: "确认提交｜写入与状态终点",
       html: specHtml(
-        "将核对后的实际出库数写入已关联销售订单，成功后完成回单任务。",
+        "将审核结果映射到观麦异常金额、异常数、应退数；退货时同步生成退货入库单。",
         [
-          "前置条件：已由操作员确认关联唯一销售订单；订单商品实际出库数合法；人工新增行的商品名称、实收数、单位和单价完整。",
-          "写入成功后任务立即从待处理变为已完成，并进入只读状态。",
+          "前置条件：已关联唯一销售订单；签收数合法；每个差异行已选择售后类型；异常金额有效。",
+          "提交前弹窗汇总三类结果；下单数不参与写入并保持不变。",
+          "字段同步及退货入库单创建全部成功后，任务从待处理变为已完成并进入只读状态。",
           "销售订单与销售回单一一对应，已完成任务不得再次提交。",
         ],
-        ["提交期间按钮禁用防重复；成功提示并切换只读详情。"],
-        ["任一写入失败时整体回滚，任务保持待处理，保留草稿并展示失败原因。"],
+        ["提交期间按钮禁用防重复；成功弹窗回显观麦同步结果及退货入库单号。"],
+        ["任一同步失败时任务保持待处理，保留草稿并允许按回单编号幂等重试。"],
       ),
     },
   ];
@@ -1457,6 +1516,112 @@
       : "--";
   }
 
+  function signedDifference(outbound, actual) {
+    if (!Number.isFinite(outbound) || !Number.isFinite(actual)) return Number.NaN;
+    return Math.round((outbound - actual + Number.EPSILON) * 100) / 100;
+  }
+
+  function rowDifference(row) {
+    const value = Number(row?.dataset.currentDiff);
+    return row?.dataset.currentDiff === "" || !Number.isFinite(value)
+      ? Number.NaN
+      : value;
+  }
+
+  function afterSalesDemoFor(line) {
+    const orderId = document.body.dataset.orderId || "";
+    return receiptAfterSalesCatalog[orderId]?.[line.id] || {};
+  }
+
+  function renderAfterSalesOptions(value, difference) {
+    if (!Number.isFinite(difference) || difference === 0) {
+      return '<option value="">无需处理</option>';
+    }
+    return [
+      '<option value="">请选择</option>',
+      ...Object.entries(afterSalesTypes).map(([key, item]) => {
+        const selected = key === value ? " selected" : "";
+        return `<option value="${key}"${selected}>${item.label}</option>`;
+      }),
+    ].join("");
+  }
+
+  function renderAfterSalesValue({
+    type,
+    difference,
+    unit,
+    exceptionAmount = "",
+    returnInboundId = "",
+  }) {
+    if (!Number.isFinite(difference) || difference === 0) {
+      return '<span class="after-sales-empty">无需处理</span>';
+    }
+    if (!type) {
+      return '<span class="after-sales-empty pending">请选择类型</span>';
+    }
+    const quantity = formatNumber(Math.abs(difference));
+    if (type === "non_product_exception") {
+      return `<label class="after-sales-field amount"><span>异常金额</span><span class="after-sales-money">¥<input class="exception-amount-input" inputmode="decimal" value="${escapeHTML(exceptionAmount)}" placeholder="0.00" aria-label="异常金额"></span></label>`;
+    }
+    if (type === "product_exception") {
+      return `<span class="after-sales-field"><span>异常数</span><strong>${quantity} ${escapeHTML(unit)}</strong></span>`;
+    }
+    const completedReference =
+      document.body.dataset.readonly === "true" && returnInboundId
+        ? `<em class="return-order-id">${escapeHTML(returnInboundId)}</em>`
+        : '<em class="return-order-tag">生成退货单</em>';
+    return `<span class="after-sales-field return"><span>应退数</span><strong>${quantity} ${escapeHTML(unit)}</strong>${completedReference}</span>`;
+  }
+
+  function syncAfterSalesRow(row, preferred = {}) {
+    if (!row?.matches("[data-order-line]")) return;
+    const difference = rowDifference(row);
+    const select = one(".after-sales-select", row);
+    const valueCell = one("[data-after-sales-value]", row);
+    if (!select || !valueCell) return;
+
+    let type = preferred.type ?? select.value ?? row.dataset.afterSalesType ?? "";
+    if (!Number.isFinite(difference) || difference === 0) type = "";
+    const currentAmount =
+      preferred.exceptionAmount ??
+      one(".exception-amount-input", row)?.value ??
+      row.dataset.exceptionAmount ??
+      "";
+    const exceptionAmount = type === "non_product_exception" ? currentAmount : "";
+    const quantity = Number.isFinite(difference) ? Math.abs(difference) : "";
+
+    row.dataset.afterSalesType = type;
+    row.dataset.exceptionAmount = exceptionAmount;
+    row.dataset.abnormalCount = type === "product_exception" ? String(quantity) : "";
+    row.dataset.returnCount = type === "product_return" ? String(quantity) : "";
+    select.innerHTML = renderAfterSalesOptions(type, difference);
+    select.value = type;
+    select.disabled = !Number.isFinite(difference) || difference === 0;
+    select.classList.toggle("invalid", false);
+    valueCell.innerHTML = renderAfterSalesValue({
+      type,
+      difference,
+      unit: row.dataset.unit || "",
+      exceptionAmount,
+      returnInboundId:
+        preferred.returnInboundId ?? row.dataset.returnInboundId ?? "",
+    });
+    updateReceiptSummary();
+  }
+
+  function addUnitTotal(target, unit, value) {
+    if (!Number.isFinite(value) || value <= 0) return;
+    const key = unit || "";
+    target.set(key, roundMoney((target.get(key) || 0) + value));
+  }
+
+  function formatUnitTotals(target) {
+    if (!target.size) return "0";
+    return [...target.entries()]
+      .map(([unit, value]) => `${formatNumber(value)}${unit}`)
+      .join("、");
+  }
+
   function updateReceiptSummary() {
     const summary = one("[data-order-summary]");
     if (!summary) return;
@@ -1466,45 +1631,38 @@
       return;
     }
 
-    let actualAmount = 0;
-    let quantityDifference = 0;
+    let exceptionAmount = 0;
+    let pendingCount = 0;
+    const abnormalTotals = new Map();
+    const returnTotals = new Map();
     all("[data-order-line]", one("[data-quantity-body]")).forEach((row) => {
-      const actual = Number(
-        one(".actual-input", row)?.value ?? row.dataset.actual ?? 0,
-      );
-      const price = Number(row.dataset.price);
-      const outbound = Number(row.dataset.outbound);
-      if (Number.isFinite(actual) && Number.isFinite(price)) {
-        actualAmount += actual * price;
-      }
-      if (Number.isFinite(actual) && Number.isFinite(outbound)) {
-        quantityDifference += Math.abs(outbound - actual);
+      const difference = rowDifference(row);
+      const type = row.dataset.afterSalesType || "";
+      if (!Number.isFinite(difference)) return;
+      if (difference !== 0 && !type) pendingCount += 1;
+      if (type === "non_product_exception") {
+        const amount = Number(
+          one(".exception-amount-input", row)?.value ?? row.dataset.exceptionAmount,
+        );
+        if (Number.isFinite(amount)) exceptionAmount += amount;
+      } else if (type === "product_exception") {
+        addUnitTotal(abnormalTotals, row.dataset.unit, Number(row.dataset.abnormalCount));
+      } else if (type === "product_return") {
+        addUnitTotal(returnTotals, row.dataset.unit, Number(row.dataset.returnCount));
       }
     });
 
-    const orderAmount = Number(order.totalAmount);
     summary.hidden = false;
-    const actualAmountTarget = one("[data-summary-actual-amount]", summary);
-    const amountDifferenceTarget = one(
-      "[data-summary-amount-difference]",
-      summary,
-    );
-    const quantityDifferenceTarget = one(
-      "[data-summary-quantity-difference]",
-      summary,
-    );
-    if (actualAmountTarget) {
-      actualAmountTarget.textContent = formatMoney(actualAmount);
-    }
-    if (amountDifferenceTarget) {
-      amountDifferenceTarget.textContent = formatMoney(
-        Math.abs(orderAmount - actualAmount),
-      );
-    }
-    if (quantityDifferenceTarget) {
-      quantityDifferenceTarget.textContent = formatNumber(
-        Math.round((quantityDifference + Number.EPSILON) * 100) / 100,
-      );
+    const amountTarget = one("[data-summary-exception-amount]", summary);
+    const abnormalTarget = one("[data-summary-abnormal-count]", summary);
+    const returnTarget = one("[data-summary-return-count]", summary);
+    const pendingTarget = one("[data-summary-pending]", summary);
+    if (amountTarget) amountTarget.textContent = formatMoney(exceptionAmount);
+    if (abnormalTarget) abnormalTarget.textContent = formatUnitTotals(abnormalTotals);
+    if (returnTarget) returnTarget.textContent = formatUnitTotals(returnTotals);
+    if (pendingTarget) {
+      pendingTarget.hidden = pendingCount === 0;
+      pendingTarget.textContent = `待选择 ${pendingCount} 项`;
     }
   }
 
@@ -1537,7 +1695,7 @@
       item.classList.contains("failed"),
     );
     const invalid = all(
-      ".actual-input, .local-actual-input, .unit-price-input",
+      ".actual-input, .local-actual-input, .exception-amount-input, .after-sales-select",
     ).some((input) => input.classList.contains("invalid"));
 
     global.classList.remove("good", "bad");
@@ -1578,29 +1736,22 @@
         variance.textContent = "--";
         variance.className = "variance";
       }
-      const amount = one("[data-line-amount]", row);
-      if (amount) amount.textContent = "--";
+      const afterSalesSelect = one(".after-sales-select", row);
+      if (afterSalesSelect) afterSalesSelect.disabled = true;
       updateReceiptSummary();
       updateGlobalSaveState();
       return false;
     }
 
-    const difference =
-      Math.round((Math.abs(outbound - actual) + Number.EPSILON) * 100) / 100;
+    const difference = signedDifference(outbound, actual);
     row.dataset.currentDiff = String(difference);
     if (variance) {
       variance.textContent = `${formatNumber(difference)} ${unit}`;
-      variance.className = `variance ${difference > 0 ? "short" : "equal"}`;
+      variance.className = `variance ${difference > 0 ? "short" : difference < 0 ? "over" : "equal"}`;
     }
     if (difference > 0) row.classList.add("row-short");
-    const amount = one("[data-line-amount]", row);
-    const price = Number(row.dataset.price);
-    if (amount) {
-      amount.textContent =
-        Number.isFinite(price) && Number.isFinite(actual)
-          ? formatMoney(actual * price)
-          : "--";
-    }
+    if (difference < 0) row.classList.add("row-over");
+    syncAfterSalesRow(row);
     updateReceiptSummary();
     return true;
   }
@@ -1631,6 +1782,95 @@
     return `${storagePrefix}:${receiptId}:${orderId}:${itemId}`;
   }
 
+  function afterSalesStorageKey(receiptId, itemId) {
+    return `${quantityStorageKey(receiptId, itemId)}:after-sales`;
+  }
+
+  function persistAfterSalesRow(row) {
+    if (!row?.matches("[data-order-line]")) return;
+    const itemId = one(".actual-input", row)?.dataset.itemId;
+    if (!itemId) return;
+    const receiptId = document.body.dataset.receiptId || "receipt-demo";
+    const payload = {
+      type: row.dataset.afterSalesType || "",
+      exceptionAmount:
+        one(".exception-amount-input", row)?.value ??
+        row.dataset.exceptionAmount ??
+        "",
+    };
+    try {
+      localStorage.setItem(
+        afterSalesStorageKey(receiptId, itemId),
+        JSON.stringify(payload),
+      );
+    } catch {
+      // The prototype remains usable when browser storage is unavailable.
+    }
+  }
+
+  function restoreAfterSalesRow(row) {
+    if (!row?.matches("[data-order-line]") || row.dataset.afterSalesRestored === "true") {
+      return;
+    }
+    row.dataset.afterSalesRestored = "true";
+    const itemId = one(".actual-input", row)?.dataset.itemId;
+    if (!itemId) return;
+    const receiptId = document.body.dataset.receiptId || "receipt-demo";
+    try {
+      const stored = localStorage.getItem(afterSalesStorageKey(receiptId, itemId));
+      if (!stored) return;
+      const payload = JSON.parse(stored);
+      syncAfterSalesRow(row, {
+        type: payload.type || "",
+        exceptionAmount: payload.exceptionAmount || "",
+      });
+    } catch {
+      // Ignore unavailable or damaged local storage in this static prototype.
+    }
+  }
+
+  function bindAfterSalesEditing() {
+    const target = one("[data-quantity-body]");
+    if (!target) return;
+    all("[data-order-line]", target).forEach(restoreAfterSalesRow);
+    if (target.dataset.afterSalesBound === "true") return;
+    target.dataset.afterSalesBound = "true";
+
+    target.addEventListener("change", (event) => {
+      const select = event.target.closest(".after-sales-select");
+      if (!select) return;
+      const row = select.closest("[data-order-line]");
+      if (!row) return;
+      syncAfterSalesRow(row, {
+        type: select.value,
+        exceptionAmount: "",
+      });
+      persistAfterSalesRow(row);
+      setTaskState("待处理");
+      updateGlobalSaveState();
+    });
+
+    target.addEventListener("input", (event) => {
+      const input = event.target.closest(".exception-amount-input");
+      if (!input) return;
+      const row = input.closest("[data-order-line]");
+      const raw = input.value.trim();
+      const valid =
+        raw === "" ||
+        (/^\d+(?:\.\d{0,2})?$/.test(raw) && Number(raw) > 0);
+      input.classList.toggle("invalid", !valid);
+      row.dataset.exceptionAmount = raw;
+      updateReceiptSummary();
+      updateGlobalSaveState();
+    });
+
+    target.addEventListener("focusout", (event) => {
+      const input = event.target.closest(".exception-amount-input");
+      if (!input) return;
+      persistAfterSalesRow(input.closest("[data-order-line]"));
+    });
+  }
+
   function performSave(input) {
     if (!updateQuantityRow(input)) {
       markRowState(input, "failed", "请输入有效数量");
@@ -1657,6 +1897,7 @@
       } catch {
         // The prototype remains usable when browser storage is unavailable.
       }
+      persistAfterSalesRow(input.closest("[data-order-line]"));
       const now = new Date().toLocaleTimeString("zh-CN", {
         hour12: false,
         hour: "2-digit",
@@ -1770,14 +2011,193 @@
         const inputs = all(".actual-input").filter(
           (input) => input.value.trim() !== "",
         );
-        if (!inputs.length) {
-          showToast("暂无可保存的实际出库数");
+        const rows = all("[data-order-line]");
+        if (!inputs.length && !rows.length) {
+          showToast("暂无可保存的审核内容");
           return;
         }
         inputs.forEach((input) => scheduleSave(input, true));
-        showToast("正在保存实际出库数");
+        rows.forEach(persistAfterSalesRow);
+        showToast("正在保存审核草稿");
       });
     });
+  }
+
+  function collectAfterSalesPayload() {
+    const rows = [];
+    const abnormalTotals = new Map();
+    const returnTotals = new Map();
+    let exceptionAmount = 0;
+    all("[data-order-line]").forEach((row) => {
+      const difference = rowDifference(row);
+      if (!Number.isFinite(difference) || difference === 0) return;
+      const type = row.dataset.afterSalesType || "";
+      const amount = Number(
+        one(".exception-amount-input", row)?.value ?? row.dataset.exceptionAmount,
+      );
+      const item = {
+        itemId: one(".actual-input", row)?.dataset.itemId || "",
+        productName: row.dataset.orderProductName || "",
+        orderedQuantity: Number(row.dataset.outbound),
+        receivedQuantity: Number(one(".actual-input", row)?.value),
+        difference,
+        unit: row.dataset.unit || "",
+        type,
+        exceptionAmount:
+          type === "non_product_exception" && Number.isFinite(amount)
+            ? roundMoney(amount)
+            : 0,
+        abnormalCount:
+          type === "product_exception" ? Math.abs(difference) : 0,
+        returnCount: type === "product_return" ? Math.abs(difference) : 0,
+      };
+      rows.push(item);
+      exceptionAmount += item.exceptionAmount;
+      addUnitTotal(abnormalTotals, item.unit, item.abnormalCount);
+      addUnitTotal(returnTotals, item.unit, item.returnCount);
+    });
+    return {
+      receiptId: document.body.dataset.receiptId || "",
+      orderId: document.body.dataset.orderId || "",
+      rows,
+      exceptionAmount: roundMoney(exceptionAmount),
+      abnormalTotals,
+      returnTotals,
+      nonProductCount: rows.filter(
+        (item) => item.type === "non_product_exception",
+      ).length,
+      productExceptionCount: rows.filter(
+        (item) => item.type === "product_exception",
+      ).length,
+      productReturnCount: rows.filter(
+        (item) => item.type === "product_return",
+      ).length,
+    };
+  }
+
+  function validateReceiptSubmission() {
+    if (!document.body.dataset.orderId) {
+      showToast("请先选择销售订单");
+      return null;
+    }
+
+    const incompleteManualRow = all("[data-manual-row]").find((row) => {
+      const productName = one(".detail-product-input", row)?.value.trim();
+      const actual = one(".local-actual-input", row)?.value.trim();
+      return !productName || !actual;
+    });
+    if (incompleteManualRow) {
+      one(".detail-product-input", incompleteManualRow)?.focus();
+      showToast("请补全新增商品的名称和签收数");
+      return null;
+    }
+
+    const writebackInputs = all(".actual-input");
+    const invalidInput = writebackInputs.find(
+      (input) => !updateQuantityRow(input),
+    );
+    if (invalidInput) {
+      invalidInput.focus();
+      showToast("请检查签收数");
+      return null;
+    }
+    const invalidLocalInput = all(".local-actual-input").find((input) =>
+      input.classList.contains("invalid"),
+    );
+    if (invalidLocalInput) {
+      invalidLocalInput.focus();
+      showToast("请检查新增商品的签收数");
+      return null;
+    }
+
+    const unresolvedRow = all("[data-order-line]").find((row) => {
+      const difference = rowDifference(row);
+      return Number.isFinite(difference) && difference !== 0 && !row.dataset.afterSalesType;
+    });
+    if (unresolvedRow) {
+      const select = one(".after-sales-select", unresolvedRow);
+      select?.classList.add("invalid");
+      select?.focus();
+      showToast(
+        "请为差异商品选择售后类型",
+      );
+      return null;
+    }
+
+    const invalidAmountRow = all("[data-order-line]").find((row) => {
+      if (row.dataset.afterSalesType !== "non_product_exception") return false;
+      const input = one(".exception-amount-input", row);
+      const raw = input?.value.trim() || "";
+      return !/^\d+(?:\.\d{1,2})?$/.test(raw) || Number(raw) <= 0;
+    });
+    if (invalidAmountRow) {
+      const input = one(".exception-amount-input", invalidAmountRow);
+      input?.classList.add("invalid");
+      input?.focus();
+      showToast("请填写大于 0 的异常金额");
+      return null;
+    }
+
+    return collectAfterSalesPayload();
+  }
+
+  function renderSubmitSummary(payload) {
+    const target = one("[data-submit-summary]");
+    if (!target) return;
+    target.innerHTML = `
+      <div class="submit-summary-order">销售订单 <strong>${escapeHTML(payload.orderId)}</strong></div>
+      <div class="submit-summary-grid">
+        <span><b>非商品异常</b><strong>${payload.nonProductCount} 项 · ${formatMoney(payload.exceptionAmount)}</strong></span>
+        <span><b>商品异常</b><strong>${payload.productExceptionCount} 项 · ${formatUnitTotals(payload.abnormalTotals)}</strong></span>
+        <span><b>商品退货</b><strong>${payload.productReturnCount} 项 · ${formatUnitTotals(payload.returnTotals)}</strong></span>
+      </div>
+      ${payload.productReturnCount ? '<p class="submit-return-notice">提交后将在观麦生成退货入库单。</p>' : ""}`;
+  }
+
+  function completeReceiptSubmission(button) {
+    if (!pendingSubmitPayload) return;
+    const payload = pendingSubmitPayload;
+    button.disabled = true;
+    button.textContent = "同步中…";
+    all(".actual-input").forEach((input) => scheduleSave(input, true));
+    all("[data-order-line]").forEach(persistAfterSalesRow);
+
+    window.setTimeout(() => {
+      const returnRows = all("[data-order-line]").filter(
+        (row) => row.dataset.afterSalesType === "product_return",
+      );
+      const existingReturnId = returnRows
+        .map((row) => row.dataset.returnInboundId)
+        .find(Boolean);
+      const generatedReturnId = returnRows.length
+        ? existingReturnId ||
+          `THRK-20260804-${String(payload.receiptId.slice(-3) || "001").padStart(4, "0")}`
+        : "";
+      returnRows.forEach((row) => {
+        row.dataset.returnInboundId = generatedReturnId;
+      });
+      const generatedIds = generatedReturnId ? [generatedReturnId] : [];
+
+      setTaskState("已完成");
+      document.body.dataset.readonly = "true";
+      returnRows.forEach((row) => syncAfterSalesRow(row, {
+        type: "product_return",
+        returnInboundId: row.dataset.returnInboundId,
+      }));
+      applyDetailReadOnlyMode();
+      button.disabled = false;
+      button.textContent = "确认提交";
+      closeModal("submitConfirmModal");
+      const result = one("[data-submit-result]");
+      if (result) {
+        result.innerHTML = `
+          <div class="submit-result-success">审核结果已同步观麦</div>
+          <dl><div><dt>销售订单</dt><dd>${escapeHTML(payload.orderId)}</dd></div><div><dt>下单数</dt><dd>保持不变</dd></div>${generatedIds.length ? `<div><dt>退货入库单</dt><dd>${generatedIds.map(escapeHTML).join("、")}</dd></div>` : ""}</dl>`;
+      }
+      openModal("submitResultModal");
+      showToast("审核完成，已同步观麦");
+      pendingSubmitPayload = null;
+    }, 720);
   }
 
   function bindConfirmSubmit() {
@@ -1785,54 +2205,19 @@
       if (button.dataset.submitBound === "true") return;
       button.dataset.submitBound = "true";
       button.addEventListener("click", () => {
-        const orderId = document.body.dataset.orderId || "";
-        if (!orderId) {
-          showToast("请先选择销售订单");
-          return;
-        }
-
-        const incompleteManualRow = all("[data-manual-row]").find((row) => {
-          const productName = one(".detail-product-input", row)?.value.trim();
-          const actual = one(".local-actual-input", row)?.value.trim();
-          const price = one(".unit-price-input", row)?.value.trim();
-          return !productName || !actual || !price;
-        });
-        if (incompleteManualRow) {
-          one(".detail-product-input", incompleteManualRow)?.focus();
-          showToast("请补全新增商品的名称、实际出库数和单价");
-          return;
-        }
-
-        const writebackInputs = all(".actual-input");
-        const invalidInput = writebackInputs.find(
-          (input) => !updateQuantityRow(input),
-        );
-        if (invalidInput) {
-          invalidInput.focus();
-          showToast("请检查实际出库数");
-          return;
-        }
-        const invalidLocalInput = all(
-          ".local-actual-input, .unit-price-input:not([readonly])",
-        ).find((input) => input.classList.contains("invalid"));
-        if (invalidLocalInput) {
-          invalidLocalInput.focus();
-          showToast("请检查新增商品的实收数或单价");
-          return;
-        }
-
-        button.disabled = true;
-        button.textContent = "提交中…";
-        writebackInputs.forEach((input) => scheduleSave(input, true));
-        window.setTimeout(() => {
-          setTaskState("已完成");
-          document.body.dataset.readonly = "true";
-          applyDetailReadOnlyMode();
-          button.textContent = "确认提交";
-          showToast("销售回单已确认提交");
-        }, 720);
+        const payload = validateReceiptSubmission();
+        if (!payload) return;
+        pendingSubmitPayload = payload;
+        renderSubmitSummary(payload);
+        openModal("submitConfirmModal");
       });
     });
+
+    const confirm = one("[data-confirm-submit-action]");
+    if (confirm && confirm.dataset.bound !== "true") {
+      confirm.dataset.bound = "true";
+      confirm.addEventListener("click", () => completeReceiptSubmission(confirm));
+    }
   }
 
   function renderAttachments() {
@@ -2018,7 +2403,7 @@
             "beforeend",
             `<div class="message system">
               <span class="status pending"><span class="status-dot"></span>待处理</span>
-              已识别 3 个商品，其中 1 个实际出库数需要人工补充。
+              已识别 3 个商品，其中 1 个签收数需要人工补充。
               <a class="text-btn" href="receipt-detail.html">查看回单</a>
               <div class="message-time">刚刚</div>
             </div>`,
@@ -2141,31 +2526,49 @@
       receiptItem?.actual ?? (line.actual === "" ? "0" : String(line.actual));
     const remark = receiptItem?.remark ?? line.remark ?? "";
     const aiText = receiptItem?.aiText ?? line.aiText ?? "";
-    const difference = Math.abs(line.outbound - Number(actual));
-    const rowClass = difference > 0 ? "row-short" : "";
-    const varianceClass = difference > 0 ? "short" : "equal";
-    const lineAmount = Number(actual) * Number(line.price);
+    const difference = signedDifference(Number(line.outbound), Number(actual));
+    const rowClass = difference > 0 ? "row-short" : difference < 0 ? "row-over" : "";
+    const varianceClass =
+      difference > 0 ? "short" : difference < 0 ? "over" : "equal";
+    const demo = afterSalesDemoFor(line);
+    const hasPreservedType =
+      receiptItem && Object.prototype.hasOwnProperty.call(receiptItem, "afterSalesType");
+    let afterSalesType = hasPreservedType
+      ? receiptItem.afterSalesType || ""
+      : demo.type || "";
+    if (
+      !Number.isFinite(difference) ||
+      difference === 0 ||
+      (difference < 0 && afterSalesType !== "non_product_exception")
+    ) {
+      afterSalesType = "";
+    }
+    const exceptionAmount = hasPreservedType
+      ? receiptItem.exceptionAmount || ""
+      : demo.exceptionAmount || "";
+    const returnInboundId =
+      receiptItem?.returnInboundId || demo.returnInboundId || "";
+    const quantity = Number.isFinite(difference) ? Math.abs(difference) : "";
     return `
-      <tr class="${rowClass}" data-product-row data-quantity-row data-order-line data-order-product-name="${escapeHTML(line.name)}" data-recognized-name="${escapeHTML(recognizedName)}" data-ai-text="${escapeHTML(aiText)}" data-outbound="${line.outbound}" data-unit="${escapeHTML(line.unit)}" data-price="${line.price}" data-current-diff="${difference}">
+      <tr class="${rowClass}" data-product-row data-quantity-row data-order-line data-order-product-name="${escapeHTML(line.name)}" data-recognized-name="${escapeHTML(recognizedName)}" data-ai-text="${escapeHTML(aiText)}" data-outbound="${line.outbound}" data-unit="${escapeHTML(line.unit)}" data-current-diff="${difference}" data-after-sales-type="${afterSalesType}" data-exception-amount="${escapeHTML(exceptionAmount)}" data-abnormal-count="${afterSalesType === "product_exception" ? quantity : ""}" data-return-count="${afterSalesType === "product_return" ? quantity : ""}" data-return-inbound-id="${escapeHTML(returnInboundId)}">
         <td data-row-index>${index + 1}</td>
         <td><strong>${escapeHTML(line.name)}</strong></td>
         <td data-recognized-product>${escapeHTML(recognizedName || "--")}</td>
-        <td class="right"><strong>${formatNumber(line.outbound)}</strong></td>
-        <td><div class="quantity-input-wrap"><input class="quantity-input actual-input" inputmode="decimal" value="${escapeHTML(actual)}" placeholder="请填写" aria-label="${escapeHTML(line.name)}实际出库数" data-item-id="${escapeHTML(line.id)}"${receiptItem ? ' data-preserve-current="true"' : ""}><span class="unit-suffix">${escapeHTML(line.unit)}</span></div></td>
+        <td class="right"><strong>${formatNumber(line.outbound)} ${escapeHTML(line.unit)}</strong></td>
+        <td><div class="quantity-input-wrap"><input class="quantity-input actual-input" inputmode="decimal" value="${escapeHTML(actual)}" placeholder="请填写" aria-label="${escapeHTML(line.name)}签收数" data-item-id="${escapeHTML(line.id)}"${receiptItem ? ' data-preserve-current="true"' : ""}><span class="unit-suffix">${escapeHTML(line.unit)}</span></div></td>
         <td class="right"><span class="variance ${varianceClass}" data-variance>${formatNumber(difference)} ${escapeHTML(line.unit)}</span></td>
-        <td>${escapeHTML(line.unit)}</td>
-        <td><div class="price-input-wrap readonly"><span>¥</span><input class="unit-price-input system-unit-price" inputmode="decimal" value="${Number(line.price).toFixed(2)}" readonly aria-label="${escapeHTML(line.name)}系统单价"></div></td>
-        <td class="right"><strong class="line-amount" data-line-amount>${formatMoney(lineAmount)}</strong></td>
+        <td><select class="after-sales-select" aria-label="${escapeHTML(line.name)}售后类型"${difference === 0 ? " disabled" : ""}>${renderAfterSalesOptions(afterSalesType, difference)}</select></td>
+        <td data-after-sales-value>${renderAfterSalesValue({ type: afterSalesType, difference, unit: line.unit, exceptionAmount, returnInboundId })}</td>
         <td><input class="detail-remark-input" value="${escapeHTML(remark)}" placeholder="填写备注" aria-label="${escapeHTML(line.name)}备注"></td>
-        <td>${renderRowActions(line.name)}</td>
+        <td>${renderRowActions(line.name, false)}</td>
       </tr>`;
   }
 
-  function renderRowActions(name = "当前商品") {
+  function renderRowActions(name = "当前商品", allowDelete = true) {
     const safeName = escapeHTML(name);
     return `<div class="row-action-buttons">
       <button class="row-action add" type="button" data-add-row aria-label="在${safeName}后新增空白行">＋</button>
-      <button class="row-action remove" type="button" data-delete-row aria-label="删除${safeName}行">−</button>
+      ${allowDelete ? `<button class="row-action remove" type="button" data-delete-row aria-label="删除${safeName}行">−</button>` : ""}
     </div>`;
   }
 
@@ -2177,28 +2580,19 @@
     const unitControl = editableName
       ? `<input class="detail-unit-input" value="${escapeHTML(item.unit || "斤")}" aria-label="单位">`
       : escapeHTML(item.unit || "--");
-    const price = item.price ?? "";
     const actual = item.actual ?? "";
-    const amount =
-      String(price).trim() !== "" &&
-      String(actual).trim() !== "" &&
-      Number.isFinite(Number(price)) &&
-      Number.isFinite(Number(actual))
-        ? formatMoney(Number(price) * Number(actual))
-        : "--";
     return `
-      <tr data-product-row data-unmatched-row data-recognized-name="${escapeHTML(item.name || "")}" data-ai-text="${escapeHTML(item.aiText || item.text || "")}" data-unit="${escapeHTML(item.unit || "")}" data-price="${escapeHTML(price)}" data-exception-id="${escapeHTML(item.id || "")}">
+      <tr data-product-row data-unmatched-row data-recognized-name="${escapeHTML(item.name || "")}" data-ai-text="${escapeHTML(item.aiText || item.text || "")}" data-unit="${escapeHTML(item.unit || "")}" data-exception-id="${escapeHTML(item.id || "")}">
         <td data-row-index>${index + 1}</td>
         <td>--</td>
         <td data-recognized-product>${nameControl}</td>
         <td class="right">--</td>
-        <td><div class="quantity-input-wrap"><input class="quantity-input local-actual-input" inputmode="decimal" value="${escapeHTML(actual)}" placeholder="请填写" aria-label="${escapeHTML(item.name || "当前商品")}实收数"><span class="unit-suffix">${escapeHTML(item.unit || "斤")}</span></div></td>
+        <td><div class="quantity-input-wrap"><input class="quantity-input local-actual-input" inputmode="decimal" value="${escapeHTML(actual)}" placeholder="请填写" aria-label="${escapeHTML(item.name || "当前商品")}签收数"><span class="unit-suffix">${escapeHTML(item.unit || "斤")}</span></div></td>
         <td class="right">--</td>
-        <td>${unitControl}</td>
-        <td><div class="price-input-wrap"><span>¥</span><input class="unit-price-input" inputmode="decimal" value="${escapeHTML(price)}" placeholder="请填写" aria-label="${escapeHTML(item.name || "当前商品")}单价"></div></td>
-        <td class="right"><strong class="line-amount" data-line-amount>${amount}</strong></td>
+        <td><span class="after-sales-empty">--</span></td>
+        <td><span class="after-sales-empty">不回写</span></td>
         <td><input class="detail-remark-input" value="${escapeHTML(item.remark || "")}" placeholder="填写备注" aria-label="${escapeHTML(item.name || "当前商品")}备注"></td>
-        <td>${renderRowActions(item.name || "当前商品")}</td>
+        <td>${renderRowActions(item.name || "当前商品", true)}</td>
       </tr>`;
   }
 
@@ -2218,13 +2612,12 @@
         <td>--</td>
         <td data-recognized-product><input class="detail-product-input" value="" placeholder="请输入商品名称" aria-label="识别商品"></td>
         <td class="right">--</td>
-        <td><div class="quantity-input-wrap"><input class="quantity-input local-actual-input" inputmode="decimal" value="" placeholder="请填写" aria-label="实际出库数"><span class="unit-suffix">斤</span></div></td>
+        <td><div class="quantity-input-wrap"><input class="quantity-input local-actual-input" inputmode="decimal" value="" placeholder="请填写" aria-label="签收数"><span class="unit-suffix">斤</span></div></td>
         <td class="right">--</td>
-        <td><input class="detail-unit-input" value="斤" aria-label="单位"></td>
-        <td><div class="price-input-wrap"><span>¥</span><input class="unit-price-input" inputmode="decimal" value="" placeholder="请填写" aria-label="单价"></div></td>
-        <td class="right"><strong class="line-amount" data-line-amount>--</strong></td>
+        <td><span class="after-sales-empty">--</span></td>
+        <td><span class="after-sales-empty">不回写</span></td>
         <td><input class="detail-remark-input" value="" placeholder="填写备注" aria-label="备注"></td>
-        <td>${renderRowActions("空白商品")}</td>
+        <td>${renderRowActions("空白商品", true)}</td>
       </tr>`;
   }
 
@@ -2240,28 +2633,11 @@
   function updateReceiptOnlyAmount(row) {
     if (!row) return;
     const actualInput = one(".local-actual-input", row);
-    const priceInput = one(".unit-price-input", row);
-    const amount = one("[data-line-amount]", row);
     const actualRaw = actualInput?.value.trim() || "";
-    const priceRaw = priceInput?.value.trim() || "";
     const actualValid =
       actualRaw === "" ||
       (/^\d+(?:\.\d{0,2})?$/.test(actualRaw) && Number(actualRaw) >= 0);
-    const priceValid =
-      priceRaw === "" ||
-      (/^\d+(?:\.\d{0,2})?$/.test(priceRaw) && Number(priceRaw) >= 0);
     actualInput?.classList.toggle("invalid", !actualValid);
-    priceInput?.classList.toggle("invalid", !priceValid);
-    row.dataset.price = priceRaw;
-    if (amount) {
-      amount.textContent =
-        actualRaw !== "" &&
-        priceRaw !== "" &&
-        actualValid &&
-        priceValid
-          ? formatMoney(Number(actualRaw) * Number(priceRaw))
-          : "--";
-    }
     updateGlobalSaveState();
   }
 
@@ -2270,11 +2646,7 @@
       if (row.dataset.localQuantityBound === "true") return;
       row.dataset.localQuantityBound = "true";
       const actualInput = one(".local-actual-input", row);
-      const priceInput = one(".unit-price-input", row);
       actualInput?.addEventListener("input", () =>
-        updateReceiptOnlyAmount(row),
-      );
-      priceInput?.addEventListener("input", () =>
         updateReceiptOnlyAmount(row),
       );
       updateReceiptOnlyAmount(row);
@@ -2357,7 +2729,6 @@
         row,
       );
       const unitInput = one(".detail-unit-input", row);
-      const priceInput = one(".unit-price-input", row);
       const remarkInput = one(".detail-remark-input", row);
       return {
         id:
@@ -2369,11 +2740,16 @@
         recognizedName: currentProductName,
         matchName: currentProductName,
         actual: quantityInput?.value ?? "",
-        price: priceInput?.value ?? row.dataset.price ?? "",
         unit: unitInput?.value.trim() || row.dataset.unit || "",
         remark: remarkInput?.value ?? "",
         aiText: row.dataset.aiText || "",
         editableName: Boolean(productInput),
+        afterSalesType: row.dataset.afterSalesType || "",
+        exceptionAmount:
+          one(".exception-amount-input", row)?.value ??
+          row.dataset.exceptionAmount ??
+          "",
+        returnInboundId: row.dataset.returnInboundId || "",
       };
     });
   }
@@ -2393,6 +2769,9 @@
           actual: "0",
           remark: "",
           aiText: "",
+          afterSalesType: "",
+          exceptionAmount: "",
+          returnInboundId: "",
         };
       }
       used.add(matchIndex);
@@ -2436,6 +2815,7 @@
     target.hidden = false;
     renumberProductRows();
     bindQuantityEditing();
+    bindAfterSalesEditing();
     bindLocalQuantityEditing();
     bindRowActions();
     updateReceiptSummary();
@@ -2535,9 +2915,9 @@
 
     const queryOrders = () => {
       const criteria = readCriteria();
-      const eligibleOrders = Object.values(receiptOrderCatalog).filter(
-        (order) =>
-          order.orderStatus === "配送中" || order.orderStatus === "已签收",
+      const eligibleStatuses = ["等待分拣", "分拣中", "配送中", "已签收"];
+      const eligibleOrders = Object.values(receiptOrderCatalog).filter((order) =>
+        eligibleStatuses.includes(order.orderStatus),
       );
       const exactOrder = eligibleOrders.find(
         (order) =>
@@ -2706,6 +3086,10 @@
     all(".receipt-ai-panel input").forEach((input) => {
       input.readOnly = true;
       input.setAttribute("aria-readonly", "true");
+    });
+    all(".receipt-ai-panel select").forEach((select) => {
+      select.disabled = true;
+      select.setAttribute("aria-disabled", "true");
     });
     all(
       "[data-save-now], [data-confirm-submit], [data-add-product], [data-add-row], [data-delete-row], [data-open-order-query], [data-confirm-order-link]",
