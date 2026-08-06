@@ -2458,10 +2458,23 @@ function annotationControlContent(annotation) {
   if (selected) return annotationControlDetail(annotation, selected);
   const groups = activeControlRegistry.groups.filter((group) => group.visibleMatches > 0);
   const documentedCount = groups.filter((group) => group.documented).length;
+  const pageRules = (annotation.business || []).filter((item) => /^规则【/.test(item));
   return `
     <section class="control-mode-tip">
-      <strong>当前页面元素说明</strong>
-      <p>业务说明只解释当前页面实际可见的字段、表头、按钮和选择项。蓝框表示已有说明，橙框表示待补充；点选元素只查看说明，不执行原交互。</p>
+      <strong>当前页面业务说明</strong>
+      <p>进入说明模式后先阅读页面目标、角色范围和业务规则，再点选蓝色或橙色标记查看字段、表头、按钮和选择项的详细说明。点选元素只查看说明，不执行原交互。</p>
+    </section>
+    <section class="annotation-detail-section">
+      <h3>1. 页面目标</h3>
+      <p>${escapeHTML(annotation.overview || "完成当前页面的查询、维护或业务处理任务，并保持页面结果与业务状态一致。")}</p>
+    </section>
+    <section class="annotation-detail-section">
+      <h3>2. 角色、权限与数据范围</h3>
+      <p>系统管理员及获得本页面权限的业务人员可访问；仅展示当前租户和当前账号数据权限范围内的记录。按钮权限、数据范围和对象状态分别校验，任一条件不满足时隐藏、置灰或明确拦截。</p>
+    </section>
+    <section class="annotation-detail-section">
+      <h3>3. 页面业务逻辑</h3>
+      ${pageRules.length ? `<ul class="control-definition-list">${pageRules.map((item) => `<li>${escapeHTML(item.replace(/^规则【[^】]+】/, ""))}</li>`).join("")}</ul>` : `<ul class="control-definition-list"><li>筛选条件按交集确定当前数据范围，查询、列表总数和分页使用同一次结果。</li><li>保存或提交前校验功能权限、数据范围、对象状态及页面必填字段；成功后刷新受影响区域，失败时保留原数据和输入。</li></ul>`}
     </section>
     <section class="control-summary" aria-label="说明覆盖情况">
       <span><b>${activeControlRegistry.visibleCount}</b>页面控件</span>
@@ -2470,7 +2483,7 @@ function annotationControlContent(annotation) {
     </section>
     <section class="annotation-section control-catalog">
       <div class="control-catalog-head">
-        <div><h3>当前可见页面元素</h3><p>已说明 ${documentedCount} 项；切换页签或打开弹窗后，目录同步更新为新出现的元素。</p></div>
+        <div><h3>4. 字段与操作说明</h3><p>已说明 ${documentedCount} 项；切换页签或打开弹窗后，目录同步更新为新出现的元素。</p></div>
       </div>
       <label class="control-search">
         <span aria-hidden="true">⌕</span>
@@ -2492,6 +2505,10 @@ function annotationControlContent(annotation) {
         }).join("")}
       </div>
       <div class="empty-block control-search-empty" data-control-search-empty>没有匹配的字段或操作。</div>
+    </section>
+    <section class="annotation-detail-section">
+      <h3>5. 异常与边界</h3>
+      <p>首次进入无数据时展示空态；无权限时不泄露业务数据；查询或保存失败时保留原列表、筛选和输入并允许重试；重复点击不得创建重复业务数据；并发修改时提示刷新后重新提交。</p>
     </section>
   `;
 }

@@ -80,7 +80,7 @@ document.querySelectorAll('.modal-backdrop').forEach(m=>m.addEventListener('clic
 function toast(msg){const x=document.getElementById('toast');x.textContent='✓ '+msg;x.classList.add('show');clearTimeout(window.__tt);window.__tt=setTimeout(()=>x.classList.remove('show'),1800)}
 document.querySelectorAll('[data-login]').forEach(b=>b.onclick=()=>location.href=b.dataset.login);
 `;
-function doc(title,body,extra=''){return `<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}｜观麦 AI 智能订单助手</title><style>${CSS}${extra}</style></head><body>${body}<div id="toast" class="toast"></div><script>${SCRIPT}</script></body></html>`}
+function doc(title,body,extra=''){return `<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}｜观麦 AI 智能订单助手</title><style>${CSS}${extra}</style></head><body>${body}<div id="toast" class="toast"></div><script>${SCRIPT}</script><script src="../business-specs.js"></script></body></html>`}
 
 const pages = new Map();
 const add=(file,title,html,extra='')=>pages.set(file,doc(title,html,extra));

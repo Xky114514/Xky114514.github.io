@@ -205,6 +205,8 @@ if (!groupsPage.includes('href="group-detail.html"')) interactionMarkers.push('g
 
 for (const file of tenantPages) {
   const rawHtml = readRawHtml(file);
+  if (!rawHtml.includes('data-page-spec-toggle')) interactionMarkers.push(`${file} -> 缺少全页面业务说明入口`);
+  if (!rawHtml.includes('<script src="../business-specs.js"></script>')) interactionMarkers.push(`${file} -> 缺少共享业务说明脚本`);
   if (rawHtml.includes('客户')) interactionMarkers.push(`${file} -> 用户可见术语应统一为“商户”`);
   if (!rawHtml.includes('href="../sales_receipt/receipts.html"')) interactionMarkers.push(`${file} -> 主导航缺少销售回单入口`);
   if (rawHtml.includes('<strong>销售回单</strong><span>进入销售回单首页</span>')) interactionMarkers.push(`${file} -> 销售回单不应在 Agent 切换器中重复出现`);
@@ -220,34 +222,38 @@ for (const file of tenantPages) {
     if (!rawHtml.includes(marker)) interactionMarkers.push(`${file} -> 回单开通/权限显隐缺少 ${marker}`);
   }
 }
+const sharedBusinessSpecs = rawFs.readFileSync(path.resolve(dir, '../business-specs.js'), 'utf8');
+for (const marker of ['const closeDrawer = () =>', 'close.addEventListener("click", closeDrawer)', 'if (drawer.classList.contains("open")) closeDrawer()', 'const reminderFields = [', 'const reminderLogic = [', 'function findOperation(label)', '催单执行规则', '0～15 分钟随机延迟']) {
+  if (!sharedBusinessSpecs.includes(marker)) interactionMarkers.push(`business-specs.js -> 说明侧边栏交互缺少 ${marker}`);
+}
+if (sharedBusinessSpecs.includes('open(`${current.title}业务说明`, renderOverview())')) interactionMarkers.push('business-specs.js -> 进入说明模式时不应自动打开侧边栏');
+const reminderBusinessDoc = rawFs.readFileSync(path.resolve(dir, '销售订单催单设置业务说明.md'), 'utf8');
+for (const marker of ['# 销售订单群聊管理—催单设置需求说明', '催单设置是“群聊管理”的子功能', '群聊管理 → 批量设置催单', '群聊管理 → 目标群聊详情 → 催单设置页签', '不在销售订单“设置”中增加催单页签']) {
+  if (!reminderBusinessDoc.includes(marker)) interactionMarkers.push(`销售订单催单设置业务说明.md -> 功能归属说明缺少 ${marker}`);
+}
 
 const rawStatsPage = readRawHtml('stats.html');
 for (const marker of ['data-stats-modules', 'data-subtab="orderStats"', '>订单统计</button>', 'data-subtab="receiptStats"', '>回单统计</button>', 'data-panel="orderStats"', 'data-panel="receiptStats"', '回单处理统计', '观麦同步']) {
   if (!rawStatsPage.includes(marker)) interactionMarkers.push(`stats.html -> 订单/回单统计页签缺少 ${marker}`);
 }
 const rawSettingsPage = readRawHtml('settings.html');
-for (const marker of ['>信道设置</button>', '>通知设置</button>', '>回复设置</a>', '>功能设置</button>', '>催单设置</button>']) {
+for (const marker of ['>信道设置</button>', '>通知设置</button>', '>回复设置</a>', '>功能设置</button>']) {
   if (!rawSettingsPage.includes(marker)) interactionMarkers.push(`settings.html -> 销售订单设置页签缺少 ${marker}`);
 }
-for (const marker of ['settings-group-label', '>成员管理</button>', '>订单回复</a>', '>订单功能设置</button>', 'href="../sales_receipt/settings.html"', '>回单设置</a>']) {
+for (const marker of ['settings-group-label', '>成员管理</button>', '>订单回复</a>', '>订单功能设置</button>', 'href="../sales_receipt/settings.html"', '>回单设置</a>', '>催单设置</button>', 'data-panel="reminder"', 'data-reminder-settings', 'id="reminderEdit"']) {
   if (rawSettingsPage.includes(marker)) interactionMarkers.push(`settings.html -> 销售订单设置不应保留 ${marker}`);
 }
-for (const marker of ['data-panel="reminder"', 'data-reminder-settings', '群聊下单提醒', '若当天仍未检测到订单', 'data-reminder-search', 'placeholder="搜索群聊"', 'data-reminder-status-filter', 'data-reminder-select-all', 'data-reminder-row-check', 'data-reminder-batch', '批量设置', 'data-reminder-edit', 'data-reminder-modal', 'data-reminder-enabled', 'data-reminder-time', 'data-reminder-day="1"', 'data-reminder-day="7"', '日常下单日期', '催单话术', 'data-reminder-save', 'function syncReminderSelection()', 'function populateReminderModal(row,mode)', 'function applyReminderValues(row,values)', "toast(modal.dataset.mode==='batch'?"]) {
-  if (!rawSettingsPage.includes(marker)) interactionMarkers.push(`settings.html -> 催单设置缺少 ${marker}`);
+const rawReminderGroupsPage = readRawHtml('groups.html');
+for (const marker of ['>批量设置催单</button>', 'data-reminder-enter-batch', 'data-group-batch-bar', 'data-reminder-select-all', '<span>全选</span>', 'data-reminder-row-check', 'data-reminder-batch', '>设置催单</button>', 'data-reminder-edit', 'data-reminder-modal', 'data-reminder-enabled', 'data-reminder-time', 'data-reminder-day="1"', 'data-reminder-day="7"', '日常下单日期', '催单话术', 'data-reminder-save', 'data-reminder-status', 'function setReminderBatchMode(enabled)', 'function populateReminderModal(row,mode)', 'function applyReminderValues(row,values)']) {
+  if (!rawReminderGroupsPage.includes(marker)) interactionMarkers.push(`groups.html -> 群聊催单列表缺少 ${marker}`);
 }
-for (const marker of ['data-spec-toggle', 'id="reminderSpecOverview"', 'id="reminderSpecDrawer"', 'id="reminderSpecBody"', 'data-spec-close', '催单设置业务说明', 'function reminderSpecHtml(', 'const reminderSpecTargets=', 'function bindReminderSpec()', '说明模式已开启，点击蓝色标记区域查看规则']) {
-  if (!rawSettingsPage.includes(marker)) interactionMarkers.push(`settings.html -> 催单设置业务说明缺少 ${marker}`);
+for (const marker of ['data-reminder-status-filter', 'placeholder="搜索群聊或商户"', 'data-panel="reminder"', 'data-reminder-summary-copy', '识别业务', 'group-business-tags']) {
+  if (rawReminderGroupsPage.includes(marker)) interactionMarkers.push(`groups.html -> 群聊催单列表不应保留 ${marker}`);
 }
-for (const marker of ['data-reminder-scope', '将统一更新已选择的', '关闭后机器人不再自动催单', '仅在选中的日期检查当天是否已下单。', 'placeholder="搜索群聊或商户"', "batch?'批量设置群聊催单'"]) {
-  if (rawSettingsPage.includes(marker)) interactionMarkers.push(`settings.html -> 催单设置不应保留 ${marker}`);
-}
-const reminderPanelStart = rawSettingsPage.indexOf('<div class="reminder-panel"');
-const reminderTableStart = rawSettingsPage.indexOf('<table class="x-table reminder-table"', reminderPanelStart);
-const reminderIntroStart = rawSettingsPage.indexOf('<div class="reminder-intro"', reminderPanelStart);
-if (reminderPanelStart < 0 || reminderTableStart < 0 || reminderIntroStart < reminderTableStart) interactionMarkers.push('settings.html -> 群聊下单提醒说明应放在群聊列表下方');
-const reminderHeader = (rawSettingsPage.match(/<table class="x-table reminder-table"[^>]*><thead><tr>([\s\S]*?)<\/tr><\/thead>/) || [])[1] || '';
-if (reminderHeader.includes('关联商户')) interactionMarkers.push('settings.html -> 催单设置列表不应展示关联商户字段');
-if (!reminderHeader.includes('群聊名称</th><th>催单状态</th>')) interactionMarkers.push('settings.html -> 催单设置列表字段顺序不正确');
+const groupHeader = (rawReminderGroupsPage.match(/<table class="x-table group-table"[^>]*><thead><tr>([\s\S]*?)<\/tr><\/thead>/) || [])[1] || '';
+if (!groupHeader.includes('群聊名称</th><th>类型</th>') || !groupHeader.includes('下单时段</th><th>催单</th><th>操作</th>')) interactionMarkers.push('groups.html -> 催单列应位于下单时段之后、操作之前');
+if (groupHeader.includes('群聊名称</th><th>催单</th>')) interactionMarkers.push('groups.html -> 催单列不应继续紧邻群聊名称');
+if (!groupHeader.includes('aria-label="全选当前搜索结果"') || !groupHeader.includes('<span>全选</span>')) interactionMarkers.push('groups.html -> 批量选择态应提供明确的全选当前搜索结果入口');
 const receiptAppScript = rawFs.readFileSync(path.resolve(dir, '../sales_receipt/app.js'), 'utf8');
 for (const marker of ['data-receipt-module-root', 'role="menu" aria-label="销售回单菜单"', '>录入回单</a>', '>回单审核</a>', '>回单统计</a>', 'role="menu" aria-label="商户管理菜单"', 'href="../ai_order/customers.html"', 'href="../ai_order/groups.html"', 'href="../ai_order/customer-groups.html"', 'href="../ai_order/sku.html"', 'role="menu" aria-label="提示词菜单"', 'href="../ai_order/prompts.html"', 'href="../ai_order/memory.html"', 'href="../ai_order/stats.html', 'href="../ai_order/decision-dashboard.html"', 'data-title="决策大屏"', 'href="../ai_order/settings.html"', 'receiptEntryPermission', 'receiptAuditPermission', 'receiptStatsPermission', '销售回单未开通', '暂无此回单功能权限', 'AI 销售订单应用']) {
   if (!receiptAppScript.includes(marker)) interactionMarkers.push(`sales_receipt/app.js -> 整合导航缺少 ${marker}`);
@@ -415,9 +421,7 @@ const platformAppScript = rawFs.readFileSync(path.resolve(dir, '../app.js'), 'ut
 if (!platformAppScript.includes('<strong>AI 销售订单应用</strong>')) interactionMarkers.push('app.js -> 应用中心缺少统一 AI 销售订单应用入口');
 if (platformAppScript.includes('const RECEIPT_APP_URL') || platformAppScript.includes('<strong>销售回单录单</strong>')) interactionMarkers.push('app.js -> 应用中心不应保留独立销售回单卡片');
 const rawGroupsPage = readRawHtml('groups.html');
-for (const marker of ['识别业务', '>订单</span>', '>回单</span>']) {
-  if (!rawGroupsPage.includes(marker)) interactionMarkers.push(`groups.html -> 同群双业务缺少 ${marker}`);
-}
+if (rawGroupsPage.includes('识别业务') || rawGroupsPage.includes('group-business-tags')) interactionMarkers.push('groups.html -> 群聊列表不应展示识别业务列');
 if (rawGroupsPage.includes('群聊迁移')) interactionMarkers.push('groups.html -> 本期不应展示群聊迁移入口');
 const rawRepliesPage = readRawHtml('settings-replies.html');
 if (!rawRepliesPage.includes('非业务消息')) interactionMarkers.push('settings-replies.html -> 双意图群聊应使用“非业务消息”回复');
@@ -447,6 +451,10 @@ const rawGroupDetailPage = readRawHtml('group-detail.html');
 for (const marker of ['data-subtab="groupRecognition"', 'data-business-recognition="order"', 'data-business-recognition="receipt"', 'data-intent-choice="order"', 'data-intent-choice="receipt"', '销售订单识别设置已更新', '销售回单识别设置已更新']) {
   if (!rawGroupDetailPage.includes(marker)) interactionMarkers.push(`group-detail.html -> 双意图识别缺少 ${marker}`);
 }
+for (const marker of ['data-subtab="groupReminder"', '>催单设置</button>', 'data-panel="groupReminder"', 'data-reminder-detail', 'data-reminder-enabled', 'data-reminder-time', 'data-reminder-day="1"', 'data-reminder-day="7"', '日常下单日期', '催单话术', 'data-reminder-detail-save', '当前群聊的催单设置已保存']) {
+  if (!rawGroupDetailPage.includes(marker)) interactionMarkers.push(`group-detail.html -> 单群催单设置缺少 ${marker}`);
+}
+if (rawGroupDetailPage.includes('随机延迟') || rawGroupDetailPage.includes('延迟分钟')) interactionMarkers.push('group-detail.html -> 随机延迟为系统内置规则，不应展示为页面字段');
 
 const overrideSource = fs.readFileSync(path.join(dir, 'tenant-overrides.mjs'), 'utf8');
 for (const marker of ['function productSkuCode(name,index=0)', 'function splitItemsByOperationTime(', 'function splitItemsByCategoryRule(', 'function splitItemsByCategoryThenOperationTime(', 'function operationTimeParts(', 'const grouped=new Map()', 'a.start-b.start||a.end-b.end', 'function normalBlockingRows(', 'rowQuotationIds(row).length!==1||!row.dataset.operationTime', 'function normalResultMode(', 'function showNormalSplitResults(', "root.classList.add('split-result')", 'function previewNormalOrder(', 'function submitNormalResultCard(', 'function submitAllNormalResults(', "group.classList.add('group-previewed')", "card.classList.add('result-submitted')", "root.dataset.splitResult=mode==='category-time'?'category-then-operation-time':'operation-time'", "const mode=normalResultMode(root)"]) {
