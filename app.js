@@ -6,7 +6,6 @@ const FIELD_SPEC_MARKDOWN_FALLBACK_URLS = [
   "https://raw.githubusercontent.com/Xky114514/Xky114514.github.io/main/purchase-field-spec.md",
 ];
 const SALES_APP_URL = "./ai_order/home.html";
-const RECEIPT_APP_URL = "./sales_receipt/home.html";
 const PLATFORM_HOME_URL = "./index.html#home";
 const PLATFORM_ROUTES = new Set(["home", "tenant-quota", "tenant-members"]);
 const legacySalesRoutes = new Set([
@@ -436,8 +435,8 @@ const prdProjects = [
     version: "V0.8",
     owner: "管理员",
     updated: "2026-07-28",
-    desc: "统一承载销售订单录单、采购录单、销售回单录单和租户级全局能力。",
-    pages: ["应用中心", "销售订单录单入口", "采购录单", "销售回单录单入口", "全局配置", "批注面板"],
+    desc: "统一承载 AI 销售订单应用、采购录单和租户级全局能力；销售回单作为销售订单应用内模块提供。",
+    pages: ["应用中心", "AI 销售订单应用入口", "采购录单", "全局配置", "批注面板"],
   },
   {
     id: "process-flow",
@@ -808,9 +807,9 @@ let pageAnnotations = {
   home: {
     title: "项目首页",
     overview: "首页作为 AI 录单系统入口，展示应用中心、整体额度和租户级公共配置入口。",
-    dev: ["销售订单录单卡片进入销售录入，采购录单卡片进入采购首页 purchase-home，销售回单录单卡片进入 sales_receipt/home.html。", "额度管理和成员管理拆为 tenant-quota、tenant-members 两个公共配置路由，三个录单应用共用。"],
-    business: ["销售订单录单、采购录单与销售回单录单的入口相互独立，业务数据进入对应应用后查看。", "额度管理、成员管理、应用中心和整体额度使用概览属于全局能力，不归属单个录单应用。"],
-    iteration: ["2026-07-28 新增销售回单录单入口，并将额度管理、成员管理明确为三个录单应用共用的全局能力。", "2026-07-03 将首页成员管理和额度管理拆为公共配置独立入口，并新增采购录单首页入口。"],
+    dev: ["AI 销售订单应用卡片统一进入 ai_order/home.html，销售回单从应用内模块菜单进入；采购录单卡片进入采购首页 purchase-home。", "额度管理和成员管理拆为 tenant-quota、tenant-members 两个公共配置路由。"],
+    business: ["销售订单录入与销售回单共用一个应用入口，任务和审核流程相互隔离；采购录单保持独立入口。", "成员管理、应用中心和基础租户配置属于全局能力。"],
+    iteration: ["2026-08-05 将销售回单整合进 AI 销售订单应用。", "2026-07-28 新增销售回单试点。", "2026-07-03 将首页成员管理和额度管理拆为公共配置独立入口，并新增采购录单首页入口。"],
   },
   "purchase-home": {
     "title": "采购首页",
@@ -1362,7 +1361,7 @@ let pageAnnotations = {
   },
   settings: {
     title: "租户公共设置",
-    overview: "租户设置页集中展示角色权限、成员、同步规则和额度配置，是三个录单应用共用的公共配置。",
+    overview: "租户设置页集中展示角色权限、成员、同步规则和额度配置。",
     dev: ["settingsTab 控制四类设置面板，成员新增使用 operatorModal 演示。", "同步和额度目前为静态卡片，后续接租户配置接口。"],
     business: ["管理员可管理成员、同步规则和额度阈值。", "额度低于阈值时应限制普通成员继续提交识别任务。"],
     iteration: ["V0.1 完成租户公共设置框架。"],
@@ -1376,10 +1375,10 @@ let pageAnnotations = {
   },
   "tenant-quota": {
     title: "额度管理",
-    overview: "额度管理页是租户级公共配置，用于查看共享录单额度、预计可用天数、期间消耗和消耗明细。",
+    overview: "额度管理页用于查看销售订单与采购录单的共享额度、预计可用天数、期间消耗和消耗明细。",
     dev: ["路由为 tenant-quota，从首页额度管理卡片或额度资产入口进入。", "页面当前为静态原型，后续接入租户额度池、充值历史和消耗明细接口。"],
-    business: ["额度池由销售订单录单、采购录单和销售回单录单共用，不归属单个应用。", "录单额度页需要展示剩余额度、累计充值、累计消耗和按时间范围筛选的消耗明细。"],
-    iteration: ["2026-07-28 将销售回单识别消耗纳入全局共享额度池。", "2026-07-03 将额度管理从首页公共配置卡片拆出独立页面。"],
+    business: ["额度池当前展示销售订单录单与采购录单消耗。", "录单额度页需要展示剩余额度、累计充值、累计消耗和按时间范围筛选的消耗明细。"],
+    iteration: ["2026-07-03 将额度管理从首页公共配置卡片拆出独立页面。"],
   },
 };
 
@@ -1652,11 +1651,7 @@ function renderPurchaseIconMenu(activeKey) {
         </a>
         <a class="purchase-agent-link" href="${SALES_APP_URL}">
           <span class="purchase-agent-icon sales">销</span>
-          <span class="purchase-agent-copy"><strong>销售订单录单</strong><span>进入销售录单首页</span></span>
-        </a>
-        <a class="purchase-agent-link" href="${RECEIPT_APP_URL}">
-          <span class="purchase-agent-icon receipt">回</span>
-          <span class="purchase-agent-copy"><strong>销售回单</strong><span>进入销售回单首页</span></span>
+          <span class="purchase-agent-copy"><strong>销售录单</strong><span>订单与回单</span></span>
         </a>
       </div>
     </details>
@@ -2910,9 +2905,9 @@ function homePage() {
           <a class="platform-app-card" href="${SALES_APP_URL}">
             <span class="platform-app-cover sales">
               <span class="app-icon sales-grad">销</span>
-              <span class="platform-cover-copy"><b>AI 销售录单</b><small>识别 · 录入 · 审核</small></span>
+              <span class="platform-cover-copy"><b>AI 销售订单</b><small>订单 · 回单 · 审核</small></span>
             </span>
-            <strong>销售订单录单</strong>
+            <strong>AI 销售订单应用</strong>
           </a>
           <button class="platform-app-card" data-route="purchase-home">
             <span class="platform-app-cover purchase">
@@ -2921,13 +2916,6 @@ function homePage() {
             </span>
             <strong>采购录单</strong>
           </button>
-          <a class="platform-app-card" href="${RECEIPT_APP_URL}">
-            <span class="platform-app-cover receipt">
-              <span class="app-icon receipt-grad">回</span>
-              <span class="platform-cover-copy"><b>AI 销售回单</b><small>识别 · 核对 · 提交</small></span>
-            </span>
-            <strong>销售回单录单</strong>
-          </a>
         </div>
       </section>
     </div>
@@ -4952,7 +4940,7 @@ function quotaManagementPage() {
     <div class="page wide-page quota-management-page platform-subpage">
       <header class="platform-page-header">
         <h1>额度管理</h1>
-        <p>查看三个录单应用共用的额度与消耗明细</p>
+        <p>查看销售订单与采购录单的额度和消耗明细</p>
       </header>
       <section class="platform-surface quota-console-card">
         <section class="quota-available-panel">
@@ -5006,7 +4994,7 @@ function quotaManagementPage() {
 function roleSettings() {
   return `
     <div style="margin-top:16px" class="grid two">
-      <div class="card"><h3>管理员</h3><p>可访问首页、销售订单录单、采购录单、销售回单录单和租户公共设置，以及各应用内部的提示词和记忆配置。</p><div class="agent-menus"><span class="pill blue">全功能访问</span><span class="pill">配置管理</span></div></div>
+      <div class="card"><h3>管理员</h3><p>可访问首页、AI 销售订单应用（含销售回单模块）、采购录单和租户公共设置，以及各应用内部的提示词和记忆配置。</p><div class="agent-menus"><span class="pill blue">全功能访问</span><span class="pill">配置管理</span></div></div>
       <div class="card"><h3>普通成员</h3><p>拥有基础录单和审核操作权限。身份标签仅用于展示和业务分组，现阶段不做细粒度权限拦截。</p><div class="agent-menus"><span class="pill green">基础录单</span><span class="pill">身份标签</span></div></div>
     </div>
   `;
@@ -5030,7 +5018,7 @@ function operatorSettings() {
 function syncSettings() {
   return `
     <div style="margin-top:16px" class="grid two">
-      <div class="card"><h3>业务数据同步</h3><p>客户、供应商、商品、报价单、入库规格使用同一租户配置池。</p><div class="agent-menus"><span class="pill green">已开启</span><span class="pill">每 30 分钟</span></div></div>
+      <div class="card"><h3>业务数据同步</h3><p>商户、供应商、商品、报价单、入库规格使用同一租户配置池。</p><div class="agent-menus"><span class="pill green">已开启</span><span class="pill">每 30 分钟</span></div></div>
       <div class="card"><h3>渠道群聊同步</h3><p>企业微信、微信渠道群聊统一归集，业务绑定关系按销售/采购隔离。</p><div class="agent-menus"><span class="pill green">已开启</span><span class="pill">全渠道</span></div></div>
     </div>
   `;
@@ -5040,7 +5028,7 @@ function quotaSettings() {
   return `
     <div style="margin-top:16px" class="grid two">
       <div class="card"><h3>额度阈值</h3><p>租户剩余额度低于 20% 时提示管理员，低于 5% 时限制普通成员提交新识别任务。</p><div class="agent-menus"><span class="pill gold">预警 20%</span><span class="pill red">限制 5%</span></div></div>
-      <div class="card"><h3>消耗记录</h3><p>销售订单录单、采购录单与销售回单录单共用消耗池，记录按业务域打标，账单归集在租户级。</p><div class="agent-menus"><span class="pill blue">共享额度</span><span class="pill">按业务打标</span></div></div>
+      <div class="card"><h3>消耗记录</h3><p>销售订单录单与采购录单共用消耗池，记录按业务域打标，账单归集在租户级。</p><div class="agent-menus"><span class="pill blue">共享额度</span><span class="pill">按业务打标</span></div></div>
     </div>
   `;
 }
