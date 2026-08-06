@@ -8,6 +8,7 @@
   let pendingOrderId = "";
   let pendingDeleteRow = null;
   let pendingSubmitPayload = null;
+  let receiptMode = "normal";
 
   const afterSalesTypes = {
     non_product_exception: {
@@ -23,6 +24,18 @@
       fieldLabel: "应退数",
     },
   };
+
+  // 生产环境由观麦同步；静态原型先用示例数据演示可输入下拉。
+  const guanmaiAfterSalesReasonOptions = [
+    { code: "GM-R001", label: "商品破损" },
+    { code: "GM-R002", label: "商品质量异常" },
+    { code: "GM-R003", label: "缺货未配" },
+    { code: "GM-R004", label: "错配漏配" },
+    { code: "GM-R005", label: "商户拒收" },
+    { code: "GM-R006", label: "配送延误" },
+    { code: "GM-R007", label: "价格或优惠调整" },
+    { code: "GM-R999", label: "其他" },
+  ];
 
   const receiptOrderCatalog = {
     "SO-20260725-1028": {
@@ -213,7 +226,7 @@
       totalAmount: 1286.5,
       orderStatus: "已签收",
       matchLabel: "AI 唯一匹配",
-      matchReason: "门店、单据编号与商品组合命中",
+      matchReason: "商户、单据编号与商品组合命中",
       lines: [
         {
           id: "SKU-20021",
@@ -261,7 +274,7 @@
       totalAmount: 1368,
       orderStatus: "已签收",
       matchLabel: "AI 唯一匹配",
-      matchReason: "门店、单据编号与商品组合命中",
+      matchReason: "商户、单据编号与商品组合命中",
       lines: [
         {
           id: "SKU-30021",
@@ -300,45 +313,126 @@
     },
   };
 
+  receiptOrderCatalog["SO-20260727-1205"] = {
+    ...receiptOrderCatalog["SO-20260727-1120"],
+    id: "SO-20260727-1205",
+    orderTime: "2026-07-27T09:06",
+    orderTimeEnd: "2026-07-27T09:14",
+    receiveTime: "2026-07-27T15:30",
+    receiveTimeEnd: "2026-07-27T17:00",
+    totalAmount: 1552,
+    lines: receiptOrderCatalog["SO-20260727-1120"].lines.map((line) => ({
+      ...line,
+    })),
+  };
+  receiptOrderCatalog["SO-20260725-0997"] = {
+    ...receiptOrderCatalog["SO-20260727-1120"],
+    id: "SO-20260725-0997",
+    orderTime: "2026-07-25T07:48",
+    orderTimeEnd: "2026-07-25T07:55",
+    receiveTime: "2026-07-25T14:00",
+    receiveTimeEnd: "2026-07-25T16:00",
+    totalAmount: 1498,
+    lines: receiptOrderCatalog["SO-20260727-1120"].lines.map((line) => ({
+      ...line,
+    })),
+  };
+
+  // 静态原型不模拟其他回单对订单的占用；生产环境的一单一回单约束由服务端兜底。
+  const receiptOrderBindings = new Map();
+
+  function currentReceiptId() {
+    return document.body.dataset.receiptId || "";
+  }
+
+  function bindOrderToCurrentReceipt(nextOrderId, previousOrderId = "") {
+    const receiptId = currentReceiptId();
+    if (!receiptId || !nextOrderId) return false;
+    if (
+      previousOrderId &&
+      previousOrderId !== nextOrderId &&
+      receiptOrderBindings.get(previousOrderId) === receiptId
+    ) {
+      receiptOrderBindings.delete(previousOrderId);
+    }
+    receiptOrderBindings.set(nextOrderId, receiptId);
+    return true;
+  }
+
   const receiptAfterSalesCatalog = {
     "SO-20260725-1028": {
-      "SKU-10021": { type: "product_exception" },
+      "SKU-10021": {
+        type: "product_exception",
+        reason: "商品质量异常",
+      },
       "SKU-10083": {
         type: "product_return",
+        reason: "商品破损",
         returnInboundId: "THRK-20260726-0081",
       },
-      "SKU-10126": { type: "non_product_exception", exceptionAmount: "15.00" },
+      "SKU-10126": {
+        type: "non_product_exception",
+        reason: "价格或优惠调整",
+        exceptionAmount: "15.00",
+      },
       "SKU-10148": {
         type: "product_return",
+        reason: "商户拒收",
         returnInboundId: "THRK-20260726-0081",
       },
     },
     "SO-20260726-1066": {
-      "SKU-10021": { type: "product_exception" },
+      "SKU-10021": {
+        type: "product_exception",
+        reason: "商品质量异常",
+      },
       "SKU-10083": {
         type: "product_return",
+        reason: "商品破损",
         returnInboundId: "THRK-20260726-0086",
       },
-      "SKU-10126": { type: "non_product_exception", exceptionAmount: "12.00" },
+      "SKU-10126": {
+        type: "non_product_exception",
+        reason: "价格或优惠调整",
+        exceptionAmount: "12.00",
+      },
     },
     "SO-20260727-1120": {
-      "SKU-10021": { type: "product_exception" },
+      "SKU-10021": {
+        type: "product_exception",
+        reason: "商品质量异常",
+      },
       "SKU-10083": {
         type: "product_return",
+        reason: "商品破损",
         returnInboundId: "THRK-20260727-0093",
       },
-      "SKU-10126": { type: "non_product_exception", exceptionAmount: "13.00" },
-      "SKU-10208": { type: "product_return" },
-      "SKU-10311": { type: "product_exception" },
+      "SKU-10126": {
+        type: "non_product_exception",
+        reason: "价格或优惠调整",
+        exceptionAmount: "13.00",
+      },
+      "SKU-10208": { type: "product_return", reason: "商户拒收" },
+      "SKU-10311": {
+        type: "product_exception",
+        reason: "错配漏配",
+      },
     },
     "SO-20260726-2058": {
-      "SKU-20021": { type: "product_exception" },
-      "SKU-20126": { type: "product_return" },
+      "SKU-20021": {
+        type: "product_exception",
+        reason: "商品质量异常",
+      },
+      "SKU-20126": { type: "product_return", reason: "商品破损" },
     },
     "SO-20260726-3054": {
-      "SKU-30083": { type: "product_return" },
+      "SKU-30083": { type: "product_return", reason: "缺货未配" },
     },
   };
+  receiptAfterSalesCatalog["SO-20260727-1205"] =
+    receiptAfterSalesCatalog["SO-20260727-1120"];
+  receiptAfterSalesCatalog["SO-20260725-0997"] =
+    receiptAfterSalesCatalog["SO-20260727-1120"];
 
   const receiptAiExceptions = [
     {
@@ -405,7 +499,7 @@
       signDate: "2026-07-27",
       signClock: "11:06",
       documentNumber: "SO-2026072",
-      orderId: "",
+      orderId: "SO-20260727-1120",
       aiOrderStart: "",
       aiOrderEnd: "",
       aiReceiveStart: "",
@@ -416,11 +510,11 @@
         "SO-20260726-1066",
         "SO-20260727-1120",
       ],
-      remark: "单据编号字迹模糊，待确认关联订单",
+      remark: "单据编号字迹模糊，AI 已默认关联，可人工更换",
       messages: [
         "回单上的单据编号后四位字迹模糊，AI 仅识别到“SO-2026072”。",
-        "门店识别为华南鲜食店，大白菜实收 22 斤，油麦菜实收 18.5 斤。",
-        "系统匹配到多张候选销售订单，请操作员人工选择。",
+        "商户识别为华南鲜食店，大白菜实收 22 斤，油麦菜实收 18.5 斤。",
+        "系统匹配到多张候选销售订单，AI 已默认关联评分最高的一张，操作员可人工更换。",
       ],
       author: "刘店长",
       aiLines: [
@@ -451,12 +545,12 @@
       createdTime: "2026-07-27 10:28:36",
       signDate: "2026-07-27",
       signClock: "10:28",
-      documentNumber: "SO-20260727-1120",
-      orderId: "SO-20260727-1120",
-      candidateIds: ["SO-20260727-1120"],
+      documentNumber: "SO-20260727-1205",
+      orderId: "SO-20260727-1205",
+      candidateIds: ["SO-20260727-1205"],
       remark: "AI 识别完整，人工核对后提交",
       messages: [
-        "单据编号：SO-20260727-1120。",
+        "单据编号：SO-20260727-1205。",
         "大白菜实收 22 斤，青椒实收 15 斤，油麦菜实收 18.5 斤。",
         "商品与数量均清晰，已由李娜核对并确认提交。",
       ],
@@ -554,17 +648,17 @@
       signDate: "2026-07-25",
       signClock: "18:44",
       documentNumber: "SO-20260725-1028",
-      orderId: "",
+      orderId: "SO-20260725-1028",
       aiOrderStart: "2026-07-25T08:30",
       aiOrderEnd: "2026-07-25T08:45",
       aiReceiveStart: "2026-07-26T09:20",
       aiReceiveEnd: "2026-07-26T11:10",
       aiTotalAmount: 1485.5,
       candidateIds: ["SO-20260725-1028"],
-      remark: "单据编号唯一命中，待查询并确认关联",
+      remark: "单据编号唯一命中，AI 已默认关联",
       messages: [
         "AI 清晰识别单据编号 SO-20260725-1028。",
-        "点击查询订单后，系统按订单号返回唯一销售订单，仍需操作员确认关联。",
+        "系统按订单号唯一命中并默认关联销售订单，操作员可查询更换。",
         "大白菜实收 22 斤，青椒实收 12 斤，油麦菜实收 18.5 斤。",
       ],
       author: "刘店长",
@@ -594,7 +688,7 @@
       exceptionIds: [],
     },
     "merchant-multiple": {
-      sceneLabel: "仅识别门店，候选订单不唯一",
+      sceneLabel: "仅识别商户，候选订单不唯一",
       receiptId: "SR-20260725-006",
       state: "待处理",
       merchant: "华南鲜食店",
@@ -604,7 +698,7 @@
       signDate: "2026-07-25",
       signClock: "16:08",
       documentNumber: "",
-      orderId: "",
+      orderId: "SO-20260725-0997",
       aiOrderStart: "",
       aiOrderEnd: "",
       aiReceiveStart: "",
@@ -613,13 +707,13 @@
       candidateIds: [
         "SO-20260725-1028",
         "SO-20260726-1066",
-        "SO-20260727-1120",
+        "SO-20260725-0997",
       ],
-      remark: "仅识别到门店，待选择销售订单",
+      remark: "仅识别到商户，AI 已默认关联，可人工更换",
       messages: [
         "回单上没有可识别的有效单据编号。",
-        "AI 识别到系统已有门店“华南鲜食店”及商品实收数量。",
-        "该门店时间范围内有多张可处理状态的销售订单，请人工选择。",
+        "AI 识别到系统已有商户“华南鲜食店”及商品实收数量。",
+        "该商户有多张可处理状态的销售订单，AI 已默认关联评分最高的一张，操作员可人工更换。",
       ],
       author: "刘店长",
       aiLines: [
@@ -644,11 +738,13 @@
 
   const one = (selector, root = document) => root.querySelector(selector);
   const all = (selector, root = document) => [...root.querySelectorAll(selector)];
+  const merchantTerminology = (value) =>
+    String(value).replaceAll("客户", "商户").replaceAll("门店", "商户");
 
   function showToast(message) {
     const toast = one("#toast");
     if (!toast) return;
-    toast.textContent = message;
+    toast.textContent = merchantTerminology(message);
     toast.classList.add("show");
     window.clearTimeout(toastTimer);
     toastTimer = window.setTimeout(() => toast.classList.remove("show"), 2200);
@@ -713,10 +809,6 @@
           <span class="agent-app-icon platform">台</span>
           <span class="agent-switch-copy"><strong>录单平台首页</strong><span>返回应用中心</span></span>
         </a>
-        <a class="agent-switch-link" href="../ai_order/home.html">
-          <span class="agent-app-icon sales">销</span>
-          <span class="agent-switch-copy"><strong>销售订单录单</strong><span>进入销售录单首页</span></span>
-        </a>
         <a class="agent-switch-link" href="../index.html#purchase-home">
           <span class="agent-app-icon purchase">采</span>
           <span class="agent-switch-copy"><strong>采购录单</strong><span>进入采购录单首页</span></span>
@@ -751,7 +843,6 @@
         [
           "待处理：允许进入可编辑详情，核对订单、商品签收数和售后处理。",
           "已完成：三个售后字段已同步观麦，只允许查看只读详情。",
-          "列表中的业务场景是演示样例，用于覆盖候选不唯一、完整识别、多识别、漏识别、单据编号唯一命中、仅门店多候选六类路径。",
         ],
         [
           "筛选条件按交集生效，查询后同步刷新可见行数和分页总数。",
@@ -770,8 +861,8 @@
       html: specHtml(
         "筛选区用于从当前账号有权查看的回单任务中定位目标记录。",
         [
-          "状态、门店、时间范围和操作员按交集查询。",
-          "默认状态、门店、操作员均为全部；默认时间范围以页面预设值为准。",
+          "状态、商户、时间范围和操作员按交集查询。",
+          "默认状态、商户、操作员均为全部；默认时间范围以页面预设值为准。",
           "时间按回单材料进入系统的时间统计，日期区间包含开始日和结束日。",
         ],
         ["查询刷新列表；重置恢复默认条件并立即刷新。"],
@@ -795,12 +886,12 @@
     {
       id: "task-store-filter",
       selectors: ["[data-filter-merchant]"],
-      title: "门店筛选｜数据范围",
+      title: "商户筛选｜数据范围",
       html: specHtml(
-        "按销售回单归属门店筛选任务。",
-        ["候选项来自当前操作员数据权限范围内的门店；默认全部门店。"],
-        ["选择门店后点击查询，与其余筛选条件共同生效。"],
-        ["门店停用后历史回单仍可按原门店名称查询。"],
+        "按销售回单归属商户筛选任务。",
+        ["候选项来自当前操作员数据权限范围内的商户；默认全部商户。"],
+        ["选择商户后点击查询，与其余筛选条件共同生效。"],
+        ["商户停用后历史回单仍可按原商户名称查询。"],
       ),
     },
     {
@@ -848,7 +939,7 @@
       title: "重置｜恢复默认条件",
       html: specHtml(
         "清除人工选择的筛选条件并恢复页面默认值。",
-        ["状态、门店、操作员恢复为全部；时间恢复为默认区间。"],
+        ["状态、商户、操作员恢复为全部；时间恢复为默认区间。"],
         ["重置后立即刷新列表，不需要再次点击查询。"],
         ["重置不影响任务数据本身。"],
       ),
@@ -861,29 +952,11 @@
         "每一行代表一张销售回单任务，并关联至一张销售订单。",
         [
           "默认按回单进入系统时间倒序排列。",
-          "状态为待处理或已完成；业务场景说明当前样例的主要处理路径。",
-          "来源展示客户入口或群聊名称；门店展示回单归属；操作员展示最近处理人。",
+          "状态为待处理或已完成；列表不展示内部识别或匹配场景。",
+          "来源展示商户入口或群聊名称；商户展示回单归属；操作员展示最近处理人。",
         ],
         ["刷新保留当前筛选条件；分页只切换当前条件下的数据页。"],
         ["字段缺失显示“--”；不得用其他字段猜测替代。"],
-      ),
-    },
-    {
-      id: "task-scenario",
-      selectors: [".scenario-column", ".scenario-cell"],
-      title: "业务场景｜六类演示任务",
-      html: specHtml(
-        "用于在原型中明确每条任务覆盖的识别与关联结果，不作为正式业务状态。",
-        [
-          "候选订单不唯一：系统给出多张候选，操作员单选确认。",
-          "AI 识别完整：订单和商品均匹配，操作员核对后提交。",
-          "AI 多识别：订单外条目追加在订单商品末尾，不直接回写。",
-          "AI 漏识别：订单商品仍按订单顺序保留，签收数置 0。",
-          "单据编号唯一命中：点击查询后只返回一张订单，仍需操作员确认关联。",
-          "仅识别门店且候选不唯一：点击查询后按门店及其他已识别字段给出多张候选。",
-        ],
-        ["点击该场景对应行的查看，可进入匹配该场景的数据详情。"],
-        ["同一任务可同时存在商品漏识别和多识别，但列表仅展示主场景。"],
       ),
     },
     {
@@ -920,7 +993,7 @@
       title: "刷新｜保留查询条件",
       html: specHtml(
         "重新读取当前筛选条件下的最新任务数据。",
-        ["不重置状态、门店、时间范围、操作员和当前页。"],
+        ["不重置状态、商户、时间范围、操作员和当前页。"],
         ["成功后同步刷新列表与总数。"],
         ["失败时保留原数据并提示重试。"],
       ),
@@ -947,6 +1020,7 @@
         "操作员在本页核对原始回单、确认唯一销售订单、修正签收数并完成售后分流。",
         [
           "观麦是销售回单应用的关联系统，不属于 AI 录单系统；本页只读取订单并回写异常金额、异常数、应退数。",
+          "AI 识别完成后默认关联评分最高的可处理订单；默认关联可直接提交，也允许人工更换。",
           "三种售后处理均不修改销售订单下单数；签收数仅作为差异计算和审核依据。",
           "待处理允许编辑和提交；观麦字段及退货入库单同步成功后立即变为已完成。",
           "已完成详情只读，不允许再次修改或更换关联。",
@@ -962,7 +1036,7 @@
       html: specHtml(
         "集中展示纸质配送单回单、原始文件、群聊消息与定位来源。",
         [
-          "来源内容只读，作为操作员判断门店、订单号、商品和实收数量的凭证。",
+          "来源内容只读，作为操作员判断商户、订单号、商品和实收数量的凭证。",
           "“定位来源”与“群聊消息”位于同一标题栏，定位时不离开原始消息内容。",
         ],
         ["下载原文件或定位群聊原消息，用于人工复核。"],
@@ -989,12 +1063,12 @@
       selectors: ["[data-open-order-query]"],
       title: "查询订单｜显式触发候选匹配",
       html: specHtml(
-        "操作员修改 AI 识别字段后，点击本按钮才发起销售订单查询；字段编辑本身不实时查询、不自动改关联。",
+        "操作员需要复核或更换 AI 默认关联订单时，点击本按钮发起销售订单查询；字段编辑本身不实时查询、不自动改关联。",
         [
           "只查询状态为等待分拣、分拣中、配送中或已签收的销售订单。",
-          "订单号精确命中时返回该唯一订单；未精确命中时综合门店、订单号片段、下单时间范围、收货时间范围和总金额生成候选。",
-          "门店能命中系统门店时优先在该门店订单内查询；门店无匹配时不直接判定失败，回退到其他字段继续查询。",
-          "无论查询到一张还是多张订单，都必须由操作员在弹窗中选择并点击“关联订单”。",
+          "订单号精确命中时返回该唯一订单；未精确命中时综合商户、订单号片段、下单具体时间段和收货具体时间段生成候选。",
+          "商户能命中系统商户时优先在该商户订单内查询；商户无匹配时不直接判定失败，回退到其他字段继续查询。",
+          "已有默认关联时预选当前订单；只有选择其他订单并确认后才改变关联。",
         ],
         ["点击后读取此刻页面字段并打开查询结果弹窗；此前已关联订单保持不变。"],
         ["无结果时展示空态，保留当前字段、商品数据和原关联，不自动扩大查询范围。"],
@@ -1005,10 +1079,10 @@
       selectors: ["#orderQueryModal"],
       title: "订单查询结果｜人工确认关联",
       html: specHtml(
-        "展示本次查询得到的候选销售订单，供操作员核对并单选最终关联。",
+        "展示本次查询得到的候选销售订单，供操作员保留 AI 默认关联或人工改绑。",
         [
-          "列表固定展示门店、订单号、下单时间范围、收货时间范围和总金额。",
-          "一张回单只能关联一张销售订单；候选为一张时默认选中，候选为多张时由操作员选择。",
+          "列表固定展示商户、订单号、下单具体时间段和收货具体时间段。",
+          "一张回单只能关联一张销售订单；当前关联订单默认选中并显示“当前”。",
           "选择当前已关联订单只关闭弹窗，不重建商品明细。",
         ],
         ["选中订单并点击“关联订单”后，才正式改变当前关联。"],
@@ -1016,18 +1090,33 @@
       ),
     },
     {
+      id: "detail-current-association",
+      selectors: ["[data-order-association]"],
+      title: "当前关联订单｜默认关联与人工改绑",
+      html: specHtml(
+        "独立展示真正参与商品匹配和提交的观麦销售订单，避免与 AI 识别订单号混淆。",
+        [
+          "AI 识别完成后默认关联评分最高的可处理订单，并标记“AI 默认”。",
+          "操作员改绑成功后标记“人工选择”；已完成详情标记“提交快照”。",
+          "修改商户、识别订单号或时间不会自动改变当前关联。",
+        ],
+        ["有默认关联时可直接提交；商品条目尚未人工修改时，也可点击“更换订单”复核并改绑。"],
+        ["没有任何可关联订单时显示“未关联”，确认提交不可用。"],
+      ),
+    },
+    {
       id: "detail-order-choice",
       selectors: [".order-query-table", "[data-confirm-order-link]"],
-      title: "更换关联订单｜保留当前商品修改",
+      title: "更换关联订单｜商品修改后锁定",
       html: specHtml(
-        "选择新的销售订单后，系统用当前页面已经修改过的商品数据重新匹配新订单，而不是回退到最初的 AI 识别结果。",
+        "仅在回单组商品条目尚未被人工修改时，允许选择新的销售订单；一旦商品条目发生人工修改，当前关联订单立即锁定。",
         [
-          "保留项包括当前识别商品名称、签收数、售后类型、异常金额、单位、备注和人工新增行。",
-          "新订单商品按销售订单商品顺序展示，并与保留商品按名称一一匹配；未匹配的新订单商品签收数填 0。",
-          "未被新订单使用的当前商品按现有顺序追加到列表末尾，便于操作员继续排查。",
+          "商品人工修改包括修改签收数或商品备注；商品行本身完全由关联销售订单生成，不提供新增、删除或改名。",
+          "锁定后“更换订单”按钮禁用并说明原因，订单查询入口和确认改绑动作均须做逻辑拦截。",
+          "锁定状态随当前回单草稿保存，刷新页面或点击保存均不解除；未关联订单时仍允许完成首次关联。",
         ],
-        ["关联成功后更新订单商品顺序和下单数；签收数变化会重算差异及异常数/应退数，不覆盖 AI 识别字段。"],
-        ["重匹配任一步失败时恢复原关联、原商品列表和原输入，不保留部分结果。"],
+        ["未修改商品条目前，选择并确认其他候选订单后更新关联及订单商品明细。"],
+        ["即使通过非按钮方式触发改绑，系统仍须校验锁定状态并拒绝变更。"],
       ),
     },
     {
@@ -1037,30 +1126,30 @@
       html: specHtml(
         "一张回单只有一个回单组，包含 AI 识别字段、备注和商品明细。",
         [
-          "门店、订单号、下单时间范围、收货时间范围和总金额均来自 AI 识别，待处理时可人工修正。",
-          "字段修改只更新当前回单草稿；只有点击“查询订单”才会生成候选，不会实时改变已关联订单。",
+          "商户、订单号、下单具体时间段和收货具体时间段均来自 AI 识别，待处理时可人工修正。",
+          "AI 默认关联与识别字段分开展示；字段修改只更新查询条件，不会实时改变已关联订单。",
           "商品明细只向观麦回写异常金额、异常数、应退数；销售订单下单数始终只读且不被修改。",
           "关联销售订单后，标题区汇总异常金额、异常数和应退数；不同计量单位分开展示。",
         ],
-        ["保存只保存 AI 录单平台草稿；确认提交才向观麦同步三个售后字段。"],
-        ["未关联订单、签收数不合法、差异行未选择售后类型或异常金额未填写时不得提交。"],
+        ["保存只保存 AI 录单平台草稿；确认提交才向观麦同步售后原因及三个售后字段。"],
+        ["未关联订单、签收数不合法、差异行未选择售后类型、未填写售后原因或异常金额无效时不得提交。"],
       ),
     },
     {
       id: "detail-store",
       selectors: [".merchant-field"],
-      title: "门店｜AI 识别查询条件",
+      title: "商户｜AI 识别查询条件",
       html: specHtml(
-        "回单归属门店，默认采用 AI 识别结果，操作员可修正。",
+        "回单归属商户，默认采用 AI 识别结果，操作员可修正。",
         ["修改后只更新查询条件，不立即检索销售订单，也不改变当前关联。"],
-        ["点击“查询订单”时与订单号、两个时间范围和总金额一并参与候选匹配。"],
-        ["门店为空时仍可通过精确订单号查询；订单号也为空时其余字段用于辅助匹配。"],
+        ["点击“查询订单”时与订单号、下单具体时间段和收货具体时间段一并参与候选匹配。"],
+        ["商户为空时仍可通过精确订单号查询；订单号也为空时其余字段用于辅助匹配。"],
       ),
     },
     {
       id: "detail-order-time",
       selectors: [".order-time-field"],
-      title: "下单时间｜AI 识别时间范围",
+      title: "下单时间｜AI 识别具体时间段",
       html: specHtml(
         "记录 AI 从回单材料中识别出的下单开始与结束时间，用作查询订单的辅助条件。",
         ["待处理可修改，已完成只读；修改后不实时查询。"],
@@ -1071,9 +1160,9 @@
     {
       id: "detail-receive-time",
       selectors: [".receive-time-field"],
-      title: "收货时间｜AI 识别时间范围",
+      title: "收货时间｜AI 识别具体时间段",
       html: specHtml(
-        "记录 AI 识别出的预计或实际收货时间范围，作为候选排序与核对信息。",
+        "记录 AI 识别出的预计或实际收货具体时间段，作为候选排序与核对信息。",
         ["待处理可修改，已完成只读；修改后不实时查询。"],
         ["点击“查询订单”时用于与系统销售订单收货时间判断区间重叠。"],
         ["无法识别时允许为空，不单独作为关联成功的必要条件。"],
@@ -1090,23 +1179,12 @@
           "未精确命中时，订单号片段与其他 AI 字段共同参与候选评分。",
         ],
         ["修改字段本身不查询、不自动关联；点击查询后才展示订单列表供人工选择。"],
-        ["订单号为空时改用门店、时间范围和总金额生成候选。"],
-      ),
-    },
-    {
-      id: "detail-amount",
-      selectors: [".amount-field"],
-      title: "总金额｜AI 识别辅助条件",
-      html: specHtml(
-        "总金额来自 AI 识别，用于在订单号未唯一命中时辅助缩小候选范围。",
-        ["待处理可修正，已完成只读；仅接受非负金额。"],
-        ["点击“查询订单”时与系统订单总金额比较，精确一致优先，近似金额仅作为排序依据。"],
-        ["金额为空或识别错误不直接阻止查询，也不单独触发关联。"],
+        ["订单号为空时改用商户、下单具体时间段和收货具体时间段生成候选。"],
       ),
     },
     {
       id: "detail-remark",
-      selectors: [".receipt-form-grid .wide"],
+      selectors: ["[data-detail-remark]"],
       title: "回单备注｜人工调整依据",
       html: specHtml(
         "记录破损、字迹模糊、数量修正等整张回单级说明。",
@@ -1118,18 +1196,18 @@
     {
       id: "detail-products",
       selectors: [".quantity-table"],
-      title: "商品明细｜匹配、差异与售后分流",
+      title: "商品明细｜签收数量确认",
       html: specHtml(
-        "按关联销售订单商品顺序展示商品，并承载签收数核对及三个观麦字段的售后分流。",
+        "按关联销售订单商品顺序展示商品，主表只负责签收数核对与差异计算。",
         [
-          "未关联订单时按 AI 原始识别顺序；关联后按销售订单商品顺序重建。",
+          "未关联订单时显示空态；关联后按销售订单商品顺序重建。",
           "AI 漏识别的订单商品保留原位置，签收数填 0。",
-          "AI 多识别或无法一一匹配的重复条目按 AI 顺序追加到末尾，默认不回写。",
-          "更换已有订单时保留当前已修改商品数据，以这些当前值重新匹配新订单，不回退到原始 AI 结果。",
+          "订单外识别条目不进入主商品表；主表不提供新增、删除或行级操作。",
+          "商品尚未人工修改时可更换关联订单，更换后按新订单重新生成全部商品行。",
           "差异数＝下单数－签收数，输入时实时计算并保留正负号。",
-          "差异为 0 时无需售后；差异非 0 时每个观麦订单商品行必须选择一种售后类型。",
+          "默认按正常签收处理；只有操作员点击售后处理后，当前回单才切换为售后单。",
         ],
-        ["订单商品行不可删除；行内加号和底部新增商品只补充本次回单识别内容，订单外条目不回写观麦。"],
+        ["商品主表固定为七列：序号、订单商品、识别商品、下单数、签收数、差异数、备注。"],
         ["下单数只读；签收数允许 0 和最多两位小数，不允许空值、负数或非数字。"],
       ),
     },
@@ -1141,7 +1219,7 @@
         "来自观麦销售订单，是差异计算基准。",
         ["回单页面不得修改；关联订单变化时随新订单商品明细更新。"],
         ["用于实时计算差异数，任何售后分支提交后均保持原值。"],
-        ["订单外 AI 条目没有下单数，显示“--”且不回写。"],
+        ["订单商品均来自当前关联销售订单；未关联时不生成商品行。"],
       ),
     },
     {
@@ -1153,9 +1231,9 @@
         [
           "AI 匹配成功时预填识别数量；漏识别的订单商品填 0。",
           "允许 0 和小数，不允许空值、负数或非数字。",
-          "签收数保存在回单审核记录中，不覆盖观麦销售订单下单数。",
+          "签收数保存在回单审核记录中；观麦开启销售实收时，确认提交后写入销售订单出库数。",
         ],
-        ["输入时实时更新差异数和当前售后处理值；保存按钮只保存本应用草稿。"],
+        ["输入时实时更新差异数；保存按钮只保存本应用草稿。"],
         ["校验失败保留输入并定位当前行，不向观麦同步数据。"],
       ),
     },
@@ -1166,70 +1244,39 @@
       html: specHtml(
         "用于反映观麦下单数与商户签收数之间的有向差额。",
         ["差异数＝下单数－签收数；正数表示少收，0 表示一致，负数表示多收。"],
-        ["签收数变化时当前行立即重算；异常数和应退数使用差异绝对量。"],
-        ["订单外条目缺少下单数时差异显示“--”，不允许选择售后类型。"],
+        ["签收数变化时当前行立即重算；售后单首次纳入差异商品时，异常数或应退数默认取差异绝对量，操作员可修正。"],
+        ["差异只针对当前关联销售订单商品计算。"],
       ),
     },
     {
-      id: "detail-after-sales-type",
-      selectors: [
-        ".quantity-table th:nth-child(7)",
-        ".after-sales-select",
-      ],
-      title: "售后类型｜行级单选",
+      id: "detail-after-sales-entry",
+      selectors: ["[data-enter-after-sales]", "[data-cancel-after-sales]"],
+      title: "售后处理｜独立弹窗维护",
       html: specHtml(
-        "每个差异商品只能选择一种售后处理方式。",
+        "主页面始终保持签收核对视图；点击后在独立弹窗维护售后商品和处理方式。",
         [
+          "首次打开时默认加入当前差异商品，并可从关联订单已有商品继续新增或移除售后明细。",
+          "移除售后明细不删除订单商品，也不清除签收数。",
           "非商品异常对应观麦销售订单异常金额。",
           "商品异常—异常对应观麦商品异常数。",
           "商品异常—退货对应观麦商品应退数，并生成退货入库单。",
         ],
-        ["差异为 0 时自动显示无需处理；切换类型时清空旧类型对应值。"],
-        ["差异数非 0 时三种售后类型均可选择；数量字段使用差异绝对量。"],
-      ),
-    },
-    {
-      id: "detail-after-sales-value",
-      selectors: [
-        ".quantity-table th:nth-child(8)",
-        "[data-after-sales-value]",
-      ],
-      title: "售后处理｜观麦字段映射",
-      html: specHtml(
-        "根据售后类型只展示当前需要处理的一个观麦字段。",
-        ["非商品异常的异常金额由操作员填写；异常数和应退数按差异绝对量自动计算并只读。"],
-        ["退货类型在提交确认中明确提示将生成退货入库单；完成后回显入库单号。"],
-        ["异常金额必须大于 0 且最多两位小数；其余未选字段保持空值，不参与同步。"],
+        ["点击“保存售后处理”后才更新草稿；直接关闭不保存本次弹窗改动。已保存售后可二次确认取消。"],
+        ["未关联订单时不能打开售后处理；售后单没有商品或字段未完善时不能提交。"],
       ),
     },
     {
       id: "detail-order-summary",
       selectors: [".receipt-order-summary"],
-      title: "关联订单汇总｜三个观麦字段",
+      title: "关联订单汇总｜签收处理进度",
       html: specHtml(
-        "关联销售订单后，紧凑汇总本次将同步观麦的售后结果。",
+        "关联销售订单后，仅汇总订单商品数和差异商品数；当前单据模式只由回单组标题区的单个标签展示。",
         [
-          "异常金额按所有非商品异常行求和后写入订单级异常金额。",
-          "异常数和应退数按计量单位分别汇总，不跨单位相加。",
-          "仍有差异行未选择售后类型时显示待选择数量。",
+          "正常模式不因差异自动转售后。",
+          "售后模式的明细状态在售后处理弹窗内查看。",
         ],
-        ["签收数、售后类型或异常金额变化时立即重算。"],
-        ["未关联销售订单时不展示汇总；存在非法或未分类差异时不得提交。"],
-      ),
-    },
-    {
-      id: "detail-row-actions",
-      selectors: ["[data-add-row]", "[data-delete-row]", "[data-add-product]"],
-      title: "新增/删除商品行｜人工补录",
-      html: specHtml(
-        "用于补充 AI 未形成的商品条目或移除不应保留的回单行。",
-        [
-          "行内加号在当前行后插入空白行；底部新增商品在末尾追加。",
-          "观麦订单商品行不允许删除；减号只用于删除订单外或人工新增回单行。",
-          "人工新增行提交前必须补全商品名称和签收数，但该行不回写三个观麦字段。",
-        ],
-        ["新增后聚焦商品名称；删除后重新编号并保存草稿。"],
-        ["已完成任务禁用新增和删除；最后一条订单商品不可通过删除绕过订单完整性校验。"],
+        ["签收数或售后草稿变化时立即重算。"],
+        ["未关联销售订单时不展示汇总。"],
       ),
     },
     {
@@ -1237,7 +1284,7 @@
       selectors: ["[data-save-now]"],
       title: "保存｜草稿持久化",
       html: specHtml(
-        "保存当前关联、回单字段、签收数和售后选择，但不调用观麦接口、不改变任务状态。",
+        "保存当前关联、回单字段和签收数草稿，但不调用观麦接口、不改变任务状态。",
         ["仅保存通过字段级校验的数据；同一任务重复保存覆盖当前草稿版本。"],
         ["成功提示已保存；失败保留页面输入并允许重试。"],
         ["保存成功后任务仍为待处理；已完成任务不可保存。"],
@@ -1248,10 +1295,14 @@
       selectors: ["[data-confirm-submit]"],
       title: "确认提交｜写入与状态终点",
       html: specHtml(
-        "将审核结果映射到观麦异常金额、异常数、应退数；退货时同步生成退货入库单。",
+        "根据当前单据模式提交正常签收结果或售后单结果。",
         [
-          "前置条件：已关联唯一销售订单；签收数合法；每个差异行已选择售后类型；异常金额有效。",
-          "提交前弹窗汇总三类结果；下单数不参与写入并保持不变。",
+          "前置条件：已关联唯一销售订单且签收数合法。",
+          "正常模式即使存在差异，也按正常签收提交，不写入售后三字段。",
+          "售后模式至少保留一个售后商品，且每项售后类型、原因和处理值完整。",
+          "未关联订单时按钮禁用，提交校验再次拦截；AI 默认关联可直接作为有效关联提交。",
+          "提交时读取观麦销售实收开关；开启时签收数写入出库数，关闭时不修改出库数。",
+          "下单数不参与写入并始终保持不变。",
           "字段同步及退货入库单创建全部成功后，任务从待处理变为已完成并进入只读状态。",
           "销售订单与销售回单一一对应，已完成任务不得再次提交。",
         ],
@@ -1428,6 +1479,13 @@
 
     const query = new URLSearchParams(window.location.search);
     if (status && query.get("status")) status.value = query.get("status");
+    if (query.get("status") === "待处理") {
+      const heading = one(".page-head h1");
+      const route = one(".route-tab.active");
+      if (heading) heading.textContent = "回单审核";
+      if (route) route.textContent = "回单审核　×";
+      document.title = "回单审核｜销售回单";
+    }
 
     const apply = () => {
       const statusValue = status?.value || "all";
@@ -1529,14 +1587,25 @@
   }
 
   function afterSalesDemoFor(line) {
+    if (document.body.dataset.readonly !== "true") return {};
     const orderId = document.body.dataset.orderId || "";
     return receiptAfterSalesCatalog[orderId]?.[line.id] || {};
   }
 
-  function renderAfterSalesOptions(value, difference) {
-    if (!Number.isFinite(difference) || difference === 0) {
-      return '<option value="">无需处理</option>';
-    }
+  function ensureAfterSalesReasonOptions() {
+    if (document.getElementById("afterSalesReasonOptions")) return;
+    const list = document.createElement("datalist");
+    list.id = "afterSalesReasonOptions";
+    list.innerHTML = guanmaiAfterSalesReasonOptions
+      .map(
+        (item) =>
+          `<option value="${escapeHTML(item.label)}" data-reason-code="${escapeHTML(item.code)}"></option>`,
+      )
+      .join("");
+    document.body.appendChild(list);
+  }
+
+  function renderAfterSalesOptions(value) {
     return [
       '<option value="">请选择</option>',
       ...Object.entries(afterSalesTypes).map(([key, item]) => {
@@ -1551,61 +1620,80 @@
     difference,
     unit,
     exceptionAmount = "",
+    afterSalesQuantity = "",
     returnInboundId = "",
   }) {
-    if (!Number.isFinite(difference) || difference === 0) {
-      return '<span class="after-sales-empty">无需处理</span>';
-    }
     if (!type) {
       return '<span class="after-sales-empty pending">请选择类型</span>';
     }
-    const quantity = formatNumber(Math.abs(difference));
+    const defaultQuantity =
+      Number.isFinite(difference) && difference !== 0
+        ? Math.abs(difference)
+        : "";
+    const quantity = afterSalesQuantity === "" ? defaultQuantity : afterSalesQuantity;
+    const readonly = document.body.dataset.readonly === "true";
     if (type === "non_product_exception") {
+      if (readonly) {
+        return `<span class="after-sales-field"><span>异常金额</span><strong>${formatMoney(Number(exceptionAmount || 0))}</strong></span>`;
+      }
       return `<label class="after-sales-field amount"><span>异常金额</span><span class="after-sales-money">¥<input class="exception-amount-input" inputmode="decimal" value="${escapeHTML(exceptionAmount)}" placeholder="0.00" aria-label="异常金额"></span></label>`;
     }
+    const fieldLabel = type === "product_exception" ? "异常数" : "应退数";
+    const quantityControl = readonly
+      ? `<strong>${formatNumber(Number(quantity || 0))} ${escapeHTML(unit)}</strong>`
+      : `<span class="after-sales-quantity"><input class="after-sales-quantity-input" inputmode="decimal" value="${escapeHTML(quantity)}" placeholder="0" aria-label="${fieldLabel}"><span>${escapeHTML(unit)}</span></span>`;
     if (type === "product_exception") {
-      return `<span class="after-sales-field"><span>异常数</span><strong>${quantity} ${escapeHTML(unit)}</strong></span>`;
+      return `<label class="after-sales-field quantity"><span>异常数</span>${quantityControl}</label>`;
     }
     const completedReference =
-      document.body.dataset.readonly === "true" && returnInboundId
+      readonly && returnInboundId
         ? `<em class="return-order-id">${escapeHTML(returnInboundId)}</em>`
         : '<em class="return-order-tag">生成退货单</em>';
-    return `<span class="after-sales-field return"><span>应退数</span><strong>${quantity} ${escapeHTML(unit)}</strong>${completedReference}</span>`;
+    return `<label class="after-sales-field return"><span>应退数</span>${quantityControl}${completedReference}</label>`;
   }
 
   function syncAfterSalesRow(row, preferred = {}) {
     if (!row?.matches("[data-order-line]")) return;
     const difference = rowDifference(row);
-    const select = one(".after-sales-select", row);
-    const valueCell = one("[data-after-sales-value]", row);
-    if (!select || !valueCell) return;
-
-    let type = preferred.type ?? select.value ?? row.dataset.afterSalesType ?? "";
-    if (!Number.isFinite(difference) || difference === 0) type = "";
+    let type = preferred.type ?? row.dataset.afterSalesType ?? "";
     const currentAmount =
       preferred.exceptionAmount ??
-      one(".exception-amount-input", row)?.value ??
       row.dataset.exceptionAmount ??
       "";
     const exceptionAmount = type === "non_product_exception" ? currentAmount : "";
-    const quantity = Number.isFinite(difference) ? Math.abs(difference) : "";
+    let reason =
+      preferred.reason ??
+      row.dataset.afterSalesReason ??
+      "";
+    const fallbackQuantity =
+      Number.isFinite(difference) && difference !== 0
+        ? String(Math.abs(difference))
+        : "";
+    const shouldResetQuantity = preferred.resetQuantity === true;
+    let afterSalesQuantity =
+      preferred.afterSalesQuantity ?? row.dataset.afterSalesQuantity ?? "";
+    if (type === "product_exception" || type === "product_return") {
+      const hasPreferredQuantity = preferred.afterSalesQuantity !== undefined;
+      if (
+        shouldResetQuantity ||
+        (!hasPreferredQuantity && row.dataset.afterSalesQuantityManual !== "true")
+      ) {
+        afterSalesQuantity = fallbackQuantity;
+      }
+    } else {
+      afterSalesQuantity = "";
+    }
 
     row.dataset.afterSalesType = type;
+    row.dataset.afterSalesReason = reason;
     row.dataset.exceptionAmount = exceptionAmount;
-    row.dataset.abnormalCount = type === "product_exception" ? String(quantity) : "";
-    row.dataset.returnCount = type === "product_return" ? String(quantity) : "";
-    select.innerHTML = renderAfterSalesOptions(type, difference);
-    select.value = type;
-    select.disabled = !Number.isFinite(difference) || difference === 0;
-    select.classList.toggle("invalid", false);
-    valueCell.innerHTML = renderAfterSalesValue({
-      type,
-      difference,
-      unit: row.dataset.unit || "",
-      exceptionAmount,
-      returnInboundId:
-        preferred.returnInboundId ?? row.dataset.returnInboundId ?? "",
-    });
+    row.dataset.afterSalesQuantity = afterSalesQuantity;
+    row.dataset.abnormalCount =
+      type === "product_exception" ? afterSalesQuantity : "";
+    row.dataset.returnCount = type === "product_return" ? afterSalesQuantity : "";
+    if (preferred.returnInboundId !== undefined) {
+      row.dataset.returnInboundId = preferred.returnInboundId || "";
+    }
     updateReceiptSummary();
   }
 
@@ -1624,46 +1712,365 @@
 
   function updateReceiptSummary() {
     const summary = one("[data-order-summary]");
-    if (!summary) return;
     const order = receiptOrderCatalog[document.body.dataset.orderId || ""];
-    if (!order) {
-      summary.hidden = true;
+    const rows = all("[data-order-line]", one("[data-quantity-body]") || document);
+    const differenceRows = rows.filter((row) => {
+      const difference = rowDifference(row);
+      return Number.isFinite(difference) && difference !== 0;
+    });
+    if (summary) {
+      summary.hidden = !order;
+      const productTarget = one("[data-summary-product-count]", summary);
+      const differenceTarget = one("[data-summary-difference-count]", summary);
+      if (productTarget) productTarget.textContent = String(rows.length);
+      if (differenceTarget) differenceTarget.textContent = String(differenceRows.length);
+    }
+    const enterButton = one("[data-enter-after-sales]");
+    if (enterButton) {
+      enterButton.disabled = !order;
+      enterButton.title = order ? "打开售后处理" : "请先关联销售订单";
+    }
+    const badge = one("[data-receipt-mode-badge]");
+    if (badge) {
+      badge.hidden = false;
+      badge.textContent = receiptMode === "aftersales" ? "售后单" : "正常签收";
+      badge.className = receiptMode === "aftersales"
+        ? "receipt-mode-badge after-sales"
+        : "receipt-mode-badge normal";
+    }
+  }
+
+  function receiptDifferenceRows() {
+    return all("[data-order-line]").filter((row) => {
+      const difference = rowDifference(row);
+      return Number.isFinite(difference) && difference !== 0;
+    });
+  }
+
+  function findOrderLineByItemId(itemId) {
+    return all("[data-order-line]").find(
+      (row) => one(".actual-input", row)?.dataset.itemId === itemId,
+    );
+  }
+
+  function receiptAfterSalesRows() {
+    return all("[data-order-line]").filter(
+      (row) => row.dataset.afterSalesSelected === "true",
+    );
+  }
+
+  function isAfterSalesRowComplete(row) {
+    if (!row) return false;
+    const type = row.dataset.afterSalesType || "";
+    const reason = (row.dataset.afterSalesReason || "").trim();
+    if (!type || !reason || reason.length > 100) return false;
+    if (type === "non_product_exception") {
+      const amount = Number(row.dataset.exceptionAmount);
+      return Number.isFinite(amount) && amount > 0;
+    }
+    const quantity = Number(row.dataset.afterSalesQuantity);
+    return Number.isFinite(quantity) && quantity > 0;
+  }
+
+  function readSalesActualFeature() {
+    const value = new URLSearchParams(window.location.search).get("salesActual");
+    return !["0", "false", "off", "disabled"].includes(
+      String(value || "").toLowerCase(),
+    );
+  }
+
+  function renderAfterSalesWorkbenchRow(sourceRow, index) {
+    if (!sourceRow?.matches("[data-order-line]")) return "";
+    const input = one(".actual-input", sourceRow);
+    const itemId = input?.dataset.itemId || "";
+    const productName = sourceRow.dataset.orderProductName || "--";
+    const unit = sourceRow.dataset.unit || "";
+    const outbound = Number(sourceRow.dataset.outbound);
+    const actual = Number(input?.value);
+    const difference = rowDifference(sourceRow);
+    const selected = sourceRow.dataset.afterSalesSelected === "true";
+    const type = selected ? sourceRow.dataset.afterSalesType || "" : "";
+    const reason = selected ? sourceRow.dataset.afterSalesReason || "" : "";
+    const exceptionAmount = selected ? sourceRow.dataset.exceptionAmount || "" : "";
+    const afterSalesQuantity = selected
+      ? sourceRow.dataset.afterSalesQuantity || ""
+      : Number.isFinite(difference) && difference !== 0
+        ? String(Math.abs(difference))
+        : "";
+    const readonly = document.body.dataset.readonly === "true";
+    const typeControl = readonly
+      ? `<span class="after-sales-type-text">${escapeHTML(afterSalesTypes[type]?.label || "--")}</span>`
+      : `<select class="after-sales-select" aria-label="${escapeHTML(productName)}售后类型">${renderAfterSalesOptions(type)}</select>`;
+    const reasonControl = readonly
+      ? `<span class="after-sales-reason-text">${escapeHTML(reason || "--")}</span>`
+      : `<input class="after-sales-reason-input" list="afterSalesReasonOptions" value="${escapeHTML(reason)}" placeholder="选择或输入" maxlength="100" autocomplete="off" aria-label="${escapeHTML(productName)}售后原因">`;
+    const actionCell = readonly
+      ? ""
+      : `<td><button class="link danger" type="button" data-remove-after-sales-item aria-label="移除${escapeHTML(productName)}">移除</button></td>`;
+    return `<tr data-after-sales-item="${escapeHTML(itemId)}" data-after-sales-type="${escapeHTML(type)}" data-unit="${escapeHTML(unit)}" data-current-diff="${Number.isFinite(difference) ? difference : ""}">
+      <td data-after-sales-index>${index + 1}</td>
+      <td><strong>${escapeHTML(productName)}</strong></td>
+      <td class="right">${formatNumber(outbound)} ${escapeHTML(unit)}</td>
+      <td class="right">${formatNumber(actual)} ${escapeHTML(unit)}</td>
+      <td class="right"><span class="variance ${difference > 0 ? "short" : difference < 0 ? "over" : "equal"}">${formatNumber(difference)} ${escapeHTML(unit)}</span></td>
+      <td>${typeControl}</td>
+      <td>${reasonControl}</td>
+      <td data-after-sales-value>${renderAfterSalesValue({
+        type,
+        difference,
+        unit,
+        exceptionAmount,
+        afterSalesQuantity,
+        returnInboundId: sourceRow.dataset.returnInboundId || "",
+      })}</td>
+      ${actionCell}
+    </tr>`;
+  }
+
+  function updateAfterSalesWorkbenchState() {
+    const body = one("[data-after-sales-body]");
+    const rows = body ? all("[data-after-sales-item]", body) : [];
+    const count = one("[data-after-sales-count]");
+    const empty = one("[data-after-sales-empty]");
+    if (count) count.textContent = String(rows.length);
+    if (empty) empty.hidden = rows.length > 0;
+    rows.forEach((row, index) => {
+      const target = one("[data-after-sales-index]", row);
+      if (target) target.textContent = String(index + 1);
+    });
+  }
+
+  function renderAfterSalesWorkbench({ initialize = false } = {}) {
+    const body = one("[data-after-sales-body]");
+    if (!body) return;
+    const rows = receiptMode === "aftersales" || document.body.dataset.readonly === "true"
+      ? receiptAfterSalesRows()
+      : initialize
+        ? receiptDifferenceRows()
+        : [];
+    body.innerHTML = rows
+      .map((row, index) => renderAfterSalesWorkbenchRow(row, index))
+      .join("");
+    const readonly = document.body.dataset.readonly === "true";
+    one("[data-cancel-after-sales]")?.toggleAttribute(
+      "hidden",
+      readonly || receiptMode !== "aftersales",
+    );
+    one("[data-add-after-sales-product]")?.toggleAttribute("hidden", readonly);
+    one("[data-save-after-sales]")?.toggleAttribute("hidden", readonly);
+    updateAfterSalesWorkbenchState();
+  }
+
+  function readAfterSalesWorkbenchRow(row) {
+    const type = one(".after-sales-select", row)?.value || row.dataset.afterSalesType || "";
+    return {
+      itemId: row.dataset.afterSalesItem || "",
+      type,
+      reason: one(".after-sales-reason-input", row)?.value.trim() || "",
+      exceptionAmount: one(".exception-amount-input", row)?.value.trim() || "",
+      afterSalesQuantity: one(".after-sales-quantity-input", row)?.value.trim() || "",
+    };
+  }
+
+  function validateAfterSalesWorkbench() {
+    const rows = all("[data-after-sales-body] [data-after-sales-item]");
+    if (!rows.length) {
+      showToast("请至少新增一个售后商品，或取消售后处理");
+      return false;
+    }
+    for (const row of rows) {
+      const select = one(".after-sales-select", row);
+      const reason = one(".after-sales-reason-input", row);
+      select?.classList.remove("invalid");
+      reason?.classList.remove("invalid");
+      if (!select?.value) {
+        select?.classList.add("invalid");
+        select?.focus();
+        showToast("请选择售后类型");
+        return false;
+      }
+      const reasonValue = reason?.value.trim() || "";
+      if (!reasonValue || reasonValue.length > 100) {
+        reason?.classList.add("invalid");
+        reason?.focus();
+        showToast(reasonValue.length > 100 ? "售后原因最多 100 个字符" : "请选择或输入售后原因");
+        return false;
+      }
+      if (select.value === "non_product_exception") {
+        const amount = one(".exception-amount-input", row);
+        const raw = amount?.value.trim() || "";
+        if (!/^\d+(?:\.\d{1,2})?$/.test(raw) || Number(raw) <= 0) {
+          amount?.classList.add("invalid");
+          amount?.focus();
+          showToast("请填写大于 0 的异常金额");
+          return false;
+        }
+      } else {
+        const quantity = one(".after-sales-quantity-input", row);
+        const raw = quantity?.value.trim() || "";
+        if (!/^\d+(?:\.\d{1,2})?$/.test(raw) || Number(raw) <= 0) {
+          quantity?.classList.add("invalid");
+          quantity?.focus();
+          showToast(`请填写大于 0 的${afterSalesTypes[select.value]?.fieldLabel || "处理数量"}`);
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  function applyAfterSalesWorkbench() {
+    if (!validateAfterSalesWorkbench()) return false;
+    const staged = new Map(
+      all("[data-after-sales-body] [data-after-sales-item]").map((row) => {
+        const value = readAfterSalesWorkbenchRow(row);
+        return [value.itemId, value];
+      }),
+    );
+    all("[data-order-line]").forEach((row) => {
+      const itemId = one(".actual-input", row)?.dataset.itemId || "";
+      const value = staged.get(itemId);
+      if (value) {
+        row.dataset.afterSalesSelected = "true";
+        row.dataset.afterSalesQuantityManual = value.type === "non_product_exception" ? "false" : "true";
+        syncAfterSalesRow(row, {
+          type: value.type,
+          reason: value.reason,
+          exceptionAmount: value.exceptionAmount,
+          afterSalesQuantity: value.afterSalesQuantity,
+        });
+      } else {
+        row.dataset.afterSalesSelected = "false";
+        row.dataset.afterSalesType = "";
+        row.dataset.afterSalesReason = "";
+        row.dataset.exceptionAmount = "";
+        row.dataset.afterSalesQuantity = "";
+        row.dataset.afterSalesQuantityManual = "false";
+        row.dataset.abnormalCount = "";
+        row.dataset.returnCount = "";
+        row.dataset.returnInboundId = "";
+      }
+      persistAfterSalesRow(row);
+    });
+    setReceiptMode("aftersales");
+    return true;
+  }
+
+  function openAfterSalesWorkbench() {
+    if (
+      document.body.dataset.readonly !== "true" &&
+      !validateReceiptBasics()
+    ) {
       return;
     }
+    renderAfterSalesWorkbench({ initialize: receiptMode !== "aftersales" });
+    openModal("afterSalesWorkbenchModal");
+  }
 
-    let exceptionAmount = 0;
-    let pendingCount = 0;
-    const abnormalTotals = new Map();
-    const returnTotals = new Map();
-    all("[data-order-line]", one("[data-quantity-body]")).forEach((row) => {
-      const difference = rowDifference(row);
-      const type = row.dataset.afterSalesType || "";
-      if (!Number.isFinite(difference)) return;
-      if (difference !== 0 && !type) pendingCount += 1;
-      if (type === "non_product_exception") {
-        const amount = Number(
-          one(".exception-amount-input", row)?.value ?? row.dataset.exceptionAmount,
-        );
-        if (Number.isFinite(amount)) exceptionAmount += amount;
-      } else if (type === "product_exception") {
-        addUnitTotal(abnormalTotals, row.dataset.unit, Number(row.dataset.abnormalCount));
-      } else if (type === "product_return") {
-        addUnitTotal(returnTotals, row.dataset.unit, Number(row.dataset.returnCount));
+  function receiptModeStorageKey() {
+    return `${storagePrefix}:${currentReceiptId() || "receipt-demo"}:${document.body.dataset.orderId || "unassociated"}:mode`;
+  }
+
+  function persistReceiptMode() {
+    if (document.body.dataset.readonly === "true") return;
+    try {
+      localStorage.setItem(receiptModeStorageKey(), receiptMode);
+    } catch {
+      // The prototype remains usable when browser storage is unavailable.
+    }
+  }
+
+  function setReceiptMode(mode, { initialize = false, persist = true } = {}) {
+    receiptMode = mode === "aftersales" ? "aftersales" : "normal";
+    document.body.dataset.receiptMode =
+      receiptMode === "aftersales" ? "after-sales" : "normal";
+    if (persist) persistReceiptMode();
+    updateReceiptSummary();
+  }
+
+  function initializeReceiptMode() {
+    let initialMode = "normal";
+    if (document.body.dataset.readonly === "true") {
+      initialMode = all("[data-order-line]").some(
+        (row) => row.dataset.afterSalesSelected === "true",
+      )
+        ? "aftersales"
+        : "normal";
+    } else {
+      try {
+        initialMode = localStorage.getItem(receiptModeStorageKey()) || "normal";
+      } catch {
+        initialMode = "normal";
+      }
+    }
+    setReceiptMode(initialMode, {
+      initialize: initialMode === "aftersales",
+      persist: false,
+    });
+  }
+
+  function clearAfterSalesDraft() {
+    const receiptId = currentReceiptId() || "receipt-demo";
+    all("[data-order-line]").forEach((row) => {
+      const itemId = one(".actual-input", row)?.dataset.itemId || "";
+      row.dataset.afterSalesSelected = "false";
+      row.dataset.afterSalesType = "";
+      row.dataset.afterSalesReason = "";
+      row.dataset.exceptionAmount = "";
+      row.dataset.afterSalesQuantity = "";
+      row.dataset.afterSalesQuantityManual = "false";
+      row.dataset.abnormalCount = "";
+      row.dataset.returnCount = "";
+      row.dataset.returnInboundId = "";
+      if (itemId) {
+        try {
+          localStorage.removeItem(afterSalesStorageKey(receiptId, itemId));
+        } catch {
+          // The prototype remains usable when browser storage is unavailable.
+        }
       }
     });
+    setReceiptMode("normal");
+  }
 
-    summary.hidden = false;
-    const amountTarget = one("[data-summary-exception-amount]", summary);
-    const abnormalTarget = one("[data-summary-abnormal-count]", summary);
-    const returnTarget = one("[data-summary-return-count]", summary);
-    const pendingTarget = one("[data-summary-pending]", summary);
-    if (amountTarget) amountTarget.textContent = formatMoney(exceptionAmount);
-    if (abnormalTarget) abnormalTarget.textContent = formatUnitTotals(abnormalTotals);
-    if (returnTarget) returnTarget.textContent = formatUnitTotals(returnTotals);
-    if (pendingTarget) {
-      pendingTarget.hidden = pendingCount === 0;
-      pendingTarget.textContent = `待选择 ${pendingCount} 项`;
-    }
+  function renderAfterSalesProductOptions() {
+    const target = one("[data-after-sales-product-options]");
+    if (!target) return;
+    const empty = one("[data-after-sales-product-empty]");
+    const stagedIds = new Set(
+      all("[data-after-sales-body] [data-after-sales-item]").map(
+        (row) => row.dataset.afterSalesItem,
+      ),
+    );
+    const availableRows = all("[data-order-line]").filter((row) => {
+      const itemId = one(".actual-input", row)?.dataset.itemId || "";
+      return itemId && !stagedIds.has(itemId);
+    });
+    target.innerHTML = availableRows
+      .map((row) => {
+        const itemId = one(".actual-input", row)?.dataset.itemId || "";
+        const difference = rowDifference(row);
+        const unit = escapeHTML(row.dataset.unit || "");
+        return `<tr><td><input type="checkbox" value="${escapeHTML(itemId)}" aria-label="选择${escapeHTML(row.dataset.orderProductName || "当前商品")}"></td><td><strong>${escapeHTML(row.dataset.orderProductName || "--")}</strong></td><td class="right">${formatNumber(Number(row.dataset.outbound))} ${unit}</td><td class="right">${formatNumber(Number(one(".actual-input", row)?.value))} ${unit}</td><td class="right"><span class="variance ${difference > 0 ? "short" : difference < 0 ? "over" : "equal"}">${formatNumber(difference)} ${unit}</span></td></tr>`;
+      })
+      .join("");
+    if (empty) empty.hidden = availableRows.length > 0;
+    one(".after-sales-product-options-wrap")?.toggleAttribute(
+      "hidden",
+      availableRows.length === 0,
+    );
+  }
+
+  function openAfterSalesProductSelector() {
+    renderAfterSalesProductOptions();
+    openModal("afterSalesProductModal");
+  }
+
+  function removeAfterSalesRow(row) {
+    if (!row?.matches("[data-after-sales-item]")) return;
+    row.remove();
+    updateAfterSalesWorkbenchState();
+    showToast("已从售后单移除，原订单商品和签收数保持不变");
   }
 
   function setTaskState(state) {
@@ -1695,7 +2102,7 @@
       item.classList.contains("failed"),
     );
     const invalid = all(
-      ".actual-input, .local-actual-input, .exception-amount-input, .after-sales-select",
+      ".receipt-ai-panel .actual-input",
     ).some((input) => input.classList.contains("invalid"));
 
     global.classList.remove("good", "bad");
@@ -1738,6 +2145,8 @@
       }
       const afterSalesSelect = one(".after-sales-select", row);
       if (afterSalesSelect) afterSalesSelect.disabled = true;
+      const afterSalesReason = one(".after-sales-reason-input", row);
+      if (afterSalesReason) afterSalesReason.disabled = true;
       updateReceiptSummary();
       updateGlobalSaveState();
       return false;
@@ -1792,17 +2201,29 @@
     if (!itemId) return;
     const receiptId = document.body.dataset.receiptId || "receipt-demo";
     const payload = {
+      selected: row.dataset.afterSalesSelected === "true",
       type: row.dataset.afterSalesType || "",
+      reason:
+        one(".after-sales-reason-input", row)?.value.trim() ??
+        row.dataset.afterSalesReason ??
+        "",
       exceptionAmount:
         one(".exception-amount-input", row)?.value ??
         row.dataset.exceptionAmount ??
         "",
+      afterSalesQuantity:
+        one(".after-sales-quantity-input", row)?.value ??
+        row.dataset.afterSalesQuantity ??
+        "",
+      quantityManual: row.dataset.afterSalesQuantityManual === "true",
     };
     try {
-      localStorage.setItem(
-        afterSalesStorageKey(receiptId, itemId),
-        JSON.stringify(payload),
-      );
+      const key = afterSalesStorageKey(receiptId, itemId);
+      if (!payload.selected && !payload.type && !payload.reason) {
+        localStorage.removeItem(key);
+      } else {
+        localStorage.setItem(key, JSON.stringify(payload));
+      }
     } catch {
       // The prototype remains usable when browser storage is unavailable.
     }
@@ -1820,9 +2241,15 @@
       const stored = localStorage.getItem(afterSalesStorageKey(receiptId, itemId));
       if (!stored) return;
       const payload = JSON.parse(stored);
+      row.dataset.afterSalesSelected = payload.selected ? "true" : "false";
+      row.dataset.afterSalesQuantityManual = payload.quantityManual
+        ? "true"
+        : "false";
       syncAfterSalesRow(row, {
         type: payload.type || "",
+        reason: payload.reason || "",
         exceptionAmount: payload.exceptionAmount || "",
+        afterSalesQuantity: payload.afterSalesQuantity || "",
       });
     } catch {
       // Ignore unavailable or damaged local storage in this static prototype.
@@ -1830,44 +2257,91 @@
   }
 
   function bindAfterSalesEditing() {
-    const target = one("[data-quantity-body]");
-    if (!target) return;
-    all("[data-order-line]", target).forEach(restoreAfterSalesRow);
-    if (target.dataset.afterSalesBound === "true") return;
-    target.dataset.afterSalesBound = "true";
+    all("[data-order-line]").forEach(restoreAfterSalesRow);
+    if (document.body.dataset.afterSalesBound === "true") return;
+    document.body.dataset.afterSalesBound = "true";
 
-    target.addEventListener("change", (event) => {
+    document.body.addEventListener("change", (event) => {
       const select = event.target.closest(".after-sales-select");
       if (!select) return;
-      const row = select.closest("[data-order-line]");
+      const row = select.closest("[data-after-sales-item]");
       if (!row) return;
-      syncAfterSalesRow(row, {
-        type: select.value,
-        exceptionAmount: "",
+      select.classList.remove("invalid");
+      row.dataset.afterSalesType = select.value;
+      const valueCell = one("[data-after-sales-value]", row);
+      if (valueCell) {
+        valueCell.innerHTML = renderAfterSalesValue({
+          type: select.value,
+          difference: Number(row.dataset.currentDiff),
+          unit: row.dataset.unit || "",
+        });
+      }
+    });
+
+    document.body.addEventListener("input", (event) => {
+      event.target.classList.remove("invalid");
+    });
+
+    all("[data-enter-after-sales]").forEach((button) => {
+      button.addEventListener("click", openAfterSalesWorkbench);
+    });
+
+    all("[data-cancel-after-sales]").forEach((button) => {
+      button.addEventListener("click", () => {
+        openModal("cancelAfterSalesModal");
       });
-      persistAfterSalesRow(row);
+    });
+
+    one("[data-confirm-cancel-after-sales]")?.addEventListener("click", () => {
+      clearAfterSalesDraft();
+      closeModal("cancelAfterSalesModal");
+      closeModal("afterSalesWorkbenchModal");
       setTaskState("待处理");
-      updateGlobalSaveState();
+      showToast("已取消售后处理，签收数已保留");
     });
 
-    target.addEventListener("input", (event) => {
-      const input = event.target.closest(".exception-amount-input");
-      if (!input) return;
-      const row = input.closest("[data-order-line]");
-      const raw = input.value.trim();
-      const valid =
-        raw === "" ||
-        (/^\d+(?:\.\d{0,2})?$/.test(raw) && Number(raw) > 0);
-      input.classList.toggle("invalid", !valid);
-      row.dataset.exceptionAmount = raw;
-      updateReceiptSummary();
-      updateGlobalSaveState();
+    one("[data-save-after-sales]")?.addEventListener("click", () => {
+      if (!applyAfterSalesWorkbench()) return;
+      closeModal("afterSalesWorkbenchModal");
+      setTaskState("待处理");
+      showToast("售后处理已保存");
     });
 
-    target.addEventListener("focusout", (event) => {
-      const input = event.target.closest(".exception-amount-input");
-      if (!input) return;
-      persistAfterSalesRow(input.closest("[data-order-line]"));
+    all("[data-add-after-sales-product]").forEach((button) => {
+      button.addEventListener("click", openAfterSalesProductSelector);
+    });
+
+    one("[data-confirm-add-after-sales-products]")?.addEventListener("click", () => {
+      const selectedIds = all(
+        '[data-after-sales-product-options] input[type="checkbox"]:checked',
+      ).map((input) => input.value);
+      if (!selectedIds.length) {
+        showToast("请选择需要加入售后单的商品");
+        return;
+      }
+      const body = one("[data-after-sales-body]");
+      const startIndex = body ? all("[data-after-sales-item]", body).length : 0;
+      if (body) {
+        body.insertAdjacentHTML(
+          "beforeend",
+          selectedIds
+            .map((itemId, index) =>
+              renderAfterSalesWorkbenchRow(findOrderLineByItemId(itemId), startIndex + index),
+            )
+            .join(""),
+        );
+      }
+      updateAfterSalesWorkbenchState();
+      closeModal("afterSalesProductModal");
+      showToast(`已新增 ${selectedIds.length} 个售后商品`);
+    });
+
+    document.body.addEventListener("click", (event) => {
+      const remove = event.target.closest(
+        "[data-remove-after-sales-row], [data-remove-after-sales-item]",
+      );
+      if (!remove) return;
+      removeAfterSalesRow(remove.closest("[data-after-sales-item]"));
     });
   }
 
@@ -2028,12 +2502,19 @@
     const abnormalTotals = new Map();
     const returnTotals = new Map();
     let exceptionAmount = 0;
-    all("[data-order-line]").forEach((row) => {
+    receiptAfterSalesRows().forEach((row) => {
       const difference = rowDifference(row);
-      if (!Number.isFinite(difference) || difference === 0) return;
       const type = row.dataset.afterSalesType || "";
+      const reason =
+        one(".after-sales-reason-input", row)?.value.trim() ||
+        row.dataset.afterSalesReason ||
+        "";
       const amount = Number(
         one(".exception-amount-input", row)?.value ?? row.dataset.exceptionAmount,
+      );
+      const afterSalesQuantity = Number(
+        one(".after-sales-quantity-input", row)?.value ??
+          row.dataset.afterSalesQuantity,
       );
       const item = {
         itemId: one(".actual-input", row)?.dataset.itemId || "",
@@ -2043,13 +2524,19 @@
         difference,
         unit: row.dataset.unit || "",
         type,
+        reason,
         exceptionAmount:
           type === "non_product_exception" && Number.isFinite(amount)
             ? roundMoney(amount)
             : 0,
         abnormalCount:
-          type === "product_exception" ? Math.abs(difference) : 0,
-        returnCount: type === "product_return" ? Math.abs(difference) : 0,
+          type === "product_exception" && Number.isFinite(afterSalesQuantity)
+            ? afterSalesQuantity
+            : 0,
+        returnCount:
+          type === "product_return" && Number.isFinite(afterSalesQuantity)
+            ? afterSalesQuantity
+            : 0,
       };
       rows.push(item);
       exceptionAmount += item.exceptionAmount;
@@ -2059,6 +2546,10 @@
     return {
       receiptId: document.body.dataset.receiptId || "",
       orderId: document.body.dataset.orderId || "",
+      associationSource:
+        document.body.dataset.orderAssociationSource === "manual"
+          ? "人工选择"
+          : "AI 默认",
       rows,
       exceptionAmount: roundMoney(exceptionAmount),
       abnormalTotals,
@@ -2072,26 +2563,15 @@
       productReturnCount: rows.filter(
         (item) => item.type === "product_return",
       ).length,
+      receiptMode,
     };
   }
 
-  function validateReceiptSubmission() {
+  function validateReceiptBasics() {
     if (!document.body.dataset.orderId) {
       showToast("请先选择销售订单");
-      return null;
+      return false;
     }
-
-    const incompleteManualRow = all("[data-manual-row]").find((row) => {
-      const productName = one(".detail-product-input", row)?.value.trim();
-      const actual = one(".local-actual-input", row)?.value.trim();
-      return !productName || !actual;
-    });
-    if (incompleteManualRow) {
-      one(".detail-product-input", incompleteManualRow)?.focus();
-      showToast("请补全新增商品的名称和签收数");
-      return null;
-    }
-
     const writebackInputs = all(".actual-input");
     const invalidInput = writebackInputs.find(
       (input) => !updateQuantityRow(input),
@@ -2099,71 +2579,98 @@
     if (invalidInput) {
       invalidInput.focus();
       showToast("请检查签收数");
-      return null;
+      return false;
     }
-    const invalidLocalInput = all(".local-actual-input").find((input) =>
-      input.classList.contains("invalid"),
-    );
-    if (invalidLocalInput) {
-      invalidLocalInput.focus();
-      showToast("请检查新增商品的签收数");
-      return null;
-    }
+    return true;
+  }
 
-    const unresolvedRow = all("[data-order-line]").find((row) => {
-      const difference = rowDifference(row);
-      return Number.isFinite(difference) && difference !== 0 && !row.dataset.afterSalesType;
-    });
-    if (unresolvedRow) {
-      const select = one(".after-sales-select", unresolvedRow);
-      select?.classList.add("invalid");
-      select?.focus();
-      showToast(
-        "请为差异商品选择售后类型",
-      );
+  function validateReceiptSubmission() {
+    if (!validateReceiptBasics()) return null;
+    if (
+      receiptMode === "aftersales" &&
+      (!receiptAfterSalesRows().length ||
+        receiptAfterSalesRows().some((row) => !isAfterSalesRowComplete(row)))
+    ) {
+      renderAfterSalesWorkbench();
+      openModal("afterSalesWorkbenchModal");
+      showToast("请先完善并保存售后处理");
       return null;
     }
+    return receiptMode === "aftersales"
+      ? collectAfterSalesPayload()
+      : {
+          receiptId: document.body.dataset.receiptId || "",
+          orderId: document.body.dataset.orderId || "",
+          associationSource:
+            document.body.dataset.orderAssociationSource === "manual"
+              ? "人工选择"
+              : "AI 默认",
+          rows: [],
+          exceptionAmount: 0,
+          abnormalTotals: new Map(),
+          returnTotals: new Map(),
+          nonProductCount: 0,
+          productExceptionCount: 0,
+          productReturnCount: 0,
+          receiptMode: "normal",
+        };
+  }
 
-    const invalidAmountRow = all("[data-order-line]").find((row) => {
-      if (row.dataset.afterSalesType !== "non_product_exception") return false;
-      const input = one(".exception-amount-input", row);
-      const raw = input?.value.trim() || "";
-      return !/^\d+(?:\.\d{1,2})?$/.test(raw) || Number(raw) <= 0;
-    });
-    if (invalidAmountRow) {
-      const input = one(".exception-amount-input", invalidAmountRow);
-      input?.classList.add("invalid");
-      input?.focus();
-      showToast("请填写大于 0 的异常金额");
-      return null;
-    }
-
-    return collectAfterSalesPayload();
+  function prepareReceiptSubmission(payload) {
+    const receivedRows = all("[data-order-line]").map((row) => ({
+      itemId: one(".actual-input", row)?.dataset.itemId || "",
+      productName: row.dataset.orderProductName || "",
+      receivedQuantity: Number(one(".actual-input", row)?.value),
+      unit: row.dataset.unit || "",
+    }));
+    pendingSubmitPayload = {
+      ...payload,
+      receivedRows,
+      differenceCount: receiptDifferenceRows().length,
+      normalReceipt: payload.receiptMode !== "aftersales",
+      salesActualEnabled: readSalesActualFeature(),
+    };
+    renderSubmitSummary(pendingSubmitPayload);
+    openModal("submitConfirmModal");
   }
 
   function renderSubmitSummary(payload) {
     const target = one("[data-submit-summary]");
     if (!target) return;
+    const reasons = [...new Set(payload.rows.map((item) => item.reason).filter(Boolean))];
+    const salesActualNotice = payload.salesActualEnabled
+      ? '<p class="sales-actual-notice on"><strong>销售实收已开启</strong><span>确认后将签收数写入销售订单出库数。</span></p>'
+      : '<p class="sales-actual-notice off"><strong>销售实收未开启</strong><span>本次不修改出库数，回单仍可正常完成。</span></p>';
+    const afterSalesSummary = payload.normalReceipt
+      ? `<div class="normal-receipt-summary"><strong>正常签收</strong><span>${payload.differenceCount ? `当前存在 ${payload.differenceCount} 个差异商品，本次不生成售后单。` : "所有商品签收数与下单数一致，无需售后处理。"}</span></div>`
+      : `<div class="submit-summary-grid">
+          <span><b>非商品异常</b><strong>${payload.nonProductCount} 项 · ${formatMoney(payload.exceptionAmount)}</strong></span>
+          <span><b>商品异常</b><strong>${payload.productExceptionCount} 项 · ${formatUnitTotals(payload.abnormalTotals)}</strong></span>
+          <span><b>商品退货</b><strong>${payload.productReturnCount} 项 · ${formatUnitTotals(payload.returnTotals)}</strong></span>
+        </div>
+        <p class="submit-reason-notice">售后原因：${reasons.map(escapeHTML).join("、")}</p>
+        ${payload.productReturnCount ? '<p class="submit-return-notice">提交后将在观麦生成退货入库单。</p>' : ""}`;
     target.innerHTML = `
-      <div class="submit-summary-order">销售订单 <strong>${escapeHTML(payload.orderId)}</strong></div>
-      <div class="submit-summary-grid">
-        <span><b>非商品异常</b><strong>${payload.nonProductCount} 项 · ${formatMoney(payload.exceptionAmount)}</strong></span>
-        <span><b>商品异常</b><strong>${payload.productExceptionCount} 项 · ${formatUnitTotals(payload.abnormalTotals)}</strong></span>
-        <span><b>商品退货</b><strong>${payload.productReturnCount} 项 · ${formatUnitTotals(payload.returnTotals)}</strong></span>
-      </div>
-      ${payload.productReturnCount ? '<p class="submit-return-notice">提交后将在观麦生成退货入库单。</p>' : ""}`;
+      <div class="submit-summary-order">销售订单 <strong>${escapeHTML(payload.orderId)}</strong><em>${escapeHTML(payload.associationSource)}</em><span class="prototype-badge">原型演示</span></div>
+      <div class="receipt-submit-facts"><span>${payload.normalReceipt ? "正常签收" : "售后单"}</span><span>${payload.normalReceipt ? `商品 ${payload.receivedRows.length} 项` : `售后商品 ${payload.rows.length} 项`}</span><span>差异 ${payload.differenceCount} 项</span></div>
+      ${salesActualNotice}
+      ${afterSalesSummary}`;
   }
 
   function completeReceiptSubmission(button) {
     if (!pendingSubmitPayload) return;
     const payload = pendingSubmitPayload;
+    if (!bindOrderToCurrentReceipt(payload.orderId)) {
+      showToast("订单关联状态已变化，请重新确认");
+      return;
+    }
     button.disabled = true;
     button.textContent = "同步中…";
     all(".actual-input").forEach((input) => scheduleSave(input, true));
-    all("[data-order-line]").forEach(persistAfterSalesRow);
+    if (!payload.normalReceipt) receiptAfterSalesRows().forEach(persistAfterSalesRow);
 
     window.setTimeout(() => {
-      const returnRows = all("[data-order-line]").filter(
+      const returnRows = receiptAfterSalesRows().filter(
         (row) => row.dataset.afterSalesType === "product_return",
       );
       const existingReturnId = returnRows
@@ -2191,11 +2698,11 @@
       const result = one("[data-submit-result]");
       if (result) {
         result.innerHTML = `
-          <div class="submit-result-success">审核结果已同步观麦</div>
-          <dl><div><dt>销售订单</dt><dd>${escapeHTML(payload.orderId)}</dd></div><div><dt>下单数</dt><dd>保持不变</dd></div>${generatedIds.length ? `<div><dt>退货入库单</dt><dd>${generatedIds.map(escapeHTML).join("、")}</dd></div>` : ""}</dl>`;
+          <div class="submit-result-success">原型演示：已模拟同步观麦</div>
+          <dl><div><dt>销售订单</dt><dd>${escapeHTML(payload.orderId)}</dd></div><div><dt>单据类型</dt><dd>${payload.normalReceipt ? "正常签收" : "售后单"}</dd></div><div><dt>下单数</dt><dd>保持不变</dd></div><div><dt>出库数</dt><dd>${payload.salesActualEnabled ? "已按签收数更新" : "未更新（销售实收未开启）"}</dd></div><div><dt>处理结果</dt><dd>${payload.normalReceipt ? "已按正常签收提交，不生成售后字段" : `已处理 ${payload.rows.length} 项售后`}</dd></div>${generatedIds.length ? `<div><dt>退货入库单</dt><dd>${generatedIds.map(escapeHTML).join("、")}</dd></div>` : ""}</dl>`;
       }
       openModal("submitResultModal");
-      showToast("审核完成，已同步观麦");
+      showToast("原型演示完成，未产生真实观麦数据");
       pendingSubmitPayload = null;
     }, 720);
   }
@@ -2207,9 +2714,7 @@
       button.addEventListener("click", () => {
         const payload = validateReceiptSubmission();
         if (!payload) return;
-        pendingSubmitPayload = payload;
-        renderSubmitSummary(payload);
-        openModal("submitConfirmModal");
+        prepareReceiptSubmission(payload);
       });
     });
 
@@ -2243,7 +2748,7 @@
   }
 
   function escapeHTML(value) {
-    return String(value)
+    return merchantTerminology(value)
       .replaceAll("&", "&amp;")
       .replaceAll("<", "&lt;")
       .replaceAll(">", "&gt;")
@@ -2361,13 +2866,13 @@
     sendButton?.addEventListener("click", () => {
       const text = textarea?.value.trim() || "";
       if (!selectedContext) {
-        showToast("请先选择客户或群聊");
+        showToast("请先选择商户或群聊");
         return;
       }
       const activeMode =
         one("[data-source-mode].active", root)?.dataset.sourceMode || "merchant";
       if (activeMode === "group" && !selectedCustomer) {
-        showToast("请选择群聊对应的客户");
+        showToast("请选择群聊对应的商户");
         return;
       }
       if (!text && !attachments.length) {
@@ -2417,15 +2922,104 @@
 
   function setDetailText(selector, value) {
     all(selector).forEach((target) => {
-      target.textContent = value;
+      target.textContent = merchantTerminology(value);
     });
   }
 
   function setDetailValue(selector, value) {
     all(selector).forEach((target) => {
-      if ("value" in target) target.value = value;
-      else target.textContent = value;
+      if ("value" in target) target.value = merchantTerminology(value);
+      else target.textContent = merchantTerminology(value);
     });
+  }
+
+  function productModificationStorageKey() {
+    return `${storagePrefix}:${currentReceiptId() || "receipt-demo"}:products-modified`;
+  }
+
+  function hasProductModifications() {
+    return document.body.dataset.productRowsModified === "true";
+  }
+
+  function isOrderAssociationLocked() {
+    return Boolean(document.body.dataset.orderId) && hasProductModifications();
+  }
+
+  function markReceiptProductsModified() {
+    if (document.body.dataset.readonly === "true") return;
+    document.body.dataset.productRowsModified = "true";
+    try {
+      localStorage.setItem(productModificationStorageKey(), "true");
+    } catch {
+      // Ignore unavailable local storage in this static prototype.
+    }
+    updateOrderAssociationUI();
+  }
+
+  function restoreProductModificationLock() {
+    try {
+      if (localStorage.getItem(productModificationStorageKey()) === "true") {
+        document.body.dataset.productRowsModified = "true";
+      }
+    } catch {
+      // Ignore unavailable local storage in this static prototype.
+    }
+    updateOrderAssociationUI();
+  }
+
+  function bindProductModificationLock() {
+    const target = one("[data-quantity-body]");
+    if (!target || document.body.dataset.readonly === "true") return;
+    restoreProductModificationLock();
+    if (target.dataset.productModificationBound === "true") return;
+    target.dataset.productModificationBound = "true";
+    target.addEventListener("input", (event) => {
+      if (
+        event.target.matches(
+          ".actual-input, .detail-remark-input",
+        )
+      ) {
+        markReceiptProductsModified();
+      }
+    });
+  }
+
+  function updateOrderAssociationUI() {
+    const orderId = document.body.dataset.orderId || "";
+    const source = document.body.dataset.orderAssociationSource ||
+      (orderId ? "ai" : "none");
+    const container = one("[data-order-association]");
+    const idTarget = one("[data-associated-order-id]");
+    const sourceTarget = one("[data-association-source]");
+    const queryButton = one("[data-open-order-query]");
+    const submitButton = one("[data-confirm-submit]");
+    const associationLocked = isOrderAssociationLocked();
+    const sourceLabels = {
+      ai: "AI 默认",
+      manual: "人工选择",
+      submitted: "提交快照",
+      none: "未关联",
+    };
+
+    container?.classList.toggle("is-linked", Boolean(orderId));
+    container?.classList.toggle("is-unlinked", !orderId);
+    container?.classList.toggle("is-locked", associationLocked);
+    if (idTarget) idTarget.textContent = orderId || "--";
+    if (sourceTarget) sourceTarget.textContent = sourceLabels[source] || sourceLabels.ai;
+    if (queryButton) {
+      queryButton.textContent = orderId ? "更换订单" : "查询订单";
+      queryButton.disabled = associationLocked;
+      queryButton.setAttribute("aria-disabled", String(associationLocked));
+      queryButton.title = associationLocked
+        ? "商品条目已人工修改，不可更换关联订单"
+        : orderId
+          ? `当前关联 ${orderId}，点击查询并更换`
+          : "查询并关联销售订单";
+    }
+    if (submitButton && document.body.dataset.readonly !== "true") {
+      submitButton.disabled = !orderId;
+      submitButton.title = orderId ? "" : "请先关联销售订单";
+    }
   }
 
   function applyReceiptScenario() {
@@ -2438,16 +3032,20 @@
 
     document.body.dataset.scenario = scenarioKey;
     document.body.dataset.receiptId = config.receiptId;
-    if (config.orderId) {
-      document.body.dataset.orderId = config.orderId;
+    const resolvedOrderId = config.orderId || (config.candidateIds || [])[0] || "";
+    if (resolvedOrderId) {
+      document.body.dataset.orderId = resolvedOrderId;
       document.body.dataset.orderUnassociated = "false";
+      document.body.dataset.orderAssociationSource =
+        config.state === "已完成" ? "submitted" : "ai";
     } else {
       delete document.body.dataset.orderId;
       document.body.dataset.orderUnassociated = "true";
+      document.body.dataset.orderAssociationSource = "none";
     }
 
-    const associatedOrder = config.orderId
-      ? receiptOrderCatalog[config.orderId]
+    const associatedOrder = resolvedOrderId
+      ? receiptOrderCatalog[resolvedOrderId]
       : null;
     if (associatedOrder && config.orderLines) {
       associatedOrder.lines = config.orderLines.map((line) => ({ ...line }));
@@ -2493,11 +3091,6 @@
       "[data-ai-receive-end]",
       config.aiReceiveEnd || recognizedOrder?.receiveTimeEnd || "",
     );
-    setDetailValue(
-      "[data-ai-total-amount]",
-      config.aiTotalAmount ?? recognizedOrder?.totalAmount ?? "",
-    );
-
     const message = one("[data-detail-message]");
     if (message) {
       message.innerHTML = [
@@ -2510,13 +3103,6 @@
     if (location) {
       location.innerHTML = `${escapeHTML(config.group)}<br>${escapeHTML(config.createdTime)} · ${escapeHTML(config.author)}`;
     }
-  }
-
-  function normalizeProductName(value) {
-    return String(value || "")
-      .trim()
-      .toLowerCase()
-      .replace(/\s+/g, "");
   }
 
   function renderOrderLine(line, index, receiptItem = null) {
@@ -2536,289 +3122,52 @@
     let afterSalesType = hasPreservedType
       ? receiptItem.afterSalesType || ""
       : demo.type || "";
-    if (
-      !Number.isFinite(difference) ||
-      difference === 0 ||
-      (difference < 0 && afterSalesType !== "non_product_exception")
-    ) {
+    if (!Number.isFinite(difference)) {
       afterSalesType = "";
     }
+    const afterSalesReason =
+      afterSalesType
+        ? receiptItem?.afterSalesReason ?? demo.reason ?? ""
+        : "";
     const exceptionAmount = hasPreservedType
       ? receiptItem.exceptionAmount || ""
       : demo.exceptionAmount || "";
     const returnInboundId =
       receiptItem?.returnInboundId || demo.returnInboundId || "";
     const quantity = Number.isFinite(difference) ? Math.abs(difference) : "";
+    const afterSalesSelected =
+      receiptItem?.afterSalesSelected === true || Boolean(afterSalesType);
+    const afterSalesQuantity =
+      receiptItem?.afterSalesQuantity ??
+      (afterSalesType === "product_exception" || afterSalesType === "product_return"
+        ? String(quantity)
+        : "");
     return `
-      <tr class="${rowClass}" data-product-row data-quantity-row data-order-line data-order-product-name="${escapeHTML(line.name)}" data-recognized-name="${escapeHTML(recognizedName)}" data-ai-text="${escapeHTML(aiText)}" data-outbound="${line.outbound}" data-unit="${escapeHTML(line.unit)}" data-current-diff="${difference}" data-after-sales-type="${afterSalesType}" data-exception-amount="${escapeHTML(exceptionAmount)}" data-abnormal-count="${afterSalesType === "product_exception" ? quantity : ""}" data-return-count="${afterSalesType === "product_return" ? quantity : ""}" data-return-inbound-id="${escapeHTML(returnInboundId)}">
+      <tr class="${rowClass}" data-product-row data-quantity-row data-order-line data-order-product-name="${escapeHTML(line.name)}" data-recognized-name="${escapeHTML(recognizedName)}" data-ai-text="${escapeHTML(aiText)}" data-outbound="${line.outbound}" data-unit="${escapeHTML(line.unit)}" data-current-diff="${difference}" data-after-sales-selected="${afterSalesSelected}" data-after-sales-type="${afterSalesType}" data-after-sales-reason="${escapeHTML(afterSalesReason)}" data-exception-amount="${escapeHTML(exceptionAmount)}" data-after-sales-quantity="${escapeHTML(afterSalesQuantity)}" data-after-sales-quantity-manual="false" data-abnormal-count="${afterSalesType === "product_exception" ? afterSalesQuantity : ""}" data-return-count="${afterSalesType === "product_return" ? afterSalesQuantity : ""}" data-return-inbound-id="${escapeHTML(returnInboundId)}">
         <td data-row-index>${index + 1}</td>
         <td><strong>${escapeHTML(line.name)}</strong></td>
         <td data-recognized-product>${escapeHTML(recognizedName || "--")}</td>
         <td class="right"><strong>${formatNumber(line.outbound)} ${escapeHTML(line.unit)}</strong></td>
         <td><div class="quantity-input-wrap"><input class="quantity-input actual-input" inputmode="decimal" value="${escapeHTML(actual)}" placeholder="请填写" aria-label="${escapeHTML(line.name)}签收数" data-item-id="${escapeHTML(line.id)}"${receiptItem ? ' data-preserve-current="true"' : ""}><span class="unit-suffix">${escapeHTML(line.unit)}</span></div></td>
         <td class="right"><span class="variance ${varianceClass}" data-variance>${formatNumber(difference)} ${escapeHTML(line.unit)}</span></td>
-        <td><select class="after-sales-select" aria-label="${escapeHTML(line.name)}售后类型"${difference === 0 ? " disabled" : ""}>${renderAfterSalesOptions(afterSalesType, difference)}</select></td>
-        <td data-after-sales-value>${renderAfterSalesValue({ type: afterSalesType, difference, unit: line.unit, exceptionAmount, returnInboundId })}</td>
         <td><input class="detail-remark-input" value="${escapeHTML(remark)}" placeholder="填写备注" aria-label="${escapeHTML(line.name)}备注"></td>
-        <td>${renderRowActions(line.name, false)}</td>
       </tr>`;
   }
 
-  function renderRowActions(name = "当前商品", allowDelete = true) {
-    const safeName = escapeHTML(name);
-    return `<div class="row-action-buttons">
-      <button class="row-action add" type="button" data-add-row aria-label="在${safeName}后新增空白行">＋</button>
-      ${allowDelete ? `<button class="row-action remove" type="button" data-delete-row aria-label="删除${safeName}行">−</button>` : ""}
-    </div>`;
-  }
-
-  function renderReceiptOnlyRow(item, index) {
-    const editableName = item.editableName === true;
-    const nameControl = editableName
-      ? `<input class="detail-product-input" value="${escapeHTML(item.name || "")}" placeholder="请输入商品名称" aria-label="识别商品">`
-      : `<strong>${escapeHTML(item.name || "--")}</strong>`;
-    const unitControl = editableName
-      ? `<input class="detail-unit-input" value="${escapeHTML(item.unit || "斤")}" aria-label="单位">`
-      : escapeHTML(item.unit || "--");
-    const actual = item.actual ?? "";
-    return `
-      <tr data-product-row data-unmatched-row data-recognized-name="${escapeHTML(item.name || "")}" data-ai-text="${escapeHTML(item.aiText || item.text || "")}" data-unit="${escapeHTML(item.unit || "")}" data-exception-id="${escapeHTML(item.id || "")}">
-        <td data-row-index>${index + 1}</td>
-        <td>--</td>
-        <td data-recognized-product>${nameControl}</td>
-        <td class="right">--</td>
-        <td><div class="quantity-input-wrap"><input class="quantity-input local-actual-input" inputmode="decimal" value="${escapeHTML(actual)}" placeholder="请填写" aria-label="${escapeHTML(item.name || "当前商品")}签收数"><span class="unit-suffix">${escapeHTML(item.unit || "斤")}</span></div></td>
-        <td class="right">--</td>
-        <td><span class="after-sales-empty">--</span></td>
-        <td><span class="after-sales-empty">不回写</span></td>
-        <td><input class="detail-remark-input" value="${escapeHTML(item.remark || "")}" placeholder="填写备注" aria-label="${escapeHTML(item.name || "当前商品")}备注"></td>
-        <td>${renderRowActions(item.name || "当前商品", true)}</td>
-      </tr>`;
-  }
-
-  function renderUnmatchedRow(item, index) {
-    return renderReceiptOnlyRow(item, index);
-  }
-
-  function renderAiLine(item, index) {
-    return renderReceiptOnlyRow(item, index);
-  }
-
-  function renderBlankRow() {
-    const rowId = `MANUAL-${Date.now()}-${Math.random().toString(16).slice(2)}`;
-    return `
-      <tr data-product-row data-manual-row data-recognized-name="" data-ai-text="" data-unit="斤" data-price="" data-manual-id="${rowId}">
-        <td data-row-index></td>
-        <td>--</td>
-        <td data-recognized-product><input class="detail-product-input" value="" placeholder="请输入商品名称" aria-label="识别商品"></td>
-        <td class="right">--</td>
-        <td><div class="quantity-input-wrap"><input class="quantity-input local-actual-input" inputmode="decimal" value="" placeholder="请填写" aria-label="签收数"><span class="unit-suffix">斤</span></div></td>
-        <td class="right">--</td>
-        <td><span class="after-sales-empty">--</span></td>
-        <td><span class="after-sales-empty">不回写</span></td>
-        <td><input class="detail-remark-input" value="" placeholder="填写备注" aria-label="备注"></td>
-        <td>${renderRowActions("空白商品", true)}</td>
-      </tr>`;
-  }
-
-  function renumberProductRows() {
-    all("[data-product-row]", one("[data-quantity-body]")).forEach(
-      (row, index) => {
-        const target = one("[data-row-index]", row);
-        if (target) target.textContent = String(index + 1);
-      },
-    );
-  }
-
-  function updateReceiptOnlyAmount(row) {
-    if (!row) return;
-    const actualInput = one(".local-actual-input", row);
-    const actualRaw = actualInput?.value.trim() || "";
-    const actualValid =
-      actualRaw === "" ||
-      (/^\d+(?:\.\d{0,2})?$/.test(actualRaw) && Number(actualRaw) >= 0);
-    actualInput?.classList.toggle("invalid", !actualValid);
-    updateGlobalSaveState();
-  }
-
-  function bindLocalQuantityEditing() {
-    all("[data-unmatched-row], [data-manual-row]").forEach((row) => {
-      if (row.dataset.localQuantityBound === "true") return;
-      row.dataset.localQuantityBound = "true";
-      const actualInput = one(".local-actual-input", row);
-      actualInput?.addEventListener("input", () =>
-        updateReceiptOnlyAmount(row),
-      );
-      updateReceiptOnlyAmount(row);
-    });
-  }
-
-  function insertBlankProductRow(referenceRow = null) {
-    const target = one("[data-quantity-body]");
-    if (!target) return;
-    if (referenceRow) {
-      referenceRow.insertAdjacentHTML("afterend", renderBlankRow());
-    } else {
-      target.insertAdjacentHTML("beforeend", renderBlankRow());
-    }
-    renumberProductRows();
-    bindLocalQuantityEditing();
-    decorateSpecTargets(detailSpecTargets);
-    const newRow = referenceRow
-      ? referenceRow.nextElementSibling
-      : target.lastElementChild;
-    one(".detail-product-input", newRow)?.focus();
-  }
-
-  function bindAddProductButton() {
-    all("[data-add-product]").forEach((button) => {
-      if (button.dataset.addProductBound === "true") return;
-      button.dataset.addProductBound = "true";
-      button.addEventListener("click", () => {
-        insertBlankProductRow();
-        showToast("已在明细末尾新增空白商品行");
-      });
-    });
-  }
-
-  function bindRowActions() {
-    const target = one("[data-quantity-body]");
-    if (!target || target.dataset.rowActionsBound === "true") return;
-    target.dataset.rowActionsBound = "true";
-    target.addEventListener("click", (event) => {
-      const addButton = event.target.closest("[data-add-row]");
-      const deleteButton = event.target.closest("[data-delete-row]");
-      if (!addButton && !deleteButton) return;
-      const row = event.target.closest("[data-product-row]");
-      if (!row) return;
-
-      if (addButton) {
-        insertBlankProductRow(row);
-        showToast("已在当前行后新增空白行");
-        return;
-      }
-
-      const itemId = one(".actual-input", row)?.dataset.itemId;
-      if (itemId && saveTimers.has(itemId)) {
-        window.clearTimeout(saveTimers.get(itemId));
-        saveTimers.delete(itemId);
-      }
-      row.remove();
-      renumberProductRows();
-      updateReceiptSummary();
-      updateGlobalSaveState();
-      showToast("已删除当前行");
-    });
-  }
-
-  function captureCurrentProductData() {
-    const target = one("[data-quantity-body]");
-    if (!target) return [];
-    return all("[data-product-row]", target).map((row, index) => {
-      const productInput = one(".detail-product-input", row);
-      const recognizedCell = one("[data-recognized-product]", row);
-      const recognizedText = productInput
-        ? productInput.value.trim()
-        : row.dataset.recognizedName ||
-          recognizedCell?.textContent.trim().replace(/^--$/, "") ||
-          "";
-      const orderProductName = row.dataset.orderProductName || "";
-      const currentProductName = recognizedText || orderProductName;
-      const quantityInput = one(
-        ".actual-input, .local-actual-input",
-        row,
-      );
-      const unitInput = one(".detail-unit-input", row);
-      const remarkInput = one(".detail-remark-input", row);
-      return {
-        id:
-          quantityInput?.dataset.itemId ||
-          row.dataset.manualId ||
-          row.dataset.exceptionId ||
-          `CURRENT-${index + 1}`,
-        name: currentProductName,
-        recognizedName: currentProductName,
-        matchName: currentProductName,
-        actual: quantityInput?.value ?? "",
-        unit: unitInput?.value.trim() || row.dataset.unit || "",
-        remark: remarkInput?.value ?? "",
-        aiText: row.dataset.aiText || "",
-        editableName: Boolean(productInput),
-        afterSalesType: row.dataset.afterSalesType || "",
-        exceptionAmount:
-          one(".exception-amount-input", row)?.value ??
-          row.dataset.exceptionAmount ??
-          "",
-        returnInboundId: row.dataset.returnInboundId || "",
-      };
-    });
-  }
-
-  function rematchCurrentProducts(order, currentProducts) {
-    const used = new Set();
-    const matched = order.lines.map((line) => {
-      const matchIndex = currentProducts.findIndex(
-        (item, index) =>
-          !used.has(index) &&
-          normalizeProductName(item.matchName) ===
-            normalizeProductName(line.name),
-      );
-      if (matchIndex < 0) {
-        return {
-          recognizedName: "",
-          actual: "0",
-          remark: "",
-          aiText: "",
-          afterSalesType: "",
-          exceptionAmount: "",
-          returnInboundId: "",
-        };
-      }
-      used.add(matchIndex);
-      return currentProducts[matchIndex];
-    });
-    const extras = currentProducts.filter((_, index) => !used.has(index));
-    return { matched, extras };
-  }
-
-  function renderQuantityRows(order, currentProducts = null) {
+  function renderQuantityRows(order) {
     const target = one("[data-quantity-body]");
     if (!target) return;
     if (!order) {
-      target.innerHTML = activeReceiptAiOriginalLines
-        .map((item, index) => renderAiLine(item, index))
-        .join("");
-    } else if (currentProducts) {
-      const rematched = rematchCurrentProducts(order, currentProducts);
-      const orderRows = order.lines
-        .map((line, index) =>
-          renderOrderLine(line, index, rematched.matched[index]),
-        )
-        .join("");
-      const extraRows = rematched.extras
-        .map((item, index) =>
-          renderReceiptOnlyRow(item, order.lines.length + index),
-        )
-        .join("");
-      target.innerHTML = `${orderRows}${extraRows}`;
+      target.innerHTML = '<tr class="empty-row"><td colspan="7">请先关联销售订单</td></tr>';
     } else {
-      const orderRows = order.lines
+      target.innerHTML = order.lines
         .map((line, index) => renderOrderLine(line, index))
         .join("");
-      const exceptionRows = activeReceiptAiExceptions
-        .map((item, index) =>
-          renderUnmatchedRow(item, order.lines.length + index),
-        )
-        .join("");
-      target.innerHTML = `${orderRows}${exceptionRows}`;
     }
     target.hidden = false;
-    renumberProductRows();
     bindQuantityEditing();
     bindAfterSalesEditing();
-    bindLocalQuantityEditing();
-    bindRowActions();
-    updateReceiptSummary();
+    initializeReceiptMode();
     decorateSpecTargets(detailSpecTargets);
   }
 
@@ -2833,8 +3182,12 @@
           initialOrderField?.value ||
           initialOrderField?.textContent.trim() ||
           "";
-    if (initialOrderId) document.body.dataset.orderId = initialOrderId;
+    if (initialOrderId) {
+      document.body.dataset.orderId = initialOrderId;
+      document.body.dataset.orderAssociationSource ||= "ai";
+    }
     renderQuantityRows(receiptOrderCatalog[initialOrderId] || null);
+    updateOrderAssociationUI();
   }
 
   function bindOrderSelection() {
@@ -2846,7 +3199,10 @@
           initialOrderField?.value ||
           initialOrderField?.textContent.trim() ||
           "";
-    if (initialOrderId) document.body.dataset.orderId = initialOrderId;
+    if (initialOrderId) {
+      document.body.dataset.orderId = initialOrderId;
+      document.body.dataset.orderAssociationSource ||= "ai";
+    }
     const openButton = one("[data-open-order-query]");
     const queryBody = one("[data-order-query-body]");
     const confirm = one("[data-confirm-order-link]");
@@ -2859,10 +3215,9 @@
       orderEnd: one("[data-ai-order-end]")?.value || "",
       receiveStart: one("[data-ai-receive-start]")?.value || "",
       receiveEnd: one("[data-ai-receive-end]")?.value || "",
-      totalAmount: one("[data-ai-total-amount]")?.value.trim() || "",
     });
 
-    const rangesOverlap = (startA, endA, startB, endB) => {
+    const periodsOverlap = (startA, endA, startB, endB) => {
       if (!startA || !startB) return false;
       const a1 = new Date(startA).getTime();
       const a2 = new Date(endA || startA).getTime();
@@ -2885,7 +3240,7 @@
         else if (order.merchant.toLowerCase().includes(merchant)) score += 20;
       }
       if (
-        rangesOverlap(
+        periodsOverlap(
           criteria.orderStart,
           criteria.orderEnd,
           order.orderTime,
@@ -2895,7 +3250,7 @@
         score += 18;
       }
       if (
-        rangesOverlap(
+        periodsOverlap(
           criteria.receiveStart,
           criteria.receiveEnd,
           order.receiveTime,
@@ -2904,20 +3259,14 @@
       ) {
         score += 18;
       }
-      const amount = Number(criteria.totalAmount);
-      if (criteria.totalAmount && Number.isFinite(amount)) {
-        const difference = Math.abs(order.totalAmount - amount);
-        if (difference < 0.01) score += 16;
-        else if (difference / Math.max(order.totalAmount, 1) <= 0.1) score += 8;
-      }
       return score;
     };
 
     const queryOrders = () => {
       const criteria = readCriteria();
       const eligibleStatuses = ["等待分拣", "分拣中", "配送中", "已签收"];
-      const eligibleOrders = Object.values(receiptOrderCatalog).filter((order) =>
-        eligibleStatuses.includes(order.orderStatus),
+      const eligibleOrders = Object.values(receiptOrderCatalog).filter(
+        (order) => eligibleStatuses.includes(order.orderStatus),
       );
       const exactOrder = eligibleOrders.find(
         (order) =>
@@ -2953,43 +3302,76 @@
 
     const formatDateTime = (value) =>
       value ? value.replace("T", " ").replaceAll("-", "/") : "--";
-    const formatTimeRange = (start, end) =>
+    const formatTimePeriod = (start, end) =>
       `${formatDateTime(start)} ～ ${formatDateTime(end || start)}`;
 
     const renderQueryResults = () => {
       const orders = queryOrders();
       const currentOrderId = document.body.dataset.orderId || "";
-      const defaultOrderId = orders.some(
-        (order) => order.id === currentOrderId,
-      )
+      const defaultOrderId = orders.some((order) => order.id === currentOrderId)
         ? currentOrderId
         : orders.length === 1
           ? orders[0].id
           : "";
       pendingOrderId = defaultOrderId;
       confirm.disabled = !defaultOrderId;
+      confirm.textContent =
+        defaultOrderId && defaultOrderId === currentOrderId
+          ? "保持关联"
+          : "关联订单";
       if (!orders.length) {
         queryBody.innerHTML =
-          '<tr class="empty-row"><td colspan="6">未查询到符合条件的销售订单</td></tr>';
+          '<tr class="empty-row"><td colspan="5">未查询到符合条件的销售订单</td></tr>';
         return;
       }
       queryBody.innerHTML = orders
         .map((order) => {
           const checked = order.id === defaultOrderId ? " checked" : "";
-          return `<tr${checked ? ' class="selected"' : ""}>
+          const currentTag =
+            order.id === currentOrderId
+              ? '<em class="current-order-tag">当前</em>'
+              : "";
+          const rowClasses = checked ? "selected" : "";
+          return `<tr${rowClasses ? ` class="${rowClasses}"` : ""}>
             <td><input type="radio" name="query-order" value="${escapeHTML(order.id)}" aria-label="选择销售订单 ${escapeHTML(order.id)}"${checked}></td>
             <td>${escapeHTML(order.merchant)}</td>
-            <td><strong>${escapeHTML(order.id)}</strong></td>
-            <td>${escapeHTML(formatTimeRange(order.orderTime, order.orderTimeEnd))}</td>
-            <td>${escapeHTML(formatTimeRange(order.receiveTime, order.receiveTimeEnd))}</td>
-            <td class="right">¥${Number(order.totalAmount).toFixed(2)}</td>
+            <td><strong>${escapeHTML(order.id)}</strong>${currentTag}</td>
+            <td>${escapeHTML(formatTimePeriod(order.orderTime, order.orderTimeEnd))}</td>
+            <td>${escapeHTML(formatTimePeriod(order.receiveTime, order.receiveTimeEnd))}</td>
           </tr>`;
         })
         .join("");
     };
 
     openButton.addEventListener("click", () => {
+      if (isOrderAssociationLocked()) {
+        showToast("商品条目已人工修改，不可更换关联订单");
+        return;
+      }
+      const criteria = readCriteria();
+      if (
+        criteria.orderStart &&
+        criteria.orderEnd &&
+        new Date(criteria.orderStart) > new Date(criteria.orderEnd)
+      ) {
+        showToast("下单时间段的开始时间不可晚于结束时间");
+        return;
+      }
+      if (
+        criteria.receiveStart &&
+        criteria.receiveEnd &&
+        new Date(criteria.receiveStart) > new Date(criteria.receiveEnd)
+      ) {
+        showToast("收货时间段的开始时间不可晚于结束时间");
+        return;
+      }
       renderQueryResults();
+      const title = one("#orderQueryModalTitle");
+      if (title) {
+        title.textContent = document.body.dataset.orderId
+          ? "更换关联订单"
+          : "查询销售订单";
+      }
       openModal("orderQueryModal");
     });
 
@@ -3001,9 +3383,18 @@
         row.classList.toggle("selected", row.contains(radio)),
       );
       confirm.disabled = false;
+      confirm.textContent =
+        radio.value === (document.body.dataset.orderId || "")
+          ? "保持关联"
+          : "关联订单";
     });
 
     confirm.addEventListener("click", () => {
+      if (isOrderAssociationLocked()) {
+        closeModal("orderQueryModal");
+        showToast("商品条目已人工修改，不可更换关联订单");
+        return;
+      }
       const nextOrder = receiptOrderCatalog[pendingOrderId];
       if (!nextOrder) {
         showToast("请先选择需要关联的销售订单");
@@ -3016,23 +3407,31 @@
         showToast(`当前已关联 ${nextOrder.id}`);
         return;
       }
-      const currentProducts = captureCurrentProductData();
       confirm.disabled = true;
       confirm.textContent = "正在关联…";
       window.setTimeout(() => {
+        if (!bindOrderToCurrentReceipt(nextOrder.id, oldOrderId)) {
+          confirm.disabled = false;
+          confirm.textContent = "关联订单";
+          showToast("订单关联状态已变化，请重新选择");
+          return;
+        }
+        clearAfterSalesDraft();
         document.body.dataset.orderId = nextOrder.id;
         document.body.dataset.orderUnassociated = "false";
-        renderQuantityRows(nextOrder, currentProducts);
+        document.body.dataset.orderAssociationSource = "manual";
+        renderQuantityRows(nextOrder);
+        setReceiptMode("normal");
+        updateOrderAssociationUI();
         setTaskState("待处理");
         closeModal("orderQueryModal");
         confirm.disabled = false;
         confirm.textContent = "关联订单";
         pendingOrderId = "";
-        showToast(
-          `已关联 ${nextOrder.id}，并按当前已修改商品数据重新匹配`,
-        );
+        showToast(`已关联 ${nextOrder.id}，商品列表已按该订单重新生成`);
       }, 450);
     });
+    updateOrderAssociationUI();
   }
 
   function bindSearchTables() {
@@ -3069,15 +3468,148 @@
     });
   }
 
+  function applyMerchantTerminology() {
+    const roots = [document.body, ...all("template").map((item) => item.content)];
+    roots.forEach((root) => {
+      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+      let node = walker.nextNode();
+      while (node) {
+        node.nodeValue = merchantTerminology(node.nodeValue);
+        node = walker.nextNode();
+      }
+      all("[title], [aria-label], [placeholder]", root).forEach((element) => {
+        ["title", "aria-label", "placeholder"].forEach((attribute) => {
+          if (element.hasAttribute(attribute)) {
+            element.setAttribute(
+              attribute,
+              merchantTerminology(element.getAttribute(attribute)),
+            );
+          }
+        });
+      });
+    });
+    document.title = merchantTerminology(document.title);
+  }
+
+  function integrateReceiptNavigation() {
+    const nav = one(".nav");
+    if (!nav) return;
+    const page = document.body.dataset.page || "";
+    const params = new URLSearchParams(window.location.search);
+    const receiptPages = new Set([
+      "home",
+      "receipts",
+      "entry",
+      "detail-pending",
+      "detail-processing",
+      "detail-completed",
+    ]);
+    const receiptActive = receiptPages.has(page);
+    const currentReceiptPermission =
+      page === "stats"
+        ? "stats"
+        : page === "settings"
+          ? "settings"
+          : page === "entry"
+            ? "entry"
+            : "audit";
+    const active = (condition) => (condition ? " active" : "");
+    const navIcons = {
+      home: '<path d="M3 11.5 12 4l9 7.5M5.5 10.5V20h13v-9.5M9.5 20v-6h5v6"/>',
+      review: '<path d="M6 3h12v18H6zM9 8h6M9 12h4M15.5 15.5l4 4M18 15.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/>',
+      edit: '<path d="M5 19l4-.8L19 8l-3-3L5.8 15.2 5 19zM14 7l3 3M4 21h16"/>',
+      receipt: '<path d="M6 3h12v18H6zM9 8h6M9 12h6M9 16h3M15.5 15.5l1.5 1.5 3-3"/>',
+      users: '<circle cx="8" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M2.5 20a5.5 5.5 0 0 1 11 0M13 20a4.5 4.5 0 0 1 8 0"/>',
+      bag: '<path d="M5 8h14l-1 12H6L5 8zM9 8a3 3 0 0 1 6 0"/>',
+      code: '<path d="M4 5h16v14H4zM8 10l3 2-3 2M13 15h3"/>',
+      chart: '<path d="M4 20V9m5 11V4m5 16v-7m5 7V6M2 20h20"/>',
+      dash: '<path d="M4 18a8 8 0 1 1 16 0M12 12l4-4M7 17h10"/>',
+      settings: '<circle cx="12" cy="12" r="3"/><path d="M12 3v3m0 12v3M3 12h3m12 0h3M5.6 5.6l2.1 2.1m8.6 8.6 2.1 2.1m0-12.8-2.1 2.1m-8.6 8.6-2.1 2.1"/>',
+    };
+    const navIcon = (name) => `<span class="nav-symbol"><svg viewBox="0 0 24 24" aria-hidden="true">${navIcons[name]}</svg></span>`;
+    nav.innerHTML = `
+      <a class="nav-item" href="../ai_order/home.html" data-title="首页" aria-label="首页" data-nav-scope="shared">${navIcon("home")}</a>
+      <a class="nav-item" href="../ai_order/tasks.html" data-title="订单审核" aria-label="订单审核" data-nav-scope="order">${navIcon("review")}</a>
+      <a class="nav-item" href="../ai_order/chat-simulator.html" data-title="订单录入" aria-label="订单录入" data-nav-scope="order">${navIcon("edit")}</a>
+      <div class="nav-group" data-receipt-module-root>
+        <a class="nav-item nav-parent${active(receiptActive)}" href="receipts.html" data-title="销售回单" aria-label="销售回单" aria-haspopup="true">${navIcon("receipt")}</a>
+        <div class="nav-flyout" role="menu" aria-label="销售回单菜单">
+          <a class="${active(page === "receipts" || page === "detail-pending" || page === "detail-processing" || page === "detail-completed")}" href="receipts.html" data-receipt-permission="audit" role="menuitem">回单审核</a>
+          <a class="${active(page === "entry")}" href="receipt-entry.html" data-receipt-permission="entry" role="menuitem">录入回单</a>
+          <a href="../ai_order/stats.html?tab=receipt" data-receipt-permission="stats" role="menuitem">回单统计</a>
+        </div>
+      </div>
+      <div class="nav-group">
+        <a class="nav-item nav-parent${active(page === "merchants" || page === "groups" || page === "groups-detail")}" href="../ai_order/customers.html" data-title="商户管理" aria-label="商户管理" aria-haspopup="true">${navIcon("users")}</a>
+        <div class="nav-flyout" role="menu" aria-label="商户管理菜单">
+          <a class="${active(page === "merchants")}" href="../ai_order/customers.html" role="menuitem">商户管理</a>
+          <a class="${active(page === "groups" || page === "groups-detail")}" href="../ai_order/groups.html" role="menuitem">群聊管理</a>
+          <a href="../ai_order/customer-groups.html" role="menuitem">商户分组</a>
+        </div>
+      </div>
+      <a class="nav-item" href="../ai_order/sku.html" data-title="报价单" aria-label="报价单" data-nav-scope="order">${navIcon("bag")}</a>
+      <div class="nav-group">
+        <a class="nav-item nav-parent" href="../ai_order/prompts.html" data-title="提示词" aria-label="提示词" aria-haspopup="true">${navIcon("code")}</a>
+        <div class="nav-flyout" role="menu" aria-label="提示词菜单">
+          <a href="../ai_order/prompts.html" role="menuitem">提示词</a>
+          <a href="../ai_order/memory.html" role="menuitem">AI 记忆</a>
+        </div>
+      </div>
+      <a class="nav-item${active(page === "stats")}" href="../ai_order/stats.html${page === "stats" ? "?tab=receipt" : ""}" data-title="统计" aria-label="统计" data-nav-scope="shared">${navIcon("chart")}</a>
+      <a class="nav-item" href="../ai_order/decision-dashboard.html" data-title="决策大屏" aria-label="决策大屏" data-nav-scope="shared">${navIcon("dash")}</a>
+      <a class="nav-item${active(page === "settings")}" href="../ai_order/settings.html" data-title="设置" aria-label="设置" data-nav-scope="shared">${navIcon("settings")}</a>`;
+
+    const disabledFlag = (value) =>
+      ["0", "false", "off", "none"].includes(String(value || "").toLowerCase());
+    const moduleEnabled = !disabledFlag(params.get("receiptEnabled"));
+    const modulePermission = !disabledFlag(params.get("receiptPermission"));
+    const moduleVisible = moduleEnabled && modulePermission;
+    const permissionParams = {
+      entry: "receiptEntryPermission",
+      audit: "receiptAuditPermission",
+      stats: "receiptStatsPermission",
+      settings: "receiptSettingsPermission",
+    };
+    all("[data-receipt-permission]", nav).forEach((item) => {
+      item.hidden =
+        !moduleVisible ||
+        disabledFlag(params.get(permissionParams[item.dataset.receiptPermission]));
+    });
+    const receiptRoot = one("[data-receipt-module-root]", nav);
+    const visibleChildren = all("[data-receipt-permission]", receiptRoot).filter(
+      (item) => !item.hidden,
+    );
+    if (receiptRoot) receiptRoot.hidden = !moduleVisible || !visibleChildren.length;
+    const receiptParent = one(".nav-parent", receiptRoot);
+    if (receiptParent && visibleChildren[0]) receiptParent.href = visibleChildren[0].href;
+
+    const currentPermissionAllowed =
+      moduleVisible &&
+      !disabledFlag(params.get(permissionParams[currentReceiptPermission]));
+    if ((receiptActive || page === "stats" || page === "settings") && !currentPermissionAllowed) {
+      const content = one(".content");
+      if (content) {
+        const title = moduleEnabled ? "暂无此回单功能权限" : "销售回单未开通";
+        content.innerHTML = `<div class="page"><section class="module-access-state"><strong>${title}</strong><a class="btn primary" href="../ai_order/home.html">返回首页</a></section></div>`;
+      }
+    }
+
+    const requirementsLink = one('.sider > a[data-title="需求框架"]');
+    if (requirementsLink) requirementsLink.hidden = true;
+  }
+
   function bindApplicationCenterLinks() {
     all(".back-app").forEach((link) => {
-      link.href = "../index.html#home";
+      link.href = "../ai_order/home.html";
+      link.textContent = "← 返回首页";
     });
     const brand = one(".brand");
     if (brand) {
-      brand.href = "home.html";
-      brand.title = "销售回单首页";
+      brand.href = "../ai_order/home.html";
+      brand.title = "AI录单首页";
     }
+    const tenant = one(".tenant");
+    if (tenant) tenant.innerHTML = "<strong>AI 销售订单应用</strong><span>销售回单</span>";
   }
 
   function applyDetailReadOnlyMode() {
@@ -3092,7 +3624,7 @@
       select.setAttribute("aria-disabled", "true");
     });
     all(
-      "[data-save-now], [data-confirm-submit], [data-add-product], [data-add-row], [data-delete-row], [data-open-order-query], [data-confirm-order-link]",
+      "[data-save-now], [data-confirm-submit], [data-open-order-query], [data-confirm-order-link]",
     ).forEach((control) => {
       control.disabled = true;
     });
@@ -3209,6 +3741,8 @@
   }
 
   function init() {
+    applyMerchantTerminology();
+    integrateReceiptNavigation();
     bindApplicationCenterLinks();
     bindAgentSwitcher();
     bindGlobalControls();
@@ -3217,10 +3751,11 @@
     applyReceiptScenario();
     bindInlineSourceLocation();
     bindSpecDrawer();
+    ensureAfterSalesReasonOptions();
     initializeQuantityRows();
+    bindProductModificationLock();
     bindManualSave();
     bindConfirmSubmit();
-    bindAddProductButton();
     bindEntryPage();
     bindOrderSelection();
     bindSearchTables();

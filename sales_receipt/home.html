@@ -68,11 +68,11 @@
             <p>2026年07月27日 星期一</p>
           </div>
           <nav class="home-shortcuts" aria-label="快捷入口">
-            <a href="receipts.html" class="home-shortcut"><span class="shortcut-tile cyan">▤</span><span>回单任务</span></a>
+            <a href="receipts.html" class="home-shortcut"><span class="shortcut-tile cyan">▤</span><span>回单审核</span></a>
             <a href="receipt-entry.html" class="home-shortcut"><span class="shortcut-tile mint">✎</span><span>回单录入</span></a>
             <a href="merchants.html" class="home-shortcut"><span class="shortcut-tile orange">♙</span><span>商户管理</span></a>
             <a href="groups.html" class="home-shortcut"><span class="shortcut-tile coral">♧</span><span>群聊管理</span></a>
-            <a href="settings.html" class="home-shortcut"><span class="shortcut-tile pale">✺</span><span>设置</span></a>
+            <a href="../ai_order/settings.html" class="home-shortcut"><span class="shortcut-tile pale">✺</span><span>设置</span></a>
           </nav>
           <span class="banner-orb orb-one"></span><span class="banner-orb orb-two"></span><span class="banner-orb orb-three"></span>
         </section>
@@ -87,11 +87,11 @@
             </div>
           </section>
           <section class="reference-card quota-card">
-            <div class="reference-card-title"><strong><span class="title-icon blue">ϟ</span> 回单识别额度</strong><a href="../index.html#tenant-quota" title="进入全局额度管理">›</a></div>
-            <div class="quota-main"><strong>99,260</strong><span class="quota-days">&gt;999<br><small>预计天</small></span></div>
-            <span class="muted">剩余额度</span>
+            <div class="reference-card-title"><strong><span class="title-icon blue">✓</span> 今日处理结果</strong><a href="../ai_order/stats.html?tab=receipt" title="查看回单统计">›</a></div>
+            <div class="quota-main"><strong>28</strong><span class="quota-days">6<br><small>退货单</small></span></div>
+            <span class="muted">已完成回单</span>
             <div class="quota-progress"><span></span></div>
-            <div class="quota-foot"><span>已用 1,910</span><span>总额 101,170</span></div>
+            <div class="quota-foot"><span>异常商品 19</span><span>同步失败 1</span></div>
           </section>
         </div>
         <section class="reference-card group-board">
@@ -112,7 +112,7 @@
   <h3>页面目标</h3>
   <p>让回单岗快速判断今日处理量、异常量和待办任务，并进入最常用页面。</p>
   <h3>字段与业务含义</h3>
-  <ul><li>识别中：当前仍由 AI 解析的任务数。</li><li>待处理：订单未匹配、售后类型未确认或观麦同步失败的任务数。</li><li>今日已完成：当日售后字段及退货入库单已成功同步观麦的任务数。</li><li>差异回单：至少一个商品差异数不为 0 的回单数。</li><li>回单识别额度：展示共享额度池概览，点击进入应用中心的全局额度管理。</li></ul>
+  <ul><li>识别中：当前仍由 AI 解析的任务数。</li><li>待处理：订单未关联、售后类型/原因未完成或观麦同步失败的任务数。</li><li>今日已完成：当日售后原因、售后字段及退货入库单已成功同步观麦的任务数。</li><li>差异回单：至少一个商品差异数不为 0 的回单数。</li><li>今日处理结果：展示已完成回单、退货入库单、异常商品和同步失败数量。</li></ul>
   <h3>交互与业务规则</h3>
   <ul><li>点击指标后带对应筛选条件进入回单任务。</li><li>最近回单的状态、商户和差异数与任务列表保持一致。</li><li>状态全局只使用识别中、待处理、已完成。</li></ul>
 

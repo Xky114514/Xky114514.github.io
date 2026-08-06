@@ -73,10 +73,10 @@
         <aside class="entry-side">
           <div class="entry-side-head"><strong>AI 回单</strong><button type="button" aria-label="菜单">≡</button></div>
           <div class="segment">
-            <button class="active" type="button" data-source-mode="merchant">客户</button>
+            <button class="active" type="button" data-source-mode="merchant">商户</button>
             <button type="button" data-source-mode="group">群聊</button>
           </div>
-          <label class="field entry-search"><span>搜索来源</span><input data-entry-search placeholder="客户名称、编码或群聊"></label>
+          <label class="field entry-search"><span>搜索来源</span><input data-entry-search placeholder="商户名称、编码或群聊"></label>
           <div class="entry-list">
             <button class="entry-list-item" type="button" data-kind="merchant" data-name="华南鲜食店" data-search="华南鲜食店 M-10028"><strong>华南鲜食店</strong></button>
             <button class="entry-list-item" type="button" data-kind="merchant" data-name="城东实验小学" data-search="城东实验小学 M-10063"><strong>城东实验小学</strong></button>
@@ -89,7 +89,7 @@
         <section class="entry-main">
           <div class="entry-feed" data-entry-feed>
             <div class="entry-empty">
-              <div><div class="entry-empty-icon">▤</div><h2>录入销售回单</h2><p>选择客户或群聊后发送回单材料</p></div>
+              <div><div class="entry-empty-icon">▤</div><h2>录入销售回单</h2><p>选择商户或群聊后发送回单材料</p></div>
             </div>
           </div>
           <div class="entry-composer-wrap">
@@ -101,7 +101,7 @@
                   <input class="file-input" type="file" multiple accept=".png,.jpg,.jpeg,.pdf,.xlsx" data-file-input>
                   <button class="btn" type="button" data-upload-trigger>＋ 上传附件</button>
                   <label class="entry-customer-picker hidden">
-                    <select data-entry-customer aria-label="选择客户">
+                    <select data-entry-customer aria-label="选择商户">
                       <option>无叁</option>
                       <option>观麦Matto-杨永成</option>
                       <option>大面条</option>
@@ -127,11 +127,11 @@
   </div>
   <template id="pageSpec">
   <h3>页面目标</h3>
-  <p>模拟司机、客户或业务人员通过群聊或人工入口提交一张销售回单。</p>
+  <p>模拟司机、商户或业务人员通过群聊或人工入口提交一张销售回单。</p>
   <h3>字段与业务含义</h3>
-  <ul><li>客户：选择客户来源时由左侧列表确定；选择群聊来源时，在输入区底部显示客户下拉，用于指定群聊对应客户。</li><li>来源类型：客户或群聊，决定回单归属与候选订单范围。</li><li>回单文字：与附件至少填写一种。</li><li>附件：支持 JPG、PNG、PDF、Excel；多个附件属于同一张回单。</li><li>发送人和发送时间：由来源消息自动生成。</li></ul>
+  <ul><li>商户：选择商户来源时由左侧列表确定；选择群聊来源时，在输入区底部显示商户下拉，用于指定群聊对应商户。</li><li>来源类型：商户或群聊，决定回单归属与候选订单范围。</li><li>回单文字：与附件至少填写一种。</li><li>附件：支持 JPG、PNG、PDF、Excel；多个附件属于同一张回单。</li><li>发送人和发送时间：由来源消息自动生成。</li></ul>
   <h3>交互与业务规则</h3>
-  <ul><li>客户模式不显示客户下拉；群聊模式显示紧凑客户下拉。</li><li>群聊模式下未选择群聊或对应客户时禁止发送。</li><li>空文字且无附件时禁止发送。</li><li>发送成功后只创建一张识别中任务，避免重复点击生成多张任务。</li><li>AI 识别结束后，需人工处理的数据进入待处理；识别中任务不进入回单任务列表。</li></ul>
+  <ul><li>商户模式不显示商户下拉；群聊模式显示紧凑商户下拉。</li><li>群聊模式下未选择群聊或对应商户时禁止发送。</li><li>空文字且无附件时禁止发送。</li><li>发送成功后只创建一张识别中任务，避免重复点击生成多张任务。</li><li>AI 识别结束后，需人工处理的数据进入待处理；识别中任务不进入回单任务列表。</li></ul>
   <h3>异常与恢复</h3><p>不支持的文件类型被忽略并提示；本原型只模拟文件接收，不向外部系统上传。</p>
 </template>
 
