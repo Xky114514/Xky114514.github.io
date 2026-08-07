@@ -793,37 +793,6 @@
     });
   }
 
-  function bindAgentSwitcher() {
-    const sider = one(".sider");
-    if (!sider || one(".agent-switcher", sider)) return;
-
-    const switcher = document.createElement("details");
-    switcher.className = "agent-switcher";
-    switcher.innerHTML = `
-      <summary aria-label="切换 Agent 应用" title="切换 Agent 应用">
-        <span class="agent-center-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
-      </summary>
-      <div class="agent-switch-popover">
-        <div class="agent-switch-title">切换 Agent</div>
-        <a class="agent-switch-link" href="../index.html#home">
-          <span class="agent-app-icon platform">台</span>
-          <span class="agent-switch-copy"><strong>录单平台首页</strong><span>返回应用中心</span></span>
-        </a>
-        <a class="agent-switch-link" href="../index.html#purchase-home">
-          <span class="agent-app-icon purchase">采</span>
-          <span class="agent-switch-copy"><strong>采购录单</strong><span>进入采购录单首页</span></span>
-        </a>
-      </div>`;
-    sider.appendChild(switcher);
-
-    document.addEventListener("click", (event) => {
-      if (!switcher.contains(event.target)) switcher.removeAttribute("open");
-    });
-    document.addEventListener("keydown", (event) => {
-      if (event.key === "Escape") switcher.removeAttribute("open");
-    });
-  }
-
   const specHtml = (summary, rules = [], feedback = [], boundaries = []) => `
     <p>${summary}</p>
     <h3>业务规则</h3>
@@ -3599,17 +3568,26 @@
   }
 
   function bindApplicationCenterLinks() {
-    all(".back-app").forEach((link) => {
-      link.href = "../ai_order/home.html";
-      link.textContent = "← 返回首页";
-    });
+    all(".back-app").forEach((link) => link.remove());
     const brand = one(".brand");
     if (brand) {
       brand.href = "../ai_order/home.html";
-      brand.title = "AI录单首页";
+      brand.title = "销售录单首页";
     }
     const tenant = one(".tenant");
-    if (tenant) tenant.innerHTML = "<strong>AI 销售订单应用</strong><span>销售回单</span>";
+    if (tenant) tenant.innerHTML = "<strong>测试企业 1318</strong><span>销售录单</span>";
+    const userChip = one(".user-chip");
+    if (userChip) {
+      const menu = document.createElement("details");
+      menu.className = "admin-menu";
+      menu.innerHTML = `
+        <summary>系统管理员</summary>
+        <div class="admin-menu-popover" role="menu" aria-label="系统管理员菜单">
+          <a href="../index.html#tenant-members" role="menuitem">成员管理</a>
+          <a href="../index.html#tenant-quota" role="menuitem">额度管理</a>
+        </div>`;
+      userChip.replaceWith(menu);
+    }
   }
 
   function applyDetailReadOnlyMode() {
@@ -3744,7 +3722,6 @@
     applyMerchantTerminology();
     integrateReceiptNavigation();
     bindApplicationCenterLinks();
-    bindAgentSwitcher();
     bindGlobalControls();
     bindTabs();
     bindTaskFilters();

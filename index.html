@@ -16,12 +16,18 @@
     <main class="main">
       <header class="topbar">
         <div class="tenant">
-          <strong>前端 PRD 展示平台</strong>
-          <span id="moduleHint">系统总门户</span>
+          <strong>测试企业 1318</strong>
+          <span id="moduleHint">采购录单</span>
         </div>
         <div class="top-actions">
-          <span class="user-name">管理员 王明</span>
           <button class="text-btn muted">批注可编辑</button>
+          <details class="admin-menu">
+            <summary class="user-name">系统管理员</summary>
+            <div class="admin-menu-popover" role="menu" aria-label="系统管理员菜单">
+              <button type="button" data-route="tenant-members" role="menuitem">成员管理</button>
+              <button type="button" data-route="tenant-quota" role="menuitem">额度管理</button>
+            </div>
+          </details>
         </div>
       </header>
 

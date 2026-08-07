@@ -6,8 +6,7 @@ const FIELD_SPEC_MARKDOWN_FALLBACK_URLS = [
   "https://raw.githubusercontent.com/Xky114514/Xky114514.github.io/main/purchase-field-spec.md",
 ];
 const SALES_APP_URL = "./ai_order/home.html";
-const PLATFORM_HOME_URL = "./index.html#home";
-const PLATFORM_ROUTES = new Set(["home", "tenant-quota", "tenant-members"]);
+const PLATFORM_ROUTES = new Set(["tenant-quota", "tenant-members"]);
 const legacySalesRoutes = new Set([
   "sales-entry",
   "sales-review",
@@ -61,7 +60,6 @@ const routes = {
   projects: { label: "PRD 项目库", module: "projects", title: "PRD 展示平台" },
   "process-flow": { label: "流程图与说明", module: "projects", title: "流程图与说明" },
   "field-spec": { label: "字段说明 PRD", module: "projects", title: "字段说明 PRD" },
-  home: { label: "首页", module: "home", title: "AI录单平台" },
   "purchase-home": { label: "首页", tabLabel: "采购首页", module: "purchase", title: "采购录单" },
   "purchase-order-entry": { label: "采购单录入", module: "purchase", title: "采购录单" },
   "purchase-order-review": { label: "采购单审核", module: "purchase", title: "采购录单" },
@@ -89,7 +87,6 @@ const routeAliases = {
 const hiddenRoutes = new Set(["purchase-decision-screen", "purchase-supplier-groups"]);
 
 const primaryMenus = [
-  { key: "home", label: "首页", icon: "home", module: "home" },
   { key: "settings", label: "租户设置", icon: "setting", module: "settings" },
 ];
 
@@ -432,11 +429,11 @@ const prdProjects = [
     name: "AI 录单系统",
     status: "迭代中",
     route: "home",
-    version: "V0.8",
+    version: "V0.9",
     owner: "管理员",
-    updated: "2026-07-28",
-    desc: "统一承载 AI 销售订单应用、采购录单和租户级全局能力；销售回单作为销售订单应用内模块提供。",
-    pages: ["应用中心", "AI 销售订单应用入口", "采购录单", "全局配置", "批注面板"],
+    updated: "2026-08-07",
+    desc: "默认进入销售录单；采购录单保持独立工作台，成员与额度配置统一从系统管理员菜单进入。",
+    pages: ["销售录单", "采购录单", "成员管理", "额度管理", "批注面板"],
   },
   {
     id: "process-flow",
@@ -567,6 +564,16 @@ const purchaseFlowDiagrams = [
 const markdownDocumentCache = new Map();
 
 let iterationHistory = [
+  {
+    version: "V0.27",
+    date: "2026-08-07",
+    title: "录单入口与系统管理导航收敛",
+    changes: [
+      "移除独立应用中心首页，首次进入与旧首页地址统一跳转销售录单",
+      "销售录单与采购录单左上角补充对应应用名称",
+      "系统管理员菜单新增成员管理与额度管理入口，并移除底部应用切换器",
+    ],
+  },
   {
     version: "V0.26",
     date: "2026-07-14",
@@ -803,13 +810,6 @@ let pageAnnotations = {
     dev: ["字段说明只保留业务含义、页面表现和操作规则，不展开技术实现。", "供应商可输入下拉、采购数量与差异、入库时间点及补单状态必须作为联调和验收项。"],
     business: ["采购单审核的查询、重置位于筛选区，刷新、合单位于列表工具栏。", "群聊消息与定位来源属于同一组，定位来源是群聊消息右侧的附加操作。", "供应商只在 AI 明细编辑，关联采购单区域只读同步。", "候选弹窗展示可补单列表，同时保留独立确认提交入口且不提供暂存按钮。", "候选详情只保留核对所需摘要、商品表格和返回按钮；普通确认弹窗只保留确认文案与操作按钮。", "只有观麦尚未审核的采购单和采购入库单可以继续关联或补单。"],
     iteration: ["2026-07-14 V0.10 精简候选详情和普通确认提交弹窗，移除重复辅助信息与提交前注意事项。", "2026-07-13 V0.8 汇总审核布局、来源页签、可输入下拉供应商、差异高亮、保存文案和补单匹配规则。", "2026-07-13 细化关联采购单筛选、人工金额、确认问号说明，并新增观麦系统依赖与协同清单。", "2026-07-11 将字段说明升级为可直接研发评审和测试验收的完整 PRD。", "2026-07-11 增加合并送货影响评估和受限实现方案。", "2026-07-10 新增字段说明 PRD 入口，并渲染 purchase-field-spec.md。"],
-  },
-  home: {
-    title: "项目首页",
-    overview: "首页作为 AI 录单系统入口，展示应用中心、整体额度和租户级公共配置入口。",
-    dev: ["AI 销售订单应用卡片统一进入 ai_order/home.html，销售回单从应用内模块菜单进入；采购录单卡片进入采购首页 purchase-home。", "额度管理和成员管理拆为 tenant-quota、tenant-members 两个公共配置路由。"],
-    business: ["销售订单录入与销售回单共用一个应用入口，任务和审核流程相互隔离；采购录单保持独立入口。", "成员管理、应用中心和基础租户配置属于全局能力。"],
-    iteration: ["2026-08-05 将销售回单整合进 AI 销售订单应用。", "2026-07-28 新增销售回单试点。", "2026-07-03 将首页成员管理和额度管理拆为公共配置独立入口，并新增采购录单首页入口。"],
   },
   "purchase-home": {
     "title": "采购首页",
@@ -1369,14 +1369,14 @@ let pageAnnotations = {
   "tenant-members": {
     title: "成员管理",
     overview: "成员管理页是租户级公共配置，用于维护三个录单应用共用的操作人员、角色和启用状态。",
-    dev: ["路由为 tenant-members，从首页成员管理卡片进入。", "新增成员弹窗复用 operatorModal，字段包含姓名、用户名、密码和成员角色。", "成员角色拆分为订单操作员、采购操作员和回单操作员。"],
+    dev: ["路由为 tenant-members，从销售录单或采购录单顶部的系统管理员菜单进入。", "新增成员弹窗复用 operatorModal，字段包含姓名、用户名、密码和成员角色。", "成员角色拆分为订单操作员、采购操作员和回单操作员。"],
     business: ["新增按钮文案统一为新增成员。", "订单操作员用于销售订单录单，采购操作员用于采购录单，回单操作员用于销售回单任务处理。"],
     iteration: ["2026-07-28 新增回单操作员角色，成员管理继续作为全局入口。", "2026-07-03 将成员管理从首页公共配置卡片拆出独立页面，并补充新增成员弹窗。", "2026-07-03 新增成员角色拆分为订单操作员和采购操作员。"],
   },
   "tenant-quota": {
     title: "额度管理",
     overview: "额度管理页用于查看销售订单与采购录单的共享额度、预计可用天数、期间消耗和消耗明细。",
-    dev: ["路由为 tenant-quota，从首页额度管理卡片或额度资产入口进入。", "页面当前为静态原型，后续接入租户额度池、充值历史和消耗明细接口。"],
+    dev: ["路由为 tenant-quota，从销售录单或采购录单顶部的系统管理员菜单进入。", "页面当前为静态原型，后续接入租户额度池、充值历史和消耗明细接口。"],
     business: ["额度池当前展示销售订单录单与采购录单消耗。", "录单额度页需要展示剩余额度、累计充值、累计消耗和按时间范围筛选的消耗明细。"],
     iteration: ["2026-07-03 将额度管理从首页公共配置卡片拆出独立页面。"],
   },
@@ -1464,7 +1464,8 @@ function routeTo(key) {
     return;
   }
   if (state.route === "projects" && key !== "projects") {
-    state.tabs = [{ key: "home", label: "首页", isHome: true }];
+    const firstKey = routes[key]?.module === "purchase" ? "purchase-home" : key;
+    state.tabs = [{ key: firstKey, label: routes[firstKey]?.tabLabel || routes[firstKey]?.label || "", isHome: true }];
   }
   window.location.hash = key;
 }
@@ -1481,6 +1482,10 @@ function openPurchaseDetail(id) {
 
 function getRouteFromHash() {
   const key = window.location.hash.replace(/^#/, "");
+  if (key === "home") {
+    openSalesApp();
+    return "projects";
+  }
   if (legacySalesRoutes.has(key)) {
     openSalesApp();
     return "home";
@@ -1493,6 +1498,7 @@ function getRouteFromHash() {
 function render() {
   ensureAppShell();
   state.route = getRouteFromHash();
+  const route = routes[state.route];
   const isPlatformRoute = PLATFORM_ROUTES.has(state.route);
   if (state.annotationTargetRoute && state.annotationTargetRoute !== state.route) {
     state.annotationTargetId = "";
@@ -1502,10 +1508,13 @@ function render() {
   state.annotationEditing = false;
   document.body.classList.toggle("entry-mode", state.route === "purchase-order-entry" || state.route === "purchase-entry" || state.route === "purchase-detail");
   document.body.classList.toggle("project-mode", routes[state.route]?.module === "projects");
-  document.body.classList.toggle("home-mode", state.route === "home");
   document.body.classList.toggle("platform-mode", isPlatformRoute);
   document.body.classList.toggle("annotation-open", state.annotationOpen && state.route !== "projects");
-  document.title = isPlatformRoute ? `${routes[state.route].label} - AI录单平台` : "PRD 前端展示平台";
+  document.title = route.module === "projects"
+    ? "PRD 前端展示平台"
+    : route.module === "purchase"
+      ? `${route.label} - 采购录单`
+      : `${route.label} - 系统管理`;
   normalizeTabsForRoute();
   ensureTab(state.route);
   renderSideMenu();
@@ -1535,7 +1544,10 @@ function normalizeTabsForRoute() {
     return;
   }
   state.tabs = state.tabs.filter((tab) => tab.key !== "projects" && !hiddenRoutes.has(tab.key));
-  if (!state.tabs.length) state.tabs.push({ key: "home", label: "首页", isHome: true });
+  if (!state.tabs.length) {
+    const firstKey = routes[state.route]?.module === "purchase" ? "purchase-home" : state.route;
+    state.tabs.push({ key: firstKey, label: routes[firstKey]?.tabLabel || routes[firstKey]?.label || "", isHome: true });
+  }
 }
 
 function bindRouteButtons(root = document) {
@@ -1569,11 +1581,11 @@ function renderSideMenu() {
   const brandMark = brand?.querySelector(".brand-mark");
   const brandText = brand?.querySelector(".brand-text");
   if (brand) {
-    brand.dataset.route = isPlatformRoute ? "home" : "projects";
-    brand.title = isPlatformRoute ? "AI录单平台" : "项目库";
+    brand.dataset.route = isPlatformRoute ? "tenant-members" : "projects";
+    brand.title = isPlatformRoute ? "系统管理" : "项目库";
   }
   if (brandMark) brandMark.textContent = isPlatformRoute ? "AI" : "PRD";
-  if (brandText) brandText.textContent = isPlatformRoute ? "AI录单平台" : "PRD 平台";
+  if (brandText) brandText.textContent = isPlatformRoute ? "系统管理" : "PRD 平台";
   if (route.module === "projects") {
     document.getElementById("sideMenu").innerHTML = "";
     return;
@@ -1583,15 +1595,13 @@ function renderSideMenu() {
     : state.route;
   const globalMenuItems = isPlatformRoute
     ? [
-        { key: "home", label: "首页", icon: "home", module: "home" },
-        { key: "tenant-quota", label: "额度管理", icon: "setting", module: "settings" },
         { key: "tenant-members", label: "成员管理", icon: "group", module: "settings" },
+        { key: "tenant-quota", label: "额度管理", icon: "setting", module: "settings" },
       ]
     : route.module === "settings" && state.route !== "settings"
       ? [
-          { key: "home", label: "首页", icon: "home", module: "home" },
-          { key: "tenant-quota", label: "额度管理", icon: "setting", module: "settings" },
           { key: "tenant-members", label: "成员管理", icon: "group", module: "settings" },
+          { key: "tenant-quota", label: "额度管理", icon: "setting", module: "settings" },
         ]
       : primaryMenus;
   const globalHtml = route.module !== "purchase" ? `
@@ -1639,41 +1649,28 @@ function renderPurchaseIconMenu(activeKey) {
       </div>
       ${groupHtml}
     </div>
-    <details class="purchase-agent-switcher purchase-icon-menu">
-      <summary class="side-item side-icon-only" title="切换 Agent 应用" aria-label="切换 Agent 应用">
-        <span class="agent-center-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
-      </summary>
-      <div class="purchase-agent-popover">
-        <div class="purchase-agent-title">切换 Agent</div>
-        <a class="purchase-agent-link" href="${PLATFORM_HOME_URL}">
-          <span class="purchase-agent-icon platform">台</span>
-          <span class="purchase-agent-copy"><strong>录单平台首页</strong><span>返回应用中心</span></span>
-        </a>
-        <a class="purchase-agent-link" href="${SALES_APP_URL}">
-          <span class="purchase-agent-icon sales">销</span>
-          <span class="purchase-agent-copy"><strong>销售录单</strong><span>订单与回单</span></span>
-        </a>
-      </div>
-    </details>
   `;
 }
 
 function routeBreadcrumb(route) {
   if (route.module === "projects") return "项目库 / 全部 PRD";
-  if (route.module === "home") return `${route.title} / 项目首页`;
   return `${route.title} / ${route.label}`;
 }
 
 function renderTopbar() {
   const route = routes[state.route];
-  document.querySelector(".tenant strong").textContent = "前端 PRD 展示平台";
-  document.querySelector(".user-name").textContent = route.module === "projects" ? "" : "管理员";
+  const isPurchase = route.module === "purchase";
+  document.querySelector(".tenant strong").textContent = route.module === "projects" ? "前端 PRD 展示平台" : "测试企业 1318";
+  document.querySelector(".user-name").textContent = "系统管理员";
+  const adminMenu = document.querySelector(".admin-menu");
+  adminMenu.hidden = route.module === "projects";
+  if (adminMenu.open) adminMenu.removeAttribute("open");
   const actionButton = document.querySelector(".top-actions .text-btn.muted");
   actionButton.textContent = route.module === "projects" ? "" : state.annotationOpen ? "退出说明模式" : "业务说明";
   actionButton.classList.toggle("active", state.annotationOpen && route.module !== "projects");
   if (route.module === "projects") delete actionButton.dataset.annotationToggle;
   else actionButton.dataset.annotationToggle = "true";
-  document.getElementById("moduleHint").textContent = "";
+  document.getElementById("moduleHint").textContent = isPurchase ? "采购录单" : "";
 }
 
 function renderTabs() {
@@ -1706,7 +1703,6 @@ function renderContent() {
   if (state.route === "projects") content.innerHTML = projectsPage();
   if (state.route === "process-flow") content.innerHTML = processFlowPage();
   if (state.route === "field-spec") content.innerHTML = fieldSpecPage();
-  if (state.route === "home") content.innerHTML = homePage();
   if (state.route === "purchase-home") content.innerHTML = purchaseHomePage();
   if (state.route === "purchase-order-entry") content.innerHTML = entryPage("purchase-order");
   if (state.route === "purchase-entry") content.innerHTML = entryPage("purchase");
@@ -2898,45 +2894,6 @@ function escapeHTML(value) {
 
 function escapeAttribute(value) {
   return escapeHTML(value).replace(/`/g, "&#96;");
-}
-
-function homePage() {
-  return `
-    <div class="page platform-home-page">
-      <section class="platform-quota-block" aria-labelledby="overallQuotaTitle">
-        <h1 id="overallQuotaTitle">整体额度</h1>
-        <h2>额度使用概览</h2>
-        <div class="platform-quota-summary">
-          <div class="ring"><div class="ring-inner">62%<span>已用</span></div></div>
-          <div class="platform-quota-copy">
-            <strong>3,820</strong>
-            <span>剩余额度</span>
-            <p><b>6,180</b> 已用 <i></i> <b>10,000</b> 总额</p>
-          </div>
-        </div>
-      </section>
-
-      <section class="platform-app-center" aria-labelledby="appCenterTitle">
-        <h2 id="appCenterTitle">应用中心</h2>
-        <div class="platform-app-grid">
-          <a class="platform-app-card" href="${SALES_APP_URL}">
-            <span class="platform-app-cover sales">
-              <span class="app-icon sales-grad">销</span>
-              <span class="platform-cover-copy"><b>AI 销售订单</b><small>订单 · 回单 · 审核</small></span>
-            </span>
-            <strong>AI 销售订单应用</strong>
-          </a>
-          <button class="platform-app-card" data-route="purchase-home">
-            <span class="platform-app-cover purchase">
-              <span class="app-icon purchase-grad">采</span>
-              <span class="platform-cover-copy"><b>AI 采购录单</b><small>下单 · 入库 · 协同</small></span>
-            </span>
-            <strong>采购录单</strong>
-          </button>
-        </div>
-      </section>
-    </div>
-  `;
 }
 
 function configCard(route, icon, title, desc) {
@@ -5011,7 +4968,7 @@ function quotaManagementPage() {
 function roleSettings() {
   return `
     <div style="margin-top:16px" class="grid two">
-      <div class="card"><h3>管理员</h3><p>可访问首页、AI 销售订单应用（含销售回单模块）、采购录单和租户公共设置，以及各应用内部的提示词和记忆配置。</p><div class="agent-menus"><span class="pill blue">全功能访问</span><span class="pill">配置管理</span></div></div>
+      <div class="card"><h3>管理员</h3><p>可访问销售录单（含销售回单模块）、采购录单和租户公共设置，以及各应用内部的提示词和记忆配置。</p><div class="agent-menus"><span class="pill blue">全功能访问</span><span class="pill">配置管理</span></div></div>
       <div class="card"><h3>普通成员</h3><p>拥有基础录单和审核操作权限。身份标签仅用于展示和业务分组，现阶段不做细粒度权限拦截。</p><div class="agent-menus"><span class="pill green">基础录单</span><span class="pill">身份标签</span></div></div>
     </div>
   `;
@@ -6087,5 +6044,8 @@ function toast(message) {
 }
 
 window.addEventListener("hashchange", render);
-if (!window.location.hash) window.location.hash = "projects";
-loadAnnotationsFromFile().then(render);
+if (!window.location.hash || window.location.hash === "#home") {
+  openSalesApp();
+} else {
+  loadAnnotationsFromFile().then(render);
+}

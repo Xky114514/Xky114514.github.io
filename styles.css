@@ -220,135 +220,6 @@ button {
   padding-top: 8px;
 }
 
-.purchase-agent-switcher {
-  position: fixed;
-  left: 0;
-  bottom: 0;
-  z-index: 190;
-  width: 52px;
-  flex: 0 0 auto;
-  margin: 0;
-  padding: 0;
-  background: var(--sider);
-}
-
-.purchase-agent-switcher summary {
-  width: 44px;
-  height: 44px;
-  margin: 4px;
-  display: flex;
-  color: #fff;
-  background: var(--primary);
-  border-radius: 10px;
-  list-style: none;
-}
-
-.purchase-agent-switcher summary::-webkit-details-marker {
-  display: none;
-}
-
-.purchase-agent-switcher[open] summary {
-  color: #fff;
-  background: var(--primary);
-}
-
-.purchase-agent-switcher summary:hover,
-.purchase-agent-switcher[open] summary:hover {
-  background: #4096ff;
-}
-
-.purchase-agent-switcher .agent-center-mark {
-  width: 28px;
-  height: 28px;
-  display: grid;
-  grid-template-columns: repeat(2, 6px);
-  grid-template-rows: repeat(2, 6px);
-  place-content: center;
-  gap: 3px;
-  border: 1px solid rgba(255, 255, 255, 0.28);
-  border-radius: 8px;
-}
-
-.purchase-agent-switcher .agent-center-mark i {
-  width: 6px;
-  height: 6px;
-  border-radius: 2px;
-  background: currentColor;
-}
-
-.purchase-agent-popover {
-  position: absolute;
-  left: 60px;
-  bottom: 0;
-  z-index: 180;
-  width: 238px;
-  padding: 10px;
-  color: var(--text);
-  background: #fff;
-  border: 1px solid var(--border, #e8e8e8);
-  border-radius: 10px;
-  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.2);
-}
-
-.purchase-agent-title {
-  padding: 2px 4px 8px;
-  color: var(--muted);
-  font-size: 12px;
-}
-
-.purchase-agent-link {
-  min-height: 54px;
-  padding: 8px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  color: var(--text);
-  border-radius: 7px;
-  text-decoration: none;
-}
-
-.purchase-agent-link:hover {
-  background: #f5f8ff;
-}
-
-.purchase-agent-icon {
-  width: 36px;
-  height: 36px;
-  flex: 0 0 36px;
-  display: grid;
-  place-items: center;
-  color: #fff;
-  border-radius: 9px;
-  font-weight: 700;
-}
-
-.purchase-agent-icon.sales {
-  background: linear-gradient(135deg, #3db5ff, #1677ff);
-}
-
-.purchase-agent-icon.platform {
-  background: linear-gradient(135deg, #627eea, #354fc7);
-}
-
-.purchase-agent-icon.receipt {
-  background: linear-gradient(135deg, #8b7cff, #6554d9);
-}
-
-.purchase-agent-copy strong,
-.purchase-agent-copy span {
-  display: block;
-}
-
-.purchase-agent-copy strong {
-  font-size: 13px;
-}
-
-.purchase-agent-copy span {
-  margin-top: 2px;
-  color: var(--muted);
-  font-size: 11px;
-}
-
 .purchase-icon-menu {
   min-width: 52px;
 }
@@ -452,8 +323,9 @@ button {
 .tenant {
   min-width: 0;
   display: flex;
-  flex-direction: column;
-  gap: 3px;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
 }
 
 .tenant strong {
@@ -462,8 +334,11 @@ button {
 }
 
 .tenant span {
+  padding-left: 12px;
+  border-left: 1px solid var(--line);
   color: var(--muted);
-  font-size: 12px;
+  font-size: 14px;
+  font-weight: 600;
 }
 
 .top-actions {
@@ -507,7 +382,77 @@ body.home-mode .content {
 
 .user-name {
   color: var(--secondary);
-  margin-left: 8px;
+}
+
+.admin-menu {
+  position: relative;
+  overflow: visible;
+}
+
+.admin-menu[hidden] {
+  display: none;
+}
+
+.admin-menu summary {
+  min-height: 30px;
+  padding: 0 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border-radius: 5px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.admin-menu summary::-webkit-details-marker {
+  display: none;
+}
+
+.admin-menu summary::after {
+  content: "⌄";
+  color: var(--muted);
+  font-size: 11px;
+  transform: translateY(-1px);
+}
+
+.admin-menu[open] summary,
+.admin-menu summary:hover {
+  color: var(--primary);
+  background: #f5f8ff;
+}
+
+.admin-menu-popover {
+  position: absolute;
+  top: calc(100% + 7px);
+  right: 0;
+  z-index: 220;
+  width: 144px;
+  padding: 6px;
+  background: #fff;
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.16);
+}
+
+.admin-menu-popover button,
+.admin-menu-popover a {
+  width: 100%;
+  height: 38px;
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  color: var(--text);
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  text-align: left;
+  text-decoration: none;
+}
+
+.admin-menu-popover button:hover,
+.admin-menu-popover a:hover {
+  color: var(--primary);
+  background: #f5f8ff;
 }
 
 .text-btn,
@@ -6561,7 +6506,7 @@ select:focus {
 
   body.platform-mode .platform-menu {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 4px;
   }
 
