@@ -99,6 +99,121 @@ a {
   flex: 1;
 }
 
+.agent-switcher {
+  position: relative;
+  flex: 0 0 48px;
+}
+
+.agent-switcher summary {
+  width: 56px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  color: rgba(255, 255, 255, 0.76);
+  cursor: pointer;
+  list-style: none;
+}
+
+.agent-switcher summary::-webkit-details-marker {
+  display: none;
+}
+
+.agent-switcher summary:hover,
+.agent-switcher[open] summary {
+  color: #fff;
+  background: var(--primary);
+}
+
+.agent-center-mark {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  grid-template-columns: repeat(2, 6px);
+  grid-template-rows: repeat(2, 6px);
+  place-content: center;
+  gap: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 8px;
+}
+
+.agent-center-mark i {
+  width: 6px;
+  height: 6px;
+  border-radius: 2px;
+  background: currentColor;
+}
+
+.agent-switch-popover {
+  position: absolute;
+  left: 64px;
+  bottom: 4px;
+  z-index: 160;
+  width: 238px;
+  padding: 10px;
+  color: var(--text);
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.2);
+}
+
+.agent-switch-title {
+  padding: 2px 4px 8px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.agent-switch-link {
+  min-height: 54px;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-radius: 7px;
+}
+
+.agent-switch-link:hover {
+  background: #f5f8ff;
+}
+
+.agent-switch-link[aria-current="page"] {
+  background: #f5f8ff;
+}
+
+.agent-app-icon {
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  border-radius: 9px;
+  font-weight: 700;
+}
+
+.agent-app-icon.purchase {
+  background: linear-gradient(135deg, #35d8a0, #18b87c);
+}
+
+.agent-app-icon.sales {
+  background: linear-gradient(135deg, #3db5ff, #1677ff);
+}
+
+.agent-switch-copy strong,
+.agent-switch-copy span {
+  display: block;
+}
+
+.agent-switch-copy strong {
+  font-size: 13px;
+}
+
+.agent-switch-copy span {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
 .nav-item {
   position: relative;
   height: 48px;

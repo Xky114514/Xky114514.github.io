@@ -3576,6 +3576,14 @@
     }
     const tenant = one(".tenant");
     if (tenant) tenant.innerHTML = "<strong>测试企业 1318</strong><span>销售录单</span>";
+    const topActions = one(".top-actions");
+    if (topActions && !one(".prd-home-link", topActions)) {
+      const prdHomeLink = document.createElement("a");
+      prdHomeLink.className = "prd-home-link";
+      prdHomeLink.href = "../index.html#projects";
+      prdHomeLink.textContent = "← 返回 PRD 首页";
+      topActions.prepend(prdHomeLink);
+    }
     const userChip = one(".user-chip");
     if (userChip) {
       const menu = document.createElement("details");
@@ -3588,6 +3596,37 @@
         </div>`;
       userChip.replaceWith(menu);
     }
+  }
+
+  function bindAgentSwitcher() {
+    const sider = one(".sider");
+    if (!sider || one(".agent-switcher", sider)) return;
+
+    const switcher = document.createElement("details");
+    switcher.className = "agent-switcher";
+    switcher.innerHTML = `
+      <summary aria-label="切换应用" title="切换应用">
+        <span class="agent-center-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+      </summary>
+      <div class="agent-switch-popover">
+        <div class="agent-switch-title">切换应用</div>
+        <a class="agent-switch-link" href="../ai_order/home.html" aria-current="page">
+          <span class="agent-app-icon sales">销</span>
+          <span class="agent-switch-copy"><strong>销售录单</strong><span>当前应用</span></span>
+        </a>
+        <a class="agent-switch-link" href="../index.html#purchase-home">
+          <span class="agent-app-icon purchase">采</span>
+          <span class="agent-switch-copy"><strong>采购录单</strong><span>进入采购录单</span></span>
+        </a>
+      </div>`;
+    sider.appendChild(switcher);
+
+    document.addEventListener("click", (event) => {
+      if (!switcher.contains(event.target)) switcher.removeAttribute("open");
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") switcher.removeAttribute("open");
+    });
   }
 
   function applyDetailReadOnlyMode() {
@@ -3722,6 +3761,7 @@
     applyMerchantTerminology();
     integrateReceiptNavigation();
     bindApplicationCenterLinks();
+    bindAgentSwitcher();
     bindGlobalControls();
     bindTabs();
     bindTaskFilters();

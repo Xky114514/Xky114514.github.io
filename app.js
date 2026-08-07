@@ -565,6 +565,16 @@ const markdownDocumentCache = new Map();
 
 let iterationHistory = [
   {
+    version: "V0.28",
+    date: "2026-08-07",
+    title: "恢复应用互切与 PRD 返回入口",
+    changes: [
+      "销售录单、采购录单及销售回单顶部新增返回 PRD 首页按钮",
+      "当前应用名称改为主题蓝色高亮展示",
+      "左下角恢复销售录单与采购录单快捷互切，并移除首页选项",
+    ],
+  },
+  {
     version: "V0.27",
     date: "2026-08-07",
     title: "录单入口与系统管理导航收敛",
@@ -1649,6 +1659,22 @@ function renderPurchaseIconMenu(activeKey) {
       </div>
       ${groupHtml}
     </div>
+    <details class="purchase-agent-switcher purchase-icon-menu">
+      <summary aria-label="切换应用" title="切换应用">
+        <span class="agent-center-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+      </summary>
+      <div class="purchase-agent-popover">
+        <div class="purchase-agent-title">切换应用</div>
+        <a class="purchase-agent-link" href="${SALES_APP_URL}">
+          <span class="purchase-agent-icon sales">销</span>
+          <span class="purchase-agent-copy"><strong>销售录单</strong><span>进入销售录单</span></span>
+        </a>
+        <a class="purchase-agent-link" href="#purchase-home" aria-current="page">
+          <span class="purchase-agent-icon purchase">采</span>
+          <span class="purchase-agent-copy"><strong>采购录单</strong><span>当前应用</span></span>
+        </a>
+      </div>
+    </details>
   `;
 }
 

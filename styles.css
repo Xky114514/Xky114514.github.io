@@ -336,9 +336,9 @@ button {
 .tenant span {
   padding-left: 12px;
   border-left: 1px solid var(--line);
-  color: var(--muted);
+  color: var(--primary);
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .top-actions {
@@ -348,6 +348,157 @@ button {
   white-space: nowrap;
   min-width: 0;
   overflow-x: auto;
+}
+
+.prd-home-link {
+  height: 30px;
+  padding: 0 10px;
+  display: inline-flex;
+  align-items: center;
+  color: var(--primary);
+  background: #f5f9ff;
+  border: 1px solid #d9e7ff;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.prd-home-link:hover {
+  color: #0958d9;
+  border-color: var(--primary);
+  background: #e6f4ff;
+}
+
+.prd-home-link:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.purchase-agent-switcher {
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  z-index: 190;
+  width: 52px;
+  margin: 0;
+  padding: 0;
+  background: var(--sider);
+}
+
+.purchase-agent-switcher summary {
+  width: 44px;
+  height: 44px;
+  margin: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  background: var(--primary);
+  border-radius: 10px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.purchase-agent-switcher summary::-webkit-details-marker {
+  display: none;
+}
+
+.purchase-agent-switcher summary:hover,
+.purchase-agent-switcher[open] summary {
+  background: #4096ff;
+}
+
+.purchase-agent-switcher .agent-center-mark {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  grid-template-columns: repeat(2, 6px);
+  grid-template-rows: repeat(2, 6px);
+  place-content: center;
+  gap: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 8px;
+}
+
+.purchase-agent-switcher .agent-center-mark i {
+  width: 6px;
+  height: 6px;
+  border-radius: 2px;
+  background: currentColor;
+}
+
+.purchase-agent-popover {
+  position: absolute;
+  left: 60px;
+  bottom: 0;
+  z-index: 180;
+  width: 238px;
+  padding: 10px;
+  color: var(--text);
+  background: #fff;
+  border: 1px solid var(--border, #e8e8e8);
+  border-radius: 10px;
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.2);
+}
+
+.purchase-agent-title {
+  padding: 2px 4px 8px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.purchase-agent-link {
+  min-height: 54px;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text);
+  border-radius: 7px;
+  text-decoration: none;
+}
+
+.purchase-agent-link:hover {
+  background: #f5f8ff;
+}
+
+.purchase-agent-link[aria-current="page"] {
+  background: #f5f8ff;
+}
+
+.purchase-agent-icon {
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  border-radius: 9px;
+  font-weight: 700;
+}
+
+.purchase-agent-icon.sales {
+  background: linear-gradient(135deg, #3db5ff, #1677ff);
+}
+
+.purchase-agent-icon.purchase {
+  background: linear-gradient(135deg, #35d8a0, #18b87c);
+}
+
+.purchase-agent-copy strong,
+.purchase-agent-copy span {
+  display: block;
+}
+
+.purchase-agent-copy strong {
+  font-size: 13px;
+}
+
+.purchase-agent-copy span {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 11px;
 }
 
 body.project-mode .app-shell {
