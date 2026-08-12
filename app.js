@@ -1669,22 +1669,6 @@ function renderPurchaseIconMenu(activeKey) {
       </div>
       ${groupHtml}
     </div>
-    <details class="purchase-agent-switcher purchase-icon-menu">
-      <summary aria-label="切换应用" title="切换应用">
-        <span class="agent-center-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
-      </summary>
-      <div class="purchase-agent-popover">
-        <div class="purchase-agent-title">切换应用</div>
-        <a class="purchase-agent-link" href="${SALES_APP_URL}">
-          <span class="purchase-agent-icon sales">销</span>
-          <span class="purchase-agent-copy"><strong>销售录单</strong><span>进入销售录单</span></span>
-        </a>
-        <a class="purchase-agent-link" href="#purchase-home" aria-current="page">
-          <span class="purchase-agent-icon purchase">采</span>
-          <span class="purchase-agent-copy"><strong>采购录单</strong><span>当前应用</span></span>
-        </a>
-      </div>
-    </details>
   `;
 }
 
@@ -1697,6 +1681,9 @@ function renderTopbar() {
   const route = routes[state.route];
   const isPurchase = route.module === "purchase";
   document.querySelector(".tenant strong").textContent = route.module === "projects" ? "前端 PRD 展示平台" : "测试企业 1318";
+  const sceneSwitcher = document.getElementById("sceneSwitcher");
+  sceneSwitcher.hidden = !isPurchase;
+  if (sceneSwitcher.open) sceneSwitcher.removeAttribute("open");
   document.querySelector(".user-name").textContent = "系统管理员";
   const adminMenu = document.querySelector(".admin-menu");
   adminMenu.hidden = route.module === "projects";

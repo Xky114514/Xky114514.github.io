@@ -205,13 +205,17 @@ if (!groupsPage.includes('href="group-detail.html"')) interactionMarkers.push('g
 
 for (const file of tenantPages) {
   const rawHtml = readRawHtml(file);
+  const customerTerm = file === 'chat-simulator.html' ? '客户' : '商户';
+  const terminologyHtml = file === 'prompts.html'
+    ? rawHtml.replaceAll('客户提示词', '').replaceAll('客户视图', '')
+    : rawHtml;
   if (!rawHtml.includes('data-page-spec-toggle')) interactionMarkers.push(`${file} -> 缺少全页面业务说明入口`);
   if (!rawHtml.includes('<script src="../business-specs.js"></script>')) interactionMarkers.push(`${file} -> 缺少共享业务说明脚本`);
-  if (rawHtml.includes('客户')) interactionMarkers.push(`${file} -> 用户可见术语应统一为“商户”`);
+  if (terminologyHtml.includes(customerTerm === '客户' ? '商户' : '客户')) interactionMarkers.push(`${file} -> 用户可见术语应统一为“${customerTerm}”`);
   if (!rawHtml.includes('href="../sales_receipt/receipts.html"')) interactionMarkers.push(`${file} -> 主导航缺少销售回单入口`);
   if (rawHtml.includes('<strong>销售回单</strong><span>进入销售回单首页</span>')) interactionMarkers.push(`${file} -> 销售回单不应在 Agent 切换器中重复出现`);
   const navMarkup = (rawHtml.match(/<nav class="t-nav"[\s\S]*?<\/nav>/) || [''])[0];
-  for (const marker of ['data-receipt-module-root', 'aria-label="销售回单菜单"', 'data-receipt-permission="entry"', 'data-receipt-permission="audit"', 'data-receipt-permission="stats"', '>录入回单</a>', '>回单审核</a>', '>回单统计</a>', 'aria-label="商户管理菜单"', 'href="customers.html"', '>商户管理</a>', 'href="groups.html"', '>群聊管理</a>', 'href="customer-groups.html"', '>商户分组</a>', 'href="sku.html"', 'aria-label="提示词菜单"', 'href="prompts.html"', '>提示词</a>', 'href="memory.html"', '>AI 记忆</a>', 'href="stats.html"', 'data-title="统计"', 'href="decision-dashboard.html"', 'data-title="决策大屏"', 'href="settings.html"', 'data-title="设置"']) {
+  for (const marker of ['data-receipt-module-root', 'aria-label="销售回单菜单"', 'data-receipt-permission="entry"', 'data-receipt-permission="audit"', 'data-receipt-permission="stats"', '>录入回单</a>', '>回单审核</a>', '>回单统计</a>', `aria-label="${customerTerm}管理菜单"`, 'href="customers.html"', `>${customerTerm}管理</a>`, 'href="groups.html"', '>群聊管理</a>', 'href="customer-groups.html"', `>${customerTerm}分组</a>`, 'href="sku.html"', 'aria-label="提示词菜单"', 'href="prompts.html"', '>提示词</a>', 'href="memory.html"', '>AI 记忆</a>', 'href="stats.html"', 'data-title="统计"', 'href="decision-dashboard.html"', 'data-title="决策大屏"', 'href="settings.html"', 'data-title="设置"']) {
     if (!navMarkup.includes(marker)) interactionMarkers.push(`${file} -> 新菜单结构缺少 ${marker}`);
   }
   if (navMarkup.includes('>回单任务</a>') || navMarkup.includes('data-receipt-permission="task"')) interactionMarkers.push(`${file} -> 回单任务与回单审核重复，应只保留回单审核`);
@@ -255,8 +259,14 @@ if (!groupHeader.includes('群聊名称</th><th>类型</th>') || !groupHeader.in
 if (groupHeader.includes('群聊名称</th><th>催单</th>')) interactionMarkers.push('groups.html -> 催单列不应继续紧邻群聊名称');
 if (!groupHeader.includes('aria-label="全选当前搜索结果"') || !groupHeader.includes('<span>全选</span>')) interactionMarkers.push('groups.html -> 批量选择态应提供明确的全选当前搜索结果入口');
 const receiptAppScript = rawFs.readFileSync(path.resolve(dir, '../sales_receipt/app.js'), 'utf8');
-for (const marker of ['data-receipt-module-root', 'role="menu" aria-label="销售回单菜单"', '>录入回单</a>', '>回单审核</a>', '>回单统计</a>', 'role="menu" aria-label="商户管理菜单"', 'href="../ai_order/customers.html"', 'href="../ai_order/groups.html"', 'href="../ai_order/customer-groups.html"', 'href="../ai_order/sku.html"', 'role="menu" aria-label="提示词菜单"', 'href="../ai_order/prompts.html"', 'href="../ai_order/memory.html"', 'href="../ai_order/stats.html', 'href="../ai_order/decision-dashboard.html"', 'data-title="决策大屏"', 'href="../ai_order/settings.html"', 'receiptEntryPermission', 'receiptAuditPermission', 'receiptStatsPermission', '销售回单未开通', '暂无此回单功能权限', '测试企业 1318', '销售录单', 'tenant-members', 'tenant-quota', 'function bindAgentSwitcher()', 'agent-switch-popover', 'href="../ai_order/home.html" aria-current="page"', 'href="../index.html#purchase-home"', 'href = "../index.html#projects"']) {
+for (const marker of ['data-receipt-module-root', 'role="menu" aria-label="销售回单菜单"', '>录入回单</a>', '>回单审核</a>', '>回单统计</a>', 'role="menu" aria-label="商户管理菜单"', 'href="../ai_order/customers.html"', 'href="../ai_order/groups.html"', 'href="../ai_order/customer-groups.html"', 'href="../ai_order/sku.html"', 'role="menu" aria-label="提示词菜单"', 'href="../ai_order/prompts.html"', 'href="../ai_order/memory.html"', 'href="../ai_order/stats.html', 'href="../ai_order/decision-dashboard.html"', 'data-title="决策大屏"', 'href="../ai_order/settings.html"', 'receiptEntryPermission', 'receiptAuditPermission', 'receiptStatsPermission', '销售回单未开通', '暂无此回单功能权限', '测试企业 1318', '销售录单', 'tenant-members', 'tenant-quota', 'class="scene-switcher"', 'aria-label="切换当前场景"', 'href="../index.html#purchase-home"', 'href = "../index.html#projects"']) {
   if (!receiptAppScript.includes(marker)) interactionMarkers.push(`sales_receipt/app.js -> 整合导航缺少 ${marker}`);
+}
+for (const marker of ['function bindAgentSwitcher()', 'className = "agent-switcher"', 'agent-switch-popover']) {
+  if (receiptAppScript.includes(marker)) interactionMarkers.push(`sales_receipt/app.js -> 左下角应用切换器已移除，不应保留 ${marker}`);
+}
+for (const marker of ['class="scene-summary-label">当前场景</span>', '<small>当前场景</small>', '<small>进入采购录单</small>']) {
+  if (receiptAppScript.includes(marker)) interactionMarkers.push(`sales_receipt/app.js -> 场景切换器不应保留辅助文案 ${marker}`);
 }
 if (receiptAppScript.includes('>回单任务</a>') || receiptAppScript.includes('data-receipt-permission="task"')) interactionMarkers.push('sales_receipt/app.js -> 回单任务与回单审核重复，应只保留回单审核');
 for (const marker of ['录单平台首页', '返回应用中心', 'href="../index.html#home"']) {
@@ -422,19 +432,24 @@ if (!['[data-remove-after-sales-row]', '[data-remove-after-sales-item]'].some((m
 }
 const platformAppScript = rawFs.readFileSync(path.resolve(dir, '../app.js'), 'utf8');
 const platformIndexPage = rawFs.readFileSync(path.resolve(dir, '../index.html'), 'utf8');
-for (const marker of ['const PLATFORM_ROUTES = new Set(["tenant-quota", "tenant-members"])', 'if (key === "home")', 'if (!window.location.hash || window.location.hash === "#home")', 'openSalesApp();', 'document.getElementById("moduleHint").textContent = isPurchase ? "采购录单" : ""', 'purchase-agent-switcher purchase-icon-menu', 'href="${SALES_APP_URL}"', 'href="#purchase-home" aria-current="page"']) {
+for (const marker of ['const PLATFORM_ROUTES = new Set(["tenant-quota", "tenant-members"])', 'if (key === "home")', 'if (!window.location.hash || window.location.hash === "#home")', 'openSalesApp();', 'document.getElementById("moduleHint").textContent = isPurchase ? "采购录单" : ""']) {
   if (!platformAppScript.includes(marker)) interactionMarkers.push(`app.js -> 首页移除与默认销售录单规则缺少 ${marker}`);
 }
+if (platformAppScript.includes('purchase-agent-switcher')) interactionMarkers.push('app.js -> 采购录单左下角应用切换器应移除');
 for (const marker of ['function homePage()', '<h2 id="appCenterTitle">应用中心</h2>', '录单平台首页']) {
   if (platformAppScript.includes(marker)) interactionMarkers.push(`app.js -> 已移除的首页内容不应保留 ${marker}`);
 }
-for (const marker of ['class="prd-home-link"', 'href="#projects"', '← 返回 PRD 首页']) {
+for (const marker of ['class="prd-home-link"', 'href="#projects"', '← 返回 PRD 首页', 'class="scene-switcher" id="sceneSwitcher"', 'aria-label="切换当前场景"', 'class="scene-summary-label">当前场景</span>', 'class="scene-switch-option current" href="#purchase-home"']) {
   if (!platformIndexPage.includes(marker)) interactionMarkers.push(`index.html -> 采购录单顶部缺少 ${marker}`);
 }
 const salesHomePage = readRawHtml('home.html');
-for (const marker of ['<strong>测试企业 1318</strong>', '<span class="t-app-name">销售录单</span>', 'role="menu" aria-label="系统管理员菜单"', 'href="../index.html#tenant-members"', 'href="../index.html#tenant-quota"', '<details class="agent-switcher">', 'href="home.html" aria-current="page"', 'href="../index.html#purchase-home"', 'class="portal-return" href="../index.html#projects"', '← 返回 PRD 首页']) {
+for (const marker of ['<strong>测试企业 1318</strong>', '<details class="scene-switcher">', 'aria-label="切换当前场景"', 'class="scene-switch-option current" href="home.html"', 'role="menu" aria-label="系统管理员菜单"', 'href="../index.html#tenant-members"', 'href="../index.html#tenant-quota"', 'href="../index.html#purchase-home"', 'class="portal-return" href="../index.html#projects"', '← 返回 PRD 首页']) {
   if (!salesHomePage.includes(marker)) interactionMarkers.push(`home.html -> 销售录单壳层缺少 ${marker}`);
 }
+for (const marker of ['class="scene-summary-label">当前场景</span>', '<small>当前场景</small>', '<small>进入采购录单</small>']) {
+  if (salesHomePage.includes(marker)) interactionMarkers.push(`home.html -> 场景切换器不应保留辅助文案 ${marker}`);
+}
+if (salesHomePage.includes('<details class="agent-switcher">')) interactionMarkers.push('home.html -> 销售录单左下角应用切换器应移除');
 for (const marker of ['返回应用中心', '录单平台首页', 'href="../index.html#home"']) {
   if (salesHomePage.includes(marker)) interactionMarkers.push(`home.html -> 快捷切换中不应保留首页内容 ${marker}`);
 }
