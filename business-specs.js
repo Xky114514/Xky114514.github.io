@@ -10,7 +10,10 @@
   if (!app) return;
 
   const file = path.split("/").pop() || "index.html";
-  const escapeHTML = (value = "") => String(value).replace(/[&<>"']/g, (char) => ({
+  const displayTerminology = (value = "") => app === "order"
+    ? String(value).replaceAll("商户", "客户")
+    : String(value);
+  const escapeHTML = (value = "") => displayTerminology(value).replace(/[&<>"']/g, (char) => ({
     "&": "&amp;",
     "<": "&lt;",
     ">": "&gt;",

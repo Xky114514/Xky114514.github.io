@@ -6,7 +6,7 @@
   <meta name="description" content="销售回单应用前端交互原型">
   <title>回单详情｜销售回单</title>
   <link rel="stylesheet" href="./styles.css">
-  <link rel="stylesheet" href="./reference.css?v=20260805-reason-association">
+  <link rel="stylesheet" href="./reference.css?v=20260813-non-product-fields">
 </head>
 <body data-page="detail-completed" data-receipt-id="SR-20260726-004" data-order-id="SO-20260726-1066" data-order-association-source="submitted" data-readonly="true" data-receipt-mode="after-sales">
   <div class="shell">
@@ -247,7 +247,7 @@
     <tr><td>下单数</td><td>观麦销售订单快照</td><td>只读展示，售后提交未修改该值。</td></tr>
     <tr><td>签收数</td><td>审核提交快照</td><td>展示最终人工确认值；销售实收开启时该值已写入销售订单出库数。</td></tr>
     <tr><td>差异数</td><td>系统计算</td><td>下单数－签收数，保留正负号。</td></tr>
-    <tr><td>售后快照</td><td>审核提交及观麦同步结果</td><td>在只读弹窗展示类型、原因、异常金额、异常数、应退数及退货入库单号。</td></tr>
+    <tr><td>售后快照</td><td>审核提交及观麦同步结果</td><td>在只读弹窗展示类型、原因、非商品异常明细、异常数、应退数及退货入库单号。</td></tr>
     <tr><td>操作员</td><td>任务处理记录</td><td>展示最终提交人；自动提交显示“系统自动处理”。</td></tr>
   </tbody></table>
   <h3>4. 商品顺序与追溯</h3>
@@ -280,7 +280,7 @@
   </aside>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-  <script src="./app.js?v=20260805-receipt-after-sales"></script>
+  <script src="./app.js?v=20260813-non-product-fields"></script>
   <script src="../business-specs.js"></script>
 </body>
 </html>

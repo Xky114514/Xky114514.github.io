@@ -1,18 +1,7 @@
 import rawFs from 'node:fs';
 import path from 'node:path';
 
-// Existing assertions were written before the shared business term changed from
-// “客户” to “商户”. Normalize only for legacy marker checks; raw HTML receives
-// explicit terminology and integration assertions below.
-const fs = {
-  existsSync: rawFs.existsSync.bind(rawFs),
-  readFileSync(file, ...args) {
-    const content = rawFs.readFileSync(file, ...args);
-    return typeof content === 'string' && String(file).endsWith('.html')
-      ? content.replaceAll('商户', '客户')
-      : content;
-  },
-};
+const fs = rawFs;
 const readRawHtml = (file) => rawFs.readFileSync(path.join(dir, file), 'utf8');
 
 const dir = path.dirname(new URL(import.meta.url).pathname.replace(/^\/(?:([A-Za-z]):)/, '$1:'));
@@ -205,7 +194,7 @@ if (!groupsPage.includes('href="group-detail.html"')) interactionMarkers.push('g
 
 for (const file of tenantPages) {
   const rawHtml = readRawHtml(file);
-  const customerTerm = file === 'chat-simulator.html' ? '客户' : '商户';
+  const customerTerm = '客户';
   const terminologyHtml = file === 'prompts.html'
     ? rawHtml.replaceAll('客户提示词', '').replaceAll('客户视图', '')
     : rawHtml;
@@ -215,8 +204,11 @@ for (const file of tenantPages) {
   if (!rawHtml.includes('href="../sales_receipt/receipts.html"')) interactionMarkers.push(`${file} -> 主导航缺少销售回单入口`);
   if (rawHtml.includes('<strong>销售回单</strong><span>进入销售回单首页</span>')) interactionMarkers.push(`${file} -> 销售回单不应在 Agent 切换器中重复出现`);
   const navMarkup = (rawHtml.match(/<nav class="t-nav"[\s\S]*?<\/nav>/) || [''])[0];
-  for (const marker of ['data-receipt-module-root', 'aria-label="销售回单菜单"', 'data-receipt-permission="entry"', 'data-receipt-permission="audit"', 'data-receipt-permission="stats"', '>录入回单</a>', '>回单审核</a>', '>回单统计</a>', `aria-label="${customerTerm}管理菜单"`, 'href="customers.html"', `>${customerTerm}管理</a>`, 'href="groups.html"', '>群聊管理</a>', 'href="customer-groups.html"', `>${customerTerm}分组</a>`, 'href="sku.html"', 'aria-label="提示词菜单"', 'href="prompts.html"', '>提示词</a>', 'href="memory.html"', '>AI 记忆</a>', 'href="stats.html"', 'data-title="统计"', 'href="decision-dashboard.html"', 'data-title="决策大屏"', 'href="settings.html"', 'data-title="设置"']) {
+  for (const marker of ['data-receipt-module-root', 'aria-label="销售回单菜单"', 'data-receipt-permission="entry"', 'data-receipt-permission="audit"', '>回单录入</a>', '>回单审核</a>', `aria-label="${customerTerm}管理菜单"`, 'href="customers.html"', `>${customerTerm}管理</a>`, 'href="groups.html"', '>群聊管理</a>', 'href="customer-groups.html"', `>${customerTerm}分组</a>`, 'aria-label="提示词菜单"', 'href="prompts.html"', '>提示词</a>', 'href="memory.html"', '>AI 记忆</a>', 'href="stats.html"', 'data-title="统计"', 'href="decision-dashboard.html"', 'data-title="决策大屏"', 'href="settings.html"', 'data-title="设置"']) {
     if (!navMarkup.includes(marker)) interactionMarkers.push(`${file} -> 新菜单结构缺少 ${marker}`);
+  }
+  for (const marker of ['data-receipt-permission="stats"', '>回单统计</a>', 'href="sku.html"']) {
+    if (navMarkup.includes(marker)) interactionMarkers.push(`${file} -> 左侧菜单不应保留 ${marker}`);
   }
   if (navMarkup.includes('>回单任务</a>') || navMarkup.includes('data-receipt-permission="task"')) interactionMarkers.push(`${file} -> 回单任务与回单审核重复，应只保留回单审核`);
   for (const iconPath of ['M3 11.5 12 4l9 7.5M5.5 10.5V20h13v-9.5M9.5 20v-6h5v6', 'M6 3h12v18H6zM9 8h6M9 12h4M15.5 15.5l4 4M18 15.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0z', 'M5 19l4-.8L19 8l-3-3L5.8 15.2 5 19zM14 7l3 3M4 21h16', 'M2.5 20a5.5 5.5 0 0 1 11 0M13 20a4.5 4.5 0 0 1 8 0', 'M4 5h16v14H4zM8 10l3 2-3 2M13 15h3', 'M4 20V9m5 11V4m5 16v-7m5 7V6M2 20h20', 'M4 18a8 8 0 1 1 16 0M12 12l4-4M7 17h10', 'M12 3v3m0 12v3M3 12h3m12 0h3M5.6 5.6l2.1 2.1m8.6 8.6 2.1 2.1m0-12.8-2.1 2.1m-8.6 8.6-2.1 2.1']) {
@@ -259,8 +251,11 @@ if (!groupHeader.includes('群聊名称</th><th>类型</th>') || !groupHeader.in
 if (groupHeader.includes('群聊名称</th><th>催单</th>')) interactionMarkers.push('groups.html -> 催单列不应继续紧邻群聊名称');
 if (!groupHeader.includes('aria-label="全选当前搜索结果"') || !groupHeader.includes('<span>全选</span>')) interactionMarkers.push('groups.html -> 批量选择态应提供明确的全选当前搜索结果入口');
 const receiptAppScript = rawFs.readFileSync(path.resolve(dir, '../sales_receipt/app.js'), 'utf8');
-for (const marker of ['data-receipt-module-root', 'role="menu" aria-label="销售回单菜单"', '>录入回单</a>', '>回单审核</a>', '>回单统计</a>', 'role="menu" aria-label="商户管理菜单"', 'href="../ai_order/customers.html"', 'href="../ai_order/groups.html"', 'href="../ai_order/customer-groups.html"', 'href="../ai_order/sku.html"', 'role="menu" aria-label="提示词菜单"', 'href="../ai_order/prompts.html"', 'href="../ai_order/memory.html"', 'href="../ai_order/stats.html', 'href="../ai_order/decision-dashboard.html"', 'data-title="决策大屏"', 'href="../ai_order/settings.html"', 'receiptEntryPermission', 'receiptAuditPermission', 'receiptStatsPermission', '销售回单未开通', '暂无此回单功能权限', '测试企业 1318', '销售录单', 'tenant-members', 'tenant-quota', 'class="scene-switcher"', 'aria-label="切换当前场景"', 'href="../index.html#purchase-home"', 'href = "../index.html#projects"']) {
+for (const marker of ['data-receipt-module-root', 'role="menu" aria-label="销售回单菜单"', '>回单录入</a>', '>回单审核</a>', 'role="menu" aria-label="客户管理菜单"', 'href="../ai_order/customers.html"', 'href="../ai_order/groups.html"', 'href="../ai_order/customer-groups.html"', 'role="menu" aria-label="提示词菜单"', 'href="../ai_order/prompts.html"', 'href="../ai_order/memory.html"', 'href="../ai_order/stats.html', 'href="../ai_order/decision-dashboard.html"', 'data-title="决策大屏"', 'href="../ai_order/settings.html"', 'receiptEntryPermission', 'receiptAuditPermission', '销售回单未开通', '暂无此回单功能权限', '测试企业 1318', '销售录单', 'tenant-members', 'tenant-quota', 'class="scene-switcher"', 'aria-label="切换当前场景"', 'href="../index.html#purchase-home"', 'href = "../index.html#projects"']) {
   if (!receiptAppScript.includes(marker)) interactionMarkers.push(`sales_receipt/app.js -> 整合导航缺少 ${marker}`);
+}
+for (const marker of ['>回单统计</a>', 'href="../ai_order/sku.html"', 'aria-label="商户管理菜单"']) {
+  if (receiptAppScript.includes(marker)) interactionMarkers.push(`sales_receipt/app.js -> 整合导航不应保留 ${marker}`);
 }
 for (const marker of ['function bindAgentSwitcher()', 'className = "agent-switcher"', 'agent-switch-popover']) {
   if (receiptAppScript.includes(marker)) interactionMarkers.push(`sales_receipt/app.js -> 左下角应用切换器已移除，不应保留 ${marker}`);
@@ -309,11 +304,22 @@ for (const marker of ['renderReceiptOnlyRow', 'renderUnmatchedRow', 'activeRecei
 }
 
 const receiptDetailSurface = `${receiptDetailPage}\n${receiptAppScript}`;
-for (const marker of ['id="afterSalesWorkbenchModal"', 'data-enter-after-sales', 'data-cancel-after-sales', 'data-confirm-cancel-after-sales', 'data-add-after-sales-product', 'data-save-after-sales', 'data-remove-after-sales-item', 'data-after-sales-body', 'data-after-sales-product-options', 'data-confirm-add-after-sales-products']) {
+for (const marker of ['id="afterSalesWorkbenchModal"', 'data-receipt-mode-action', 'data-enter-after-sales', 'data-cancel-after-sales', 'data-confirm-cancel-after-sales', 'data-add-after-sales-product', 'data-save-after-sales', 'data-remove-after-sales-item', 'data-after-sales-body', 'data-after-sales-product-options', 'data-confirm-add-after-sales-products']) {
   if (!receiptDetailSurface.includes(marker)) interactionMarkers.push(`sales_receipt/receipt-detail.html -> 售后弹窗交互缺少 ${marker}`);
 }
-for (const marker of ['let receiptMode = "normal"', 'function setReceiptMode(', 'function clearAfterSalesDraft(', 'function renderAfterSalesWorkbenchRow(', 'function renderAfterSalesWorkbench(', 'function openAfterSalesWorkbench(', 'function applyAfterSalesWorkbench(', 'function validateAfterSalesWorkbench(', 'function renderAfterSalesProductOptions(', 'function removeAfterSalesRow(', 'function validateReceiptBasics(', 'function readSalesActualFeature(']) {
+for (const marker of ['let receiptMode = "aftersales"', 'function setReceiptMode(', 'function handleReceiptModeAction(', 'function clearAfterSalesDraft(', 'function renderAfterSalesWorkbenchRow(', 'function renderAfterSalesWorkbench(', 'function openAfterSalesWorkbench(', 'function applyAfterSalesWorkbench(', 'function validateAfterSalesWorkbench(', 'function renderAfterSalesProductOptions(', 'function removeAfterSalesRow(', 'function validateReceiptBasics(', 'function readSalesActualFeature(']) {
   if (!receiptAppScript.includes(marker)) interactionMarkers.push(`sales_receipt/app.js -> 回单/售后模式实现缺少 ${marker}`);
+}
+const initializeReceiptModeSource = receiptFunctionSource('initializeReceiptMode');
+for (const marker of ['let initialMode = "aftersales"', 'localStorage.getItem(receiptModeStorageKey()) || "aftersales"']) {
+  if (!initializeReceiptModeSource.includes(marker)) interactionMarkers.push(`sales_receipt/app.js -> 待处理回单默认售后单处理缺少 ${marker}`);
+}
+const updateReceiptSummarySource = receiptFunctionSource('updateReceiptSummary');
+for (const marker of ['[data-receipt-mode-action]', '"正常签收" : "售后单处理"', '切换为正常签收']) {
+  if (!updateReceiptSummarySource.includes(marker)) interactionMarkers.push(`sales_receipt/app.js -> 模式切换按钮缺少 ${marker}`);
+}
+if (!receiptDetailPage.includes('data-receipt-mode="after-sales"') || !receiptDetailPage.includes('data-receipt-mode-action>正常签收</button>')) {
+  interactionMarkers.push('sales_receipt/receipt-detail.html -> 待处理回单应默认展示售后单处理，并将模式按钮展示为正常签收');
 }
 if (receiptDetailPage.includes('data-after-sales-column') || renderOrderLineSource.includes('class="after-sales-select"')) {
   interactionMarkers.push('sales_receipt -> 售后三字段只能在售后弹窗中维护，不得在主商品表展开');
@@ -403,12 +409,19 @@ if (workbenchHeaders.join('|') !== expectedWorkbenchHeaders.join('|')) {
 }
 
 const validateReceiptSubmissionSource = receiptFunctionSource('validateReceiptSubmission');
-for (const marker of ['receiptMode === "aftersales"', 'isAfterSalesRowComplete(row)', 'renderAfterSalesWorkbench()', 'openModal("afterSalesWorkbenchModal")', 'collectAfterSalesPayload()', 'rows: []']) {
+for (const marker of ['receiptMode === "aftersales"', 'isAfterSalesRowComplete(row)', 'renderAfterSalesWorkbench({ initialize: true })', 'openModal("afterSalesWorkbenchModal")', 'collectAfterSalesPayload()', 'rows: []']) {
   if (!validateReceiptSubmissionSource.includes(marker)) interactionMarkers.push(`sales_receipt/app.js -> 正常签收/售后单提交分支缺少 ${marker}`);
 }
 const collectAfterSalesPayloadSource = receiptFunctionSource('collectAfterSalesPayload');
 for (const marker of ['receiptAfterSalesRows()', 'afterSalesQuantity', 'type === "non_product_exception"', 'type === "product_exception"', 'type === "product_return"']) {
   if (!collectAfterSalesPayloadSource.includes(marker)) interactionMarkers.push(`sales_receipt/app.js -> 售后三字段映射缺少 ${marker}`);
+}
+for (const marker of ['exceptionReason', 'responsibleDepartment', 'followUpDepartment', 'handlingMethod', 'exceptionDescription']) {
+  if (!collectAfterSalesPayloadSource.includes(marker)) interactionMarkers.push(`sales_receipt/app.js -> 非商品异常提交载荷缺少 ${marker}`);
+}
+const renderNonProductExceptionDetailsSource = receiptFunctionSource('renderNonProductExceptionDetails');
+for (const marker of ['异常原因', '责任部门', '跟进部门', '处理方式', '金额变动', '描述']) {
+  if (!renderNonProductExceptionDetailsSource.includes(marker)) interactionMarkers.push(`sales_receipt/app.js -> 非商品异常编辑区缺少 ${marker}`);
 }
 if (/difference\s*===\s*0[^\n]*return/.test(collectAfterSalesPayloadSource)) {
   interactionMarkers.push('sales_receipt/app.js -> 售后单允许新增零差异的订单商品，汇总时不得按差异为 0 过滤');

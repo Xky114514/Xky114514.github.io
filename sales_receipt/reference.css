@@ -2093,7 +2093,9 @@ body[data-receipt-mode="after-sales"] .receipt-mode-badge {
 .after-sales-select.invalid,
 .after-sales-reason-input.invalid,
 .exception-amount-input.invalid,
-.after-sales-quantity-input.invalid {
+.after-sales-quantity-input.invalid,
+.non-product-exception-field input.invalid,
+.non-product-exception-field select.invalid {
   border-color: #ff4d4f;
   box-shadow: 0 0 0 2px rgba(255, 77, 79, 0.1);
 }
@@ -2203,6 +2205,87 @@ body[data-receipt-mode="after-sales"] .receipt-mode-badge {
   border: 0;
   outline: 0;
   text-align: right;
+}
+
+.non-product-exception-grid {
+  min-width: 880px;
+  display: grid;
+  grid-template-columns: 150px 128px 128px 142px 120px 190px;
+  gap: 12px;
+  align-items: end;
+}
+
+.non-product-exception-field {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  color: #595959;
+  font-weight: 400;
+}
+
+.non-product-exception-field > span:first-child {
+  color: #595959;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.non-product-exception-field > input,
+.non-product-exception-field > select {
+  width: 100%;
+  height: 34px;
+  padding: 5px 9px;
+  color: #262626;
+  background: #fff;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+  outline: 0;
+}
+
+.non-product-exception-field > select {
+  padding-right: 28px;
+}
+
+.non-product-exception-field > input:focus,
+.non-product-exception-field > select:focus {
+  border-color: #1677ff;
+  box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.1);
+}
+
+.non-product-exception-field .after-sales-money {
+  width: 100%;
+  border-radius: 4px;
+}
+
+.non-product-exception-field .exception-amount-input {
+  min-width: 0;
+  flex: 1;
+}
+
+.non-product-exception-field .after-sales-money b {
+  color: #595959;
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.non-product-exception-field:has(.exception-amount-input.invalid) .after-sales-money {
+  border-color: #ff4d4f;
+  box-shadow: 0 0 0 2px rgba(255, 77, 79, 0.1);
+}
+
+.non-product-exception-grid.readonly {
+  align-items: start;
+}
+
+.non-product-exception-grid.readonly .non-product-exception-field strong {
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+  color: #262626;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: normal;
+  word-break: break-word;
 }
 
 .return-order-tag,
@@ -2473,6 +2556,14 @@ body[data-readonly="true"] .after-sales-reason-input[readonly] {
   width: 100%;
   min-width: 1120px;
   border-collapse: collapse;
+}
+
+.after-sales-workbench-table:has(.non-product-exception-grid) {
+  min-width: 2050px;
+}
+
+.after-sales-workbench-table td:has(.non-product-exception-grid) {
+  min-width: 900px;
 }
 
 .after-sales-workbench-table th,

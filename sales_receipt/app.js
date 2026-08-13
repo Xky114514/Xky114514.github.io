@@ -8,7 +8,7 @@
   let pendingOrderId = "";
   let pendingDeleteRow = null;
   let pendingSubmitPayload = null;
-  let receiptMode = "normal";
+  let receiptMode = "aftersales";
 
   const afterSalesTypes = {
     non_product_exception: {
@@ -24,6 +24,15 @@
       fieldLabel: "应退数",
     },
   };
+
+  const nonProductHandlingMethods = [
+    "退款",
+    "补送",
+    "补差价",
+    "线下协商",
+    "无需处理",
+    "其他",
+  ];
 
   // 生产环境由观麦同步；静态原型先用示例数据演示可输入下拉。
   const guanmaiAfterSalesReasonOptions = [
@@ -373,7 +382,12 @@
       "SKU-10126": {
         type: "non_product_exception",
         reason: "价格或优惠调整",
+        exceptionReason: "其它",
+        responsibleDepartment: "销售部",
+        followUpDepartment: "运营部",
+        handlingMethod: "补差价",
         exceptionAmount: "15.00",
+        exceptionDescription: "按商户确认结果调整订单差额",
       },
       "SKU-10148": {
         type: "product_return",
@@ -394,7 +408,12 @@
       "SKU-10126": {
         type: "non_product_exception",
         reason: "价格或优惠调整",
+        exceptionReason: "其它",
+        responsibleDepartment: "销售部",
+        followUpDepartment: "运营部",
+        handlingMethod: "补差价",
         exceptionAmount: "12.00",
+        exceptionDescription: "优惠金额与回单记录不一致",
       },
     },
     "SO-20260727-1120": {
@@ -410,7 +429,12 @@
       "SKU-10126": {
         type: "non_product_exception",
         reason: "价格或优惠调整",
+        exceptionReason: "其它",
+        responsibleDepartment: "销售部",
+        followUpDepartment: "运营部",
+        handlingMethod: "补差价",
         exceptionAmount: "13.00",
+        exceptionDescription: "按最终签收结果补录差额",
       },
       "SKU-10208": { type: "product_return", reason: "商户拒收" },
       "SKU-10311": {
@@ -1584,11 +1608,61 @@
     ].join("");
   }
 
+  function renderNonProductHandlingOptions(value) {
+    return [
+      '<option value="">请选择</option>',
+      ...nonProductHandlingMethods.map((item) => {
+        const selected = item === value ? " selected" : "";
+        return `<option value="${escapeHTML(item)}"${selected}>${escapeHTML(item)}</option>`;
+      }),
+    ].join("");
+  }
+
+  function renderNonProductExceptionDetails({
+    exceptionReason = "",
+    responsibleDepartment = "",
+    followUpDepartment = "",
+    handlingMethod = "",
+    exceptionAmount = "",
+    exceptionDescription = "",
+  }) {
+    const readonly = document.body.dataset.readonly === "true";
+    const fields = [
+      ["异常原因", exceptionReason],
+      ["责任部门", responsibleDepartment],
+      ["跟进部门", followUpDepartment],
+      ["处理方式", handlingMethod],
+      ["金额变动", `${Number(exceptionAmount || 0).toFixed(2)} 元`],
+      ["描述", exceptionDescription],
+    ];
+    if (readonly) {
+      return `<div class="non-product-exception-grid readonly">${fields
+        .map(
+          ([label, value]) =>
+            `<div class="non-product-exception-field"><span>${label}</span><strong>${escapeHTML(value || "--")}</strong></div>`,
+        )
+        .join("")}</div>`;
+    }
+    return `<div class="non-product-exception-grid">
+      <label class="non-product-exception-field"><span>异常原因</span><input class="non-product-exception-reason-input" value="${escapeHTML(exceptionReason)}" placeholder="如：其它" maxlength="100" aria-label="异常原因"></label>
+      <label class="non-product-exception-field"><span>责任部门</span><input class="non-product-responsible-department-input" value="${escapeHTML(responsibleDepartment)}" placeholder="填写部门" maxlength="50" aria-label="责任部门"></label>
+      <label class="non-product-exception-field"><span>跟进部门</span><input class="non-product-follow-up-department-input" value="${escapeHTML(followUpDepartment)}" placeholder="填写部门" maxlength="50" aria-label="跟进部门"></label>
+      <label class="non-product-exception-field"><span>处理方式</span><select class="non-product-handling-method-select" aria-label="处理方式">${renderNonProductHandlingOptions(handlingMethod)}</select></label>
+      <label class="non-product-exception-field"><span>金额变动</span><span class="after-sales-money"><input class="exception-amount-input" inputmode="decimal" value="${escapeHTML(exceptionAmount)}" placeholder="0.00" aria-label="金额变动"><b>元</b></span></label>
+      <label class="non-product-exception-field"><span>描述</span><input class="non-product-exception-description-input" value="${escapeHTML(exceptionDescription)}" placeholder="填写描述" maxlength="200" aria-label="描述"></label>
+    </div>`;
+  }
+
   function renderAfterSalesValue({
     type,
     difference,
     unit,
+    exceptionReason = "",
+    responsibleDepartment = "",
+    followUpDepartment = "",
+    handlingMethod = "",
     exceptionAmount = "",
+    exceptionDescription = "",
     afterSalesQuantity = "",
     returnInboundId = "",
   }) {
@@ -1602,10 +1676,14 @@
     const quantity = afterSalesQuantity === "" ? defaultQuantity : afterSalesQuantity;
     const readonly = document.body.dataset.readonly === "true";
     if (type === "non_product_exception") {
-      if (readonly) {
-        return `<span class="after-sales-field"><span>异常金额</span><strong>${formatMoney(Number(exceptionAmount || 0))}</strong></span>`;
-      }
-      return `<label class="after-sales-field amount"><span>异常金额</span><span class="after-sales-money">¥<input class="exception-amount-input" inputmode="decimal" value="${escapeHTML(exceptionAmount)}" placeholder="0.00" aria-label="异常金额"></span></label>`;
+      return renderNonProductExceptionDetails({
+        exceptionReason,
+        responsibleDepartment,
+        followUpDepartment,
+        handlingMethod,
+        exceptionAmount,
+        exceptionDescription,
+      });
     }
     const fieldLabel = type === "product_exception" ? "异常数" : "应退数";
     const quantityControl = readonly
@@ -1629,7 +1707,25 @@
       preferred.exceptionAmount ??
       row.dataset.exceptionAmount ??
       "";
-    const exceptionAmount = type === "non_product_exception" ? currentAmount : "";
+    const isNonProductException = type === "non_product_exception";
+    const exceptionAmount = isNonProductException ? currentAmount : "";
+    const nonProductDetails = {
+      exceptionReason: isNonProductException
+        ? preferred.exceptionReason ?? row.dataset.exceptionReason ?? ""
+        : "",
+      responsibleDepartment: isNonProductException
+        ? preferred.responsibleDepartment ?? row.dataset.responsibleDepartment ?? ""
+        : "",
+      followUpDepartment: isNonProductException
+        ? preferred.followUpDepartment ?? row.dataset.followUpDepartment ?? ""
+        : "",
+      handlingMethod: isNonProductException
+        ? preferred.handlingMethod ?? row.dataset.handlingMethod ?? ""
+        : "",
+      exceptionDescription: isNonProductException
+        ? preferred.exceptionDescription ?? row.dataset.exceptionDescription ?? ""
+        : "",
+    };
     let reason =
       preferred.reason ??
       row.dataset.afterSalesReason ??
@@ -1656,6 +1752,9 @@
     row.dataset.afterSalesType = type;
     row.dataset.afterSalesReason = reason;
     row.dataset.exceptionAmount = exceptionAmount;
+    Object.entries(nonProductDetails).forEach(([key, value]) => {
+      row.dataset[key] = value;
+    });
     row.dataset.afterSalesQuantity = afterSalesQuantity;
     row.dataset.abnormalCount =
       type === "product_exception" ? afterSalesQuantity : "";
@@ -1694,6 +1793,21 @@
       if (productTarget) productTarget.textContent = String(rows.length);
       if (differenceTarget) differenceTarget.textContent = String(differenceRows.length);
     }
+    const modeAction = one("[data-receipt-mode-action]");
+    if (modeAction) {
+      modeAction.disabled = !order;
+      modeAction.textContent =
+        receiptMode === "aftersales" ? "正常签收" : "售后单处理";
+      modeAction.className =
+        receiptMode === "aftersales"
+          ? "btn receipt-mode-action"
+          : "btn receipt-mode-action after-sales-entry";
+      modeAction.title = order
+        ? receiptMode === "aftersales"
+          ? "切换为正常签收"
+          : "切换为售后单处理"
+        : "请先关联销售订单";
+    }
     const enterButton = one("[data-enter-after-sales]");
     if (enterButton) {
       enterButton.disabled = !order;
@@ -1702,7 +1816,11 @@
     const badge = one("[data-receipt-mode-badge]");
     if (badge) {
       badge.hidden = false;
-      badge.textContent = receiptMode === "aftersales" ? "售后单" : "正常签收";
+      badge.textContent = receiptMode === "aftersales"
+        ? document.body.dataset.readonly === "true"
+          ? "售后单"
+          : "售后单处理"
+        : "正常签收";
       badge.className = receiptMode === "aftersales"
         ? "receipt-mode-badge after-sales"
         : "receipt-mode-badge normal";
@@ -1735,7 +1853,18 @@
     if (!type || !reason || reason.length > 100) return false;
     if (type === "non_product_exception") {
       const amount = Number(row.dataset.exceptionAmount);
-      return Number.isFinite(amount) && amount > 0;
+      const requiredDetails = [
+        row.dataset.exceptionReason,
+        row.dataset.responsibleDepartment,
+        row.dataset.followUpDepartment,
+        row.dataset.handlingMethod,
+        row.dataset.exceptionDescription,
+      ];
+      return (
+        requiredDetails.every((value) => String(value || "").trim()) &&
+        Number.isFinite(amount) &&
+        amount > 0
+      );
     }
     const quantity = Number(row.dataset.afterSalesQuantity);
     return Number.isFinite(quantity) && quantity > 0;
@@ -1760,7 +1889,18 @@
     const selected = sourceRow.dataset.afterSalesSelected === "true";
     const type = selected ? sourceRow.dataset.afterSalesType || "" : "";
     const reason = selected ? sourceRow.dataset.afterSalesReason || "" : "";
+    const exceptionReason = selected ? sourceRow.dataset.exceptionReason || "" : "";
+    const responsibleDepartment = selected
+      ? sourceRow.dataset.responsibleDepartment || ""
+      : "";
+    const followUpDepartment = selected
+      ? sourceRow.dataset.followUpDepartment || ""
+      : "";
+    const handlingMethod = selected ? sourceRow.dataset.handlingMethod || "" : "";
     const exceptionAmount = selected ? sourceRow.dataset.exceptionAmount || "" : "";
+    const exceptionDescription = selected
+      ? sourceRow.dataset.exceptionDescription || ""
+      : "";
     const afterSalesQuantity = selected
       ? sourceRow.dataset.afterSalesQuantity || ""
       : Number.isFinite(difference) && difference !== 0
@@ -1788,7 +1928,12 @@
         type,
         difference,
         unit,
+        exceptionReason,
+        responsibleDepartment,
+        followUpDepartment,
+        handlingMethod,
         exceptionAmount,
+        exceptionDescription,
         afterSalesQuantity,
         returnInboundId: sourceRow.dataset.returnInboundId || "",
       })}</td>
@@ -1812,11 +1957,13 @@
   function renderAfterSalesWorkbench({ initialize = false } = {}) {
     const body = one("[data-after-sales-body]");
     if (!body) return;
-    const rows = receiptMode === "aftersales" || document.body.dataset.readonly === "true"
-      ? receiptAfterSalesRows()
-      : initialize
-        ? receiptDifferenceRows()
-        : [];
+    const savedRows = receiptAfterSalesRows();
+    const rows =
+      document.body.dataset.readonly === "true" || savedRows.length
+        ? savedRows
+        : initialize
+          ? receiptDifferenceRows()
+          : [];
     body.innerHTML = rows
       .map((row, index) => renderAfterSalesWorkbenchRow(row, index))
       .join("");
@@ -1836,7 +1983,17 @@
       itemId: row.dataset.afterSalesItem || "",
       type,
       reason: one(".after-sales-reason-input", row)?.value.trim() || "",
+      exceptionReason:
+        one(".non-product-exception-reason-input", row)?.value.trim() || "",
+      responsibleDepartment:
+        one(".non-product-responsible-department-input", row)?.value.trim() || "",
+      followUpDepartment:
+        one(".non-product-follow-up-department-input", row)?.value.trim() || "",
+      handlingMethod:
+        one(".non-product-handling-method-select", row)?.value || "",
       exceptionAmount: one(".exception-amount-input", row)?.value.trim() || "",
+      exceptionDescription:
+        one(".non-product-exception-description-input", row)?.value.trim() || "",
       afterSalesQuantity: one(".after-sales-quantity-input", row)?.value.trim() || "",
     };
   }
@@ -1866,12 +2023,35 @@
         return false;
       }
       if (select.value === "non_product_exception") {
+        const requiredFields = [
+          [".non-product-exception-reason-input", "请填写异常原因"],
+          [".non-product-responsible-department-input", "请填写责任部门"],
+          [".non-product-follow-up-department-input", "请填写跟进部门"],
+          [".non-product-handling-method-select", "请选择处理方式"],
+        ];
+        for (const [selector, message] of requiredFields) {
+          const field = one(selector, row);
+          field?.classList.remove("invalid");
+          if (!field?.value.trim()) {
+            field?.classList.add("invalid");
+            field?.focus();
+            showToast(message);
+            return false;
+          }
+        }
         const amount = one(".exception-amount-input", row);
         const raw = amount?.value.trim() || "";
         if (!/^\d+(?:\.\d{1,2})?$/.test(raw) || Number(raw) <= 0) {
           amount?.classList.add("invalid");
           amount?.focus();
-          showToast("请填写大于 0 的异常金额");
+          showToast("请填写大于 0 的金额变动");
+          return false;
+        }
+        const description = one(".non-product-exception-description-input", row);
+        if (!description?.value.trim()) {
+          description?.classList.add("invalid");
+          description?.focus();
+          showToast("请填写描述");
           return false;
         }
       } else {
@@ -1905,14 +2085,24 @@
         syncAfterSalesRow(row, {
           type: value.type,
           reason: value.reason,
+          exceptionReason: value.exceptionReason,
+          responsibleDepartment: value.responsibleDepartment,
+          followUpDepartment: value.followUpDepartment,
+          handlingMethod: value.handlingMethod,
           exceptionAmount: value.exceptionAmount,
+          exceptionDescription: value.exceptionDescription,
           afterSalesQuantity: value.afterSalesQuantity,
         });
       } else {
         row.dataset.afterSalesSelected = "false";
         row.dataset.afterSalesType = "";
         row.dataset.afterSalesReason = "";
+        row.dataset.exceptionReason = "";
+        row.dataset.responsibleDepartment = "";
+        row.dataset.followUpDepartment = "";
+        row.dataset.handlingMethod = "";
         row.dataset.exceptionAmount = "";
+        row.dataset.exceptionDescription = "";
         row.dataset.afterSalesQuantity = "";
         row.dataset.afterSalesQuantityManual = "false";
         row.dataset.abnormalCount = "";
@@ -1932,8 +2122,25 @@
     ) {
       return;
     }
-    renderAfterSalesWorkbench({ initialize: receiptMode !== "aftersales" });
+    renderAfterSalesWorkbench({
+      initialize:
+        receiptMode !== "aftersales" || !receiptAfterSalesRows().length,
+    });
     openModal("afterSalesWorkbenchModal");
+  }
+
+  function handleReceiptModeAction() {
+    if (receiptMode !== "aftersales") {
+      openAfterSalesWorkbench();
+      return;
+    }
+    if (receiptAfterSalesRows().length) {
+      openModal("cancelAfterSalesModal");
+      return;
+    }
+    setReceiptMode("normal");
+    setTaskState("待处理");
+    showToast("已切换为正常签收");
   }
 
   function receiptModeStorageKey() {
@@ -1958,7 +2165,7 @@
   }
 
   function initializeReceiptMode() {
-    let initialMode = "normal";
+    let initialMode = "aftersales";
     if (document.body.dataset.readonly === "true") {
       initialMode = all("[data-order-line]").some(
         (row) => row.dataset.afterSalesSelected === "true",
@@ -1967,9 +2174,9 @@
         : "normal";
     } else {
       try {
-        initialMode = localStorage.getItem(receiptModeStorageKey()) || "normal";
+        initialMode = localStorage.getItem(receiptModeStorageKey()) || "aftersales";
       } catch {
-        initialMode = "normal";
+        initialMode = "aftersales";
       }
     }
     setReceiptMode(initialMode, {
@@ -1985,7 +2192,12 @@
       row.dataset.afterSalesSelected = "false";
       row.dataset.afterSalesType = "";
       row.dataset.afterSalesReason = "";
+      row.dataset.exceptionReason = "";
+      row.dataset.responsibleDepartment = "";
+      row.dataset.followUpDepartment = "";
+      row.dataset.handlingMethod = "";
       row.dataset.exceptionAmount = "";
+      row.dataset.exceptionDescription = "";
       row.dataset.afterSalesQuantity = "";
       row.dataset.afterSalesQuantityManual = "false";
       row.dataset.abnormalCount = "";
@@ -2176,9 +2388,29 @@
         one(".after-sales-reason-input", row)?.value.trim() ??
         row.dataset.afterSalesReason ??
         "",
+      exceptionReason:
+        one(".non-product-exception-reason-input", row)?.value.trim() ??
+        row.dataset.exceptionReason ??
+        "",
+      responsibleDepartment:
+        one(".non-product-responsible-department-input", row)?.value.trim() ??
+        row.dataset.responsibleDepartment ??
+        "",
+      followUpDepartment:
+        one(".non-product-follow-up-department-input", row)?.value.trim() ??
+        row.dataset.followUpDepartment ??
+        "",
+      handlingMethod:
+        one(".non-product-handling-method-select", row)?.value ??
+        row.dataset.handlingMethod ??
+        "",
       exceptionAmount:
         one(".exception-amount-input", row)?.value ??
         row.dataset.exceptionAmount ??
+        "",
+      exceptionDescription:
+        one(".non-product-exception-description-input", row)?.value.trim() ??
+        row.dataset.exceptionDescription ??
         "",
       afterSalesQuantity:
         one(".after-sales-quantity-input", row)?.value ??
@@ -2217,7 +2449,12 @@
       syncAfterSalesRow(row, {
         type: payload.type || "",
         reason: payload.reason || "",
+        exceptionReason: payload.exceptionReason || "",
+        responsibleDepartment: payload.responsibleDepartment || "",
+        followUpDepartment: payload.followUpDepartment || "",
+        handlingMethod: payload.handlingMethod || "",
         exceptionAmount: payload.exceptionAmount || "",
+        exceptionDescription: payload.exceptionDescription || "",
         afterSalesQuantity: payload.afterSalesQuantity || "",
       });
     } catch {
@@ -2255,6 +2492,10 @@
       button.addEventListener("click", openAfterSalesWorkbench);
     });
 
+    all("[data-receipt-mode-action]").forEach((button) => {
+      button.addEventListener("click", handleReceiptModeAction);
+    });
+
     all("[data-cancel-after-sales]").forEach((button) => {
       button.addEventListener("click", () => {
         openModal("cancelAfterSalesModal");
@@ -2266,7 +2507,7 @@
       closeModal("cancelAfterSalesModal");
       closeModal("afterSalesWorkbenchModal");
       setTaskState("待处理");
-      showToast("已取消售后处理，签收数已保留");
+      showToast("已切换为正常签收，签收数已保留");
     });
 
     one("[data-save-after-sales]")?.addEventListener("click", () => {
@@ -2494,10 +2735,26 @@
         unit: row.dataset.unit || "",
         type,
         reason,
+        exceptionReason:
+          type === "non_product_exception" ? row.dataset.exceptionReason || "" : "",
+        responsibleDepartment:
+          type === "non_product_exception"
+            ? row.dataset.responsibleDepartment || ""
+            : "",
+        followUpDepartment:
+          type === "non_product_exception"
+            ? row.dataset.followUpDepartment || ""
+            : "",
+        handlingMethod:
+          type === "non_product_exception" ? row.dataset.handlingMethod || "" : "",
         exceptionAmount:
           type === "non_product_exception" && Number.isFinite(amount)
             ? roundMoney(amount)
             : 0,
+        exceptionDescription:
+          type === "non_product_exception"
+            ? row.dataset.exceptionDescription || ""
+            : "",
         abnormalCount:
           type === "product_exception" && Number.isFinite(afterSalesQuantity)
             ? afterSalesQuantity
@@ -2560,7 +2817,7 @@
       (!receiptAfterSalesRows().length ||
         receiptAfterSalesRows().some((row) => !isAfterSalesRowComplete(row)))
     ) {
-      renderAfterSalesWorkbench();
+      renderAfterSalesWorkbench({ initialize: true });
       openModal("afterSalesWorkbenchModal");
       showToast("请先完善并保存售后处理");
       return null;
@@ -3101,6 +3358,13 @@
     const exceptionAmount = hasPreservedType
       ? receiptItem.exceptionAmount || ""
       : demo.exceptionAmount || "";
+    const nonProductDetail = (field) =>
+      hasPreservedType ? receiptItem?.[field] || "" : demo[field] || "";
+    const exceptionReason = nonProductDetail("exceptionReason");
+    const responsibleDepartment = nonProductDetail("responsibleDepartment");
+    const followUpDepartment = nonProductDetail("followUpDepartment");
+    const handlingMethod = nonProductDetail("handlingMethod");
+    const exceptionDescription = nonProductDetail("exceptionDescription");
     const returnInboundId =
       receiptItem?.returnInboundId || demo.returnInboundId || "";
     const quantity = Number.isFinite(difference) ? Math.abs(difference) : "";
@@ -3112,7 +3376,7 @@
         ? String(quantity)
         : "");
     return `
-      <tr class="${rowClass}" data-product-row data-quantity-row data-order-line data-order-product-name="${escapeHTML(line.name)}" data-recognized-name="${escapeHTML(recognizedName)}" data-ai-text="${escapeHTML(aiText)}" data-outbound="${line.outbound}" data-unit="${escapeHTML(line.unit)}" data-current-diff="${difference}" data-after-sales-selected="${afterSalesSelected}" data-after-sales-type="${afterSalesType}" data-after-sales-reason="${escapeHTML(afterSalesReason)}" data-exception-amount="${escapeHTML(exceptionAmount)}" data-after-sales-quantity="${escapeHTML(afterSalesQuantity)}" data-after-sales-quantity-manual="false" data-abnormal-count="${afterSalesType === "product_exception" ? afterSalesQuantity : ""}" data-return-count="${afterSalesType === "product_return" ? afterSalesQuantity : ""}" data-return-inbound-id="${escapeHTML(returnInboundId)}">
+      <tr class="${rowClass}" data-product-row data-quantity-row data-order-line data-order-product-name="${escapeHTML(line.name)}" data-recognized-name="${escapeHTML(recognizedName)}" data-ai-text="${escapeHTML(aiText)}" data-outbound="${line.outbound}" data-unit="${escapeHTML(line.unit)}" data-current-diff="${difference}" data-after-sales-selected="${afterSalesSelected}" data-after-sales-type="${afterSalesType}" data-after-sales-reason="${escapeHTML(afterSalesReason)}" data-exception-reason="${escapeHTML(exceptionReason)}" data-responsible-department="${escapeHTML(responsibleDepartment)}" data-follow-up-department="${escapeHTML(followUpDepartment)}" data-handling-method="${escapeHTML(handlingMethod)}" data-exception-amount="${escapeHTML(exceptionAmount)}" data-exception-description="${escapeHTML(exceptionDescription)}" data-after-sales-quantity="${escapeHTML(afterSalesQuantity)}" data-after-sales-quantity-manual="false" data-abnormal-count="${afterSalesType === "product_exception" ? afterSalesQuantity : ""}" data-return-count="${afterSalesType === "product_return" ? afterSalesQuantity : ""}" data-return-inbound-id="${escapeHTML(returnInboundId)}">
         <td data-row-index>${index + 1}</td>
         <td><strong>${escapeHTML(line.name)}</strong></td>
         <td data-recognized-product>${escapeHTML(recognizedName || "--")}</td>
@@ -3390,7 +3654,7 @@
         document.body.dataset.orderUnassociated = "false";
         document.body.dataset.orderAssociationSource = "manual";
         renderQuantityRows(nextOrder);
-        setReceiptMode("normal");
+        setReceiptMode("aftersales");
         updateOrderAssociationUI();
         setTaskState("待处理");
         closeModal("orderQueryModal");
@@ -3489,7 +3753,6 @@
       edit: '<path d="M5 19l4-.8L19 8l-3-3L5.8 15.2 5 19zM14 7l3 3M4 21h16"/>',
       receipt: '<path d="M6 3h12v18H6zM9 8h6M9 12h6M9 16h3M15.5 15.5l1.5 1.5 3-3"/>',
       users: '<circle cx="8" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M2.5 20a5.5 5.5 0 0 1 11 0M13 20a4.5 4.5 0 0 1 8 0"/>',
-      bag: '<path d="M5 8h14l-1 12H6L5 8zM9 8a3 3 0 0 1 6 0"/>',
       code: '<path d="M4 5h16v14H4zM8 10l3 2-3 2M13 15h3"/>',
       chart: '<path d="M4 20V9m5 11V4m5 16v-7m5 7V6M2 20h20"/>',
       dash: '<path d="M4 18a8 8 0 1 1 16 0M12 12l4-4M7 17h10"/>',
@@ -3504,19 +3767,17 @@
         <a class="nav-item nav-parent${active(receiptActive)}" href="receipts.html" data-title="销售回单" aria-label="销售回单" aria-haspopup="true">${navIcon("receipt")}</a>
         <div class="nav-flyout" role="menu" aria-label="销售回单菜单">
           <a class="${active(page === "receipts" || page === "detail-pending" || page === "detail-processing" || page === "detail-completed")}" href="receipts.html" data-receipt-permission="audit" role="menuitem">回单审核</a>
-          <a class="${active(page === "entry")}" href="receipt-entry.html" data-receipt-permission="entry" role="menuitem">录入回单</a>
-          <a href="../ai_order/stats.html?tab=receipt" data-receipt-permission="stats" role="menuitem">回单统计</a>
+          <a class="${active(page === "entry")}" href="receipt-entry.html" data-receipt-permission="entry" role="menuitem">回单录入</a>
         </div>
       </div>
       <div class="nav-group">
-        <a class="nav-item nav-parent${active(page === "merchants" || page === "groups" || page === "groups-detail")}" href="../ai_order/customers.html" data-title="商户管理" aria-label="商户管理" aria-haspopup="true">${navIcon("users")}</a>
-        <div class="nav-flyout" role="menu" aria-label="商户管理菜单">
-          <a class="${active(page === "merchants")}" href="../ai_order/customers.html" role="menuitem">商户管理</a>
+        <a class="nav-item nav-parent${active(page === "merchants" || page === "groups" || page === "groups-detail")}" href="../ai_order/customers.html" data-title="客户管理" aria-label="客户管理" aria-haspopup="true">${navIcon("users")}</a>
+        <div class="nav-flyout" role="menu" aria-label="客户管理菜单">
+          <a class="${active(page === "merchants")}" href="../ai_order/customers.html" role="menuitem">客户管理</a>
           <a class="${active(page === "groups" || page === "groups-detail")}" href="../ai_order/groups.html" role="menuitem">群聊管理</a>
-          <a href="../ai_order/customer-groups.html" role="menuitem">商户分组</a>
+          <a href="../ai_order/customer-groups.html" role="menuitem">客户分组</a>
         </div>
       </div>
-      <a class="nav-item" href="../ai_order/sku.html" data-title="报价单" aria-label="报价单" data-nav-scope="order">${navIcon("bag")}</a>
       <div class="nav-group">
         <a class="nav-item nav-parent" href="../ai_order/prompts.html" data-title="提示词" aria-label="提示词" aria-haspopup="true">${navIcon("code")}</a>
         <div class="nav-flyout" role="menu" aria-label="提示词菜单">

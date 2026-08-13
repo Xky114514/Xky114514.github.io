@@ -18,7 +18,6 @@
 群聊管理	/groups	groups.html
 群聊详情	/groups/[id]	group-detail.html
 客户分组	/customer-groups	customer-groups.html
-报价单	/sku	sku.html
 提示词	/prompts	prompts.html
 AI 记忆	/memory	memory.html
 统计	/stats	stats.html
