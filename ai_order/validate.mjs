@@ -480,10 +480,17 @@ if (!rawRepliesPage.includes('非业务消息')) interactionMarkers.push('settin
 if (rawRepliesPage.includes('非订单消息')) interactionMarkers.push('settings-replies.html -> 回单消息不得落入“非订单消息”回复');
 
 const promptsPage = fs.readFileSync(path.join(dir, 'prompts.html'), 'utf8');
-for (const marker of ['data-subtab="customerView"', '>客户视图</button>', 'data-panel="customerView"', '已配置客户', '启用模板', '订单解析提示词', '意图识别提示词', '启用模板数', 'data-prompt-customer-search', 'S3866318', '城隍阁', '特殊模板格式', 'data-prompt-customer-view="S3866318"', 'id="promptCustomerDrawer"', 'class="prompt-customer-drawer"', '客户提示词详情', 'data-prompt-customer-panel="S3866318"', 'data-prompt-detail-group="order"', 'data-prompt-detail-group="intent"', 'Prompt 内容', '更新时间：', 'class="prompt-detail-empty">未配置</div>', 'data-prompt-customer-close', 'data-prompt-detail-card', 'data-prompt-detail-content', "e.target.closest('[data-prompt-customer-view]')", "drawer.classList.add('open')", "e.target.closest('[data-prompt-customer-search]')"]) {
+for (const marker of ['data-subtab="customerView"', '>客户视图</button>', 'data-panel="customerView"', '正常启用客户', '启用绑定', '订单解析提示词', '意图识别提示词', '启用绑定数', '关联群聊', 'data-customer-view-search', 'data-customer-view-type', 'data-customer-view-status', '<option value="order">订单解析</option>', '<option value="intent">意图识别</option>', '<option value="configured">已配置</option>', '<option value="unconfigured">未配置</option>', '未配置客户提示词', 'id="promptCustomerDrawer"', 'class="prompt-customer-drawer"', '客户提示词详情', '客户信息', '系统基础配置', '客户专属配置', '查看系统提示词', '管理该客户提示词', '当前仅使用系统基础配置', '系统基础提示词未配置', 'data-customer-view-clear', 'rows.slice(0,2)', 'hiddenRows.length', 'prompt-binding-more', 'colspan="7"', "openPromptCustomerDrawer(open.dataset.customerViewOpen)", "history.replaceState(null,'','#customerPrompt')"]) {
   if (!promptsPage.includes(marker)) interactionMarkers.push(`prompts.html -> 客户视图缺少 ${marker}`);
 }
 const customerViewMarkup = (promptsPage.split('<div class="subpanel prompt-customer-view"')[1] || '').split('<script>')[0];
+const customerViewScript = (promptsPage.split('<script>')[1] || '').split('</script>')[0];
+for (const marker of ['<th>客户 ID</th>', '客户 ID：']) {
+  if (customerViewMarkup.includes(marker) || customerViewScript.includes(marker)) interactionMarkers.push(`prompts.html -> 客户视图不应展示 ${marker}`);
+}
+for (const marker of ['更新时间：', 'prompt-exclusive-preview', 'prompt-exclusive-meta']) {
+  if (customerViewScript.includes(marker)) interactionMarkers.push(`prompts.html -> 客户详情抽屉不应展示 ${marker}`);
+}
 for (const marker of ['意图识别2', '处理客户', '已停用']) {
   if (customerViewMarkup.includes(marker)) interactionMarkers.push(`prompts.html -> 客户视图不应展示已停用提示词：${marker}`);
 }
