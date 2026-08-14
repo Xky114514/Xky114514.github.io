@@ -275,9 +275,12 @@ const receiptDetailHeaderCells = [...receiptDetailHead.matchAll(/<th([^>]*)>([\s
     text: match[2].replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim(),
   }));
 const receiptDetailHeaders = receiptDetailHeaderCells.map((cell) => cell.text);
-const expectedReceiptDetailHeaders = ['序号', '订单商品', '识别商品', '下单数', '签收数', '差异数', '备注'];
+const expectedReceiptDetailHeaders = ['序号', '订单商品', '识别商品', '下单数', '签收数', '差异数', '备注', '售后类型', '售后原因', '售后处理', '操作'];
 if (receiptDetailHeaders.join('|') !== expectedReceiptDetailHeaders.join('|')) {
-  interactionMarkers.push(`sales_receipt/receipt-detail.html -> 回单主表应始终展示 ${expectedReceiptDetailHeaders.join('/')} 7 列（当前 ${receiptDetailHeaders.join('/')}）`);
+  interactionMarkers.push(`sales_receipt/receipt-detail.html -> 回单主表应包含正常签收 7 列和售后处理 4 列（当前 ${receiptDetailHeaders.join('/')}）`);
+}
+if (receiptDetailHeaderCells.slice(7).some((cell) => !cell.attributes.includes('data-after-sales-column'))) {
+  interactionMarkers.push('sales_receipt/receipt-detail.html -> 四个售后列必须支持随模式统一显隐');
 }
 
 function receiptFunctionSource(name) {
@@ -289,14 +292,14 @@ function receiptFunctionSource(name) {
 
 const renderOrderLineSource = receiptFunctionSource('renderOrderLine');
 const orderLineCellCount = (renderOrderLineSource.match(/<td\b/g) || []).length;
-if (orderLineCellCount !== 7 || renderOrderLineSource.includes('data-after-sales-column')) {
-  interactionMarkers.push(`sales_receipt/app.js -> 订单商品行应固定为 7 列且不内嵌售后三列（当前 ${orderLineCellCount} 列）`);
+if (orderLineCellCount !== 11 || !renderOrderLineSource.includes('data-after-sales-column')) {
+  interactionMarkers.push(`sales_receipt/app.js -> 商品行应包含正常签收 7 列和售后处理 4 列（当前 ${orderLineCellCount} 列）`);
 }
 if (renderOrderLineSource.includes('renderRowActions') || /data-(?:add|delete)-row/.test(receiptAppScript) || receiptDetailPage.includes('data-add-product')) {
   interactionMarkers.push('sales_receipt -> 回单主表由关联订单生成，不得保留操作列、行新增或行删除入口');
 }
 const renderQuantityRowsSource = receiptFunctionSource('renderQuantityRows');
-for (const marker of ['order.lines', 'renderOrderLine(line, index)', 'colspan="7"']) {
+for (const marker of ['order.lines', 'renderOrderLine(line, index)', 'colspan="11"']) {
   if (!renderQuantityRowsSource.includes(marker)) interactionMarkers.push(`sales_receipt/app.js -> 关联订单商品列表渲染缺少 ${marker}`);
 }
 for (const marker of ['renderReceiptOnlyRow', 'renderUnmatchedRow', 'activeReceiptAiExceptions', 'extraRows']) {
@@ -321,8 +324,11 @@ for (const marker of ['[data-receipt-mode-action]', '"正常签收" : "售后单
 if (!receiptDetailPage.includes('data-receipt-mode="after-sales"') || !receiptDetailPage.includes('data-receipt-mode-action>正常签收</button>')) {
   interactionMarkers.push('sales_receipt/receipt-detail.html -> 待处理回单应默认展示售后单处理，并将模式按钮展示为正常签收');
 }
-if (receiptDetailPage.includes('data-after-sales-column') || renderOrderLineSource.includes('class="after-sales-select"')) {
-  interactionMarkers.push('sales_receipt -> 售后三字段只能在售后弹窗中维护，不得在主商品表展开');
+for (const marker of ['data-after-sales-column', '售后类型', '售后原因', '售后处理', '操作']) {
+  if (!receiptDetailPage.includes(marker)) interactionMarkers.push(`sales_receipt/receipt-detail.html -> 售后处理主表缺少 ${marker}`);
+}
+for (const marker of ['function renderInlineAfterSalesCells(', 'function refreshInlineAfterSalesRow(', 'function validateInlineAfterSales(', 'data-toggle-after-sales-row', '售后草稿已保留']) {
+  if (!receiptAppScript.includes(marker)) interactionMarkers.push(`sales_receipt/app.js -> 主表售后字段或无损切换缺少 ${marker}`);
 }
 
 const setReceiptModeSource = receiptFunctionSource('setReceiptMode');
@@ -409,7 +415,7 @@ if (workbenchHeaders.join('|') !== expectedWorkbenchHeaders.join('|')) {
 }
 
 const validateReceiptSubmissionSource = receiptFunctionSource('validateReceiptSubmission');
-for (const marker of ['receiptMode === "aftersales"', 'isAfterSalesRowComplete(row)', 'renderAfterSalesWorkbench({ initialize: true })', 'openModal("afterSalesWorkbenchModal")', 'collectAfterSalesPayload()', 'rows: []']) {
+for (const marker of ['receiptMode === "aftersales"', 'validateInlineAfterSales()', 'collectAfterSalesPayload()', 'rows: []']) {
   if (!validateReceiptSubmissionSource.includes(marker)) interactionMarkers.push(`sales_receipt/app.js -> 正常签收/售后单提交分支缺少 ${marker}`);
 }
 const collectAfterSalesPayloadSource = receiptFunctionSource('collectAfterSalesPayload');

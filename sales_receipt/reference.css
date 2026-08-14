@@ -2032,6 +2032,18 @@ body[data-receipt-mode="after-sales"] .receipt-mode-badge {
   min-width: 980px;
 }
 
+.receipt-reference-table [data-after-sales-column] {
+  display: none;
+}
+
+body[data-receipt-mode="after-sales"] .receipt-reference-table {
+  min-width: 2180px;
+}
+
+body[data-receipt-mode="after-sales"] .receipt-reference-table [data-after-sales-column] {
+  display: table-cell;
+}
+
 .receipt-reference-table th,
 .receipt-reference-table td {
   min-width: 0;
@@ -2062,6 +2074,36 @@ body[data-receipt-mode="after-sales"] .receipt-mode-badge {
 
 .receipt-reference-table th:nth-child(7) {
   width: 220px;
+}
+
+.receipt-reference-table th:nth-child(8) {
+  width: 170px;
+}
+
+.receipt-reference-table th:nth-child(9) {
+  width: 190px;
+}
+
+.receipt-reference-table th:nth-child(10) {
+  width: 940px;
+}
+
+.receipt-reference-table th:nth-child(11) {
+  width: 100px;
+}
+
+.receipt-reference-table td[data-after-sales-column] {
+  vertical-align: top;
+}
+
+.receipt-reference-table td[data-after-sales-action-cell] {
+  padding-top: 16px;
+  white-space: nowrap;
+}
+
+.receipt-reference-table .after-sales-row-excluded td[data-after-sales-column] {
+  color: #8c8c8c;
+  background: #fafafa;
 }
 
 .receipt-recognition-text {
