@@ -28,7 +28,7 @@ const appShellTemplate = document.getElementById("app").innerHTML;
 const state = {
   route: "projects",
   tabs: [{ key: "projects", label: "项目库", isHome: true }],
-  activeDetailId: "PI-20260701-011",
+  activeDetailId: "PO-20260701-201",
   purchaseOrderChatMode: "supplier",
   purchaseChatMode: "supplier",
   promptTab: "customer",
@@ -43,6 +43,7 @@ const state = {
   reviewTab: "list",
   groupBoardFilter: "all",
   purchaseOrderRangeByInbound: {},
+  purchaseOrderGroupsByTask: {},
   annotationTab: "controls",
   annotationEditing: false,
   annotationOpen: false,
@@ -1494,7 +1495,7 @@ function openPurchaseDetail(id) {
   if (!id) return;
   state.activeDetailId = id;
   if (state.route === "purchase-detail") {
-    renderContent();
+    render();
     return;
   }
   routeTo("purchase-detail");
@@ -1519,6 +1520,11 @@ function render() {
   ensureAppShell();
   state.route = getRouteFromHash();
   const route = routes[state.route];
+  if (state.route === "purchase-detail") {
+    route.label = state.activeDetailId?.startsWith("PO-") ? "采购单详情" : "采购入库单详情";
+    const detailTab = state.tabs.find((tab) => tab.key === "purchase-detail");
+    if (detailTab) detailTab.label = route.label;
+  }
   const isPlatformRoute = PLATFORM_ROUTES.has(state.route);
   if (state.annotationTargetRoute && state.annotationTargetRoute !== state.route) {
     state.annotationTargetId = "";
@@ -4100,6 +4106,116 @@ function commitInboundSupplierInput(input) {
   setTimeout(() => renderContent(), 0);
 }
 
+function clonePurchaseOrderDetailItem(item = {}) {
+  return {
+    raw: item.raw || "新增商品",
+    name: item.name || "",
+    qty: item.qty || "",
+    price: item.price || "",
+    amount: item.amount || "",
+    remark: item.remark || "",
+  };
+}
+
+function purchaseOrderItemsForSupplier(supplierName) {
+  const matched = purchaseDetailItems.filter((item) => item.supplier === supplierName);
+  return (matched.length ? matched : [
+    { raw: "新增商品", name: "", qty: "1 件", price: "", amount: "", remark: "" },
+  ]).map(clonePurchaseOrderDetailItem);
+}
+
+function createPurchaseOrderDetailGroup(task, supplierName, sequence) {
+  return {
+    id: `${task.id}-group-${sequence}`,
+    supplier: supplierName,
+    remark: "",
+    submitted: false,
+    items: purchaseOrderItemsForSupplier(supplierName),
+  };
+}
+
+function getPurchaseOrderDetailGroups(task) {
+  if (!state.purchaseOrderGroupsByTask[task.id]) {
+    const primarySupplier = task.supplier || suppliers[0]?.name || "";
+    const secondarySupplier = suppliers.find((supplier) => supplier.name !== primarySupplier)?.name || primarySupplier;
+    state.purchaseOrderGroupsByTask[task.id] = [
+      createPurchaseOrderDetailGroup(task, primarySupplier, 1),
+      createPurchaseOrderDetailGroup(task, secondarySupplier, 2),
+    ];
+  }
+  return state.purchaseOrderGroupsByTask[task.id];
+}
+
+function findPurchaseOrderDetailGroup(taskId, groupId) {
+  return state.purchaseOrderGroupsByTask[taskId]?.find((group) => group.id === groupId);
+}
+
+function purchaseOrderGroupCard(task, group, groupIndex, groupCount) {
+  const supplierOptions = suppliers.map((supplier) => `<option value="${escapeAttribute(supplier.name)}" ${supplier.name === group.supplier ? "selected" : ""}>${escapeHTML(supplier.name)}</option>`).join("");
+  return `
+    <section class="purchase-group purchase-order-group-card" data-purchase-order-group="${group.id}">
+      <div class="purchase-group-head purchase-order-group-head">
+        <div class="purchase-order-group-title">
+          <strong>采购单分组 ${groupIndex + 1}</strong>
+        </div>
+        <div class="purchase-order-group-actions">
+          <details class="purchase-order-more">
+            <summary class="btn">更多</summary>
+            <div class="purchase-order-more-menu">
+              <button class="text-btn danger" type="button" data-purchase-group-remove="${group.id}" data-task-id="${task.id}" ${groupCount <= 1 ? "disabled" : ""}>删除分组</button>
+            </div>
+          </details>
+          <button class="btn primary" type="button" data-purchase-group-submit="${group.id}" data-task-id="${task.id}" ${group.submitted ? "disabled" : ""}>${group.submitted ? "已提交" : "确认提交"}</button>
+        </div>
+      </div>
+      <div class="purchase-form-row purchase-order-group-form">
+        <label>
+          <span>供应商</span>
+          <select data-purchase-group-supplier="${group.id}" data-task-id="${task.id}">${supplierOptions}</select>
+        </label>
+        <label class="wide">
+          <span>采购备注</span>
+          <input value="${escapeAttribute(group.remark)}" data-purchase-group-remark="${group.id}" data-task-id="${task.id}" placeholder="填写当前分组备注">
+        </label>
+      </div>
+      <div class="purchase-table-wrap purchase-order-group-table-wrap">
+        <table class="purchase-detail-table purchase-order-group-table">
+          <thead><tr><th>序号</th><th>识别文本</th><th>商品名称</th><th>数量 / 单位</th><th>单价</th><th>总价</th><th>备注</th><th class="operation-col">操作</th></tr></thead>
+          <tbody>
+            ${group.items.map((item, itemIndex) => `
+              <tr data-purchase-group-row="${group.id}" data-item-index="${itemIndex}">
+                <td><span class="row-handle">⋮⋮</span><b>${itemIndex + 1}</b></td>
+                <td class="purchase-order-raw">${escapeHTML(item.raw)}</td>
+                <td><input value="${escapeAttribute(item.name)}" data-purchase-group-item-field="name" aria-label="商品名称"></td>
+                <td><input class="qty-input" value="${escapeAttribute(item.qty)}" data-purchase-group-item-field="qty" aria-label="数量和单位"></td>
+                <td><span class="money-input">¥ <input class="price-input" value="${escapeAttribute(item.price)}" data-purchase-group-item-field="price" aria-label="单价"></span></td>
+                <td><span class="money-input">¥ <input class="amount-input" value="${escapeAttribute(item.amount)}" data-purchase-group-item-field="amount" aria-label="总价"></span></td>
+                <td><input class="remark-input" value="${escapeAttribute(item.remark)}" data-purchase-group-item-field="remark" placeholder="备注" aria-label="备注"></td>
+                <td class="detail-row-actions"><button class="circle-btn plus" type="button" data-purchase-group-add-row="${group.id}" data-task-id="${task.id}" aria-label="在当前分组新增商品">+</button><button class="circle-btn minus" type="button" data-purchase-group-remove-row="${group.id}" data-task-id="${task.id}" data-item-index="${itemIndex}" aria-label="删除当前商品">-</button></td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      </div>
+      <div class="purchase-order-group-foot">
+        <button class="add-line" type="button" data-purchase-group-add-row="${group.id}" data-task-id="${task.id}">+ 新增商品</button>
+      </div>
+    </section>
+  `;
+}
+
+function purchaseOrderMultiGroupBoard(task) {
+  const orderGroups = getPurchaseOrderDetailGroups(task);
+  return `
+    <section class="purchase-order-multi-board">
+      <div class="purchase-order-group-list">
+        ${orderGroups.map((group, index) => purchaseOrderGroupCard(task, group, index, orderGroups.length)).join("")}
+      </div>
+      <button class="purchase-order-add-group" type="button" data-purchase-group-add data-task-id="${task.id}">新增订单分组</button>
+    </section>
+  `;
+}
+
 function purchaseDetailPage() {
   const task = [...purchaseOrderTasks, ...purchaseTasks, ...historicalInboundRecords].find((item) => item.id === state.activeDetailId) || purchaseTasks[0];
   const isPurchaseOrder = task.id.startsWith("PO-");
@@ -4142,7 +4258,7 @@ function purchaseDetailPage() {
     </section>
   ` : "";
   return `
-    <div class="purchase-detail-page">
+    <div class="purchase-detail-page ${isPurchaseOrder ? "purchase-order-detail-page" : ""}">
       <aside class="detail-source">
         <div class="detail-tabs" role="tablist" aria-label="详情来源信息">
           <button class="detail-basic-tab" role="tab" aria-selected="false">基本信息</button>
@@ -4188,6 +4304,7 @@ ${isPurchaseOrder ? "价格缺失时留待操作员确认，不自动关联其�
         </div>
 
         ${inboundResult}
+        ${isPurchaseOrder ? purchaseOrderMultiGroupBoard(task) : `
         <section class="purchase-group">
           <div class="purchase-group-head">
             <div>
@@ -4264,6 +4381,7 @@ ${isPurchaseOrder ? "价格缺失时留待操作员确认，不自动关联其�
           </div>
           ${readonlyDetail ? "" : `<button class="add-line" data-toast="已新增一行商品">+ 新增商品</button>`}
         </section>
+        `}
       </main>
     </div>
   `;
@@ -5423,6 +5541,115 @@ function gmPurchaseOrderDetailModal(order) {
   `;
 }
 
+function bindPurchaseOrderGroupActions(root = document) {
+  root.querySelectorAll("[data-purchase-group-add]").forEach((button) => {
+    button.onclick = () => {
+      const task = purchaseOrderTasks.find((item) => item.id === button.dataset.taskId);
+      if (!task) return;
+      const orderGroups = getPurchaseOrderDetailGroups(task);
+      const usedSuppliers = new Set(orderGroups.map((group) => group.supplier));
+      const nextSupplier = suppliers.find((supplier) => !usedSuppliers.has(supplier.name))?.name || suppliers[0]?.name || "";
+      let sequence = orderGroups.length + 1;
+      while (orderGroups.some((group) => group.id === `${task.id}-group-${sequence}`)) sequence += 1;
+      orderGroups.push(createPurchaseOrderDetailGroup(task, nextSupplier, sequence));
+      toast(`已新增采购单分组 ${orderGroups.length}`);
+      renderContent();
+    };
+  });
+
+  root.querySelectorAll("[data-purchase-group-remove]").forEach((button) => {
+    button.onclick = () => {
+      const orderGroups = state.purchaseOrderGroupsByTask[button.dataset.taskId];
+      if (!orderGroups || orderGroups.length <= 1) {
+        toast("至少保留一个采购单分组");
+        return;
+      }
+      const index = orderGroups.findIndex((group) => group.id === button.dataset.purchaseGroupRemove);
+      if (index < 0) return;
+      orderGroups.splice(index, 1);
+      toast("采购单分组已删除");
+      renderContent();
+    };
+  });
+
+  root.querySelectorAll("[data-purchase-group-supplier]").forEach((select) => {
+    select.onchange = () => {
+      const group = findPurchaseOrderDetailGroup(select.dataset.taskId, select.dataset.purchaseGroupSupplier);
+      if (!group) return;
+      group.supplier = select.value;
+      toast(`分组供应商已切换为 ${select.value}`);
+      renderContent();
+    };
+  });
+
+  root.querySelectorAll("[data-purchase-group-remark]").forEach((input) => {
+    input.oninput = () => {
+      const group = findPurchaseOrderDetailGroup(input.dataset.taskId, input.dataset.purchaseGroupRemark);
+      if (group) group.remark = input.value;
+    };
+  });
+
+  root.querySelectorAll("[data-purchase-group-item-field]").forEach((input) => {
+    input.oninput = () => {
+      const row = input.closest("[data-purchase-group-row]");
+      const group = findPurchaseOrderDetailGroup(state.activeDetailId, row?.dataset.purchaseGroupRow);
+      const item = group?.items?.[Number(row?.dataset.itemIndex)];
+      if (!item) return;
+      const field = input.dataset.purchaseGroupItemField;
+      item[field] = input.value;
+      if (field === "qty" || field === "price") {
+        const qty = Number.parseFloat(item.qty) || 0;
+        const price = Number(item.price) || 0;
+        item.amount = qty && price ? (qty * price).toFixed(2) : "";
+        const amountInput = row.querySelector('[data-purchase-group-item-field="amount"]');
+        if (amountInput) amountInput.value = item.amount;
+      }
+    };
+  });
+
+  root.querySelectorAll("[data-purchase-group-add-row]").forEach((button) => {
+    button.onclick = () => {
+      const group = findPurchaseOrderDetailGroup(button.dataset.taskId, button.dataset.purchaseGroupAddRow);
+      if (!group) return;
+      group.items.push(clonePurchaseOrderDetailItem({ raw: "人工新增", qty: "1 件" }));
+      toast("已在当前分组新增商品");
+      renderContent();
+    };
+  });
+
+  root.querySelectorAll("[data-purchase-group-remove-row]").forEach((button) => {
+    button.onclick = () => {
+      const group = findPurchaseOrderDetailGroup(button.dataset.taskId, button.dataset.purchaseGroupRemoveRow);
+      if (!group) return;
+      if (group.items.length <= 1) {
+        toast("每个采购单分组至少保留一个商品");
+        return;
+      }
+      group.items.splice(Number(button.dataset.itemIndex), 1);
+      toast("当前商品已删除");
+      renderContent();
+    };
+  });
+
+  root.querySelectorAll("[data-purchase-group-submit]").forEach((button) => {
+    button.onclick = () => {
+      const task = purchaseOrderTasks.find((item) => item.id === button.dataset.taskId);
+      const group = task ? findPurchaseOrderDetailGroup(task.id, button.dataset.purchaseGroupSubmit) : null;
+      if (!task || !group) return;
+      if (!group.supplier || !group.items.length || group.items.some((item) => !item.name.trim())) {
+        toast("请完善当前分组的供应商和商品名称");
+        return;
+      }
+      group.submitted = true;
+      const orderGroups = getPurchaseOrderDetailGroups(task);
+      task.status = orderGroups.every((item) => item.submitted) ? "已提交" : "部分提交";
+      toast(`采购单分组已确认提交，将生成 ${group.supplier} 的采购单`);
+      renderContent();
+    };
+  });
+
+}
+
 function wirePageInteractions() {
   bindRouteButtons(document.getElementById("content"));
   document.querySelectorAll("[data-toast]").forEach((el) => {
@@ -5608,6 +5835,7 @@ function wirePageInteractions() {
   });
   bindModalLaunchers(document);
   bindPurchaseAssociationActions(document);
+  bindPurchaseOrderGroupActions(document);
   document.querySelectorAll("[data-group-detail]").forEach((button) => {
     button.onclick = () => {
       const group = groups.find((item) => item.name === button.dataset.groupDetail) || groups[0];
