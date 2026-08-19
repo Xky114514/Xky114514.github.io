@@ -44,6 +44,7 @@ const state = {
   groupBoardFilter: "all",
   purchaseOrderRangeByInbound: {},
   purchaseOrderGroupsByTask: {},
+  purchaseDetailFieldOrder: { order: null, inbound: null },
   annotationTab: "controls",
   annotationEditing: false,
   annotationOpen: false,
@@ -1076,7 +1077,7 @@ let pageAnnotations = {
     "dev": [
       "页面由 purchaseDetailPage 渲染，activeDetailId 控制当前任务；PO- 前缀展示采购单详情，PI- 前缀展示采购入库单详情。",
       "采购入库单关系区位于详情主区域最上方，供应商只读展示；唯一编辑入口是 AI 识别明细中的可输入下拉选项。",
-      "采购入库单明细金额默认按实收数乘以单价计算，也允许操作员直接修改金额；手工修改后不再被实收数或单价变化自动覆盖。",
+      "采购入库单明细金额默认按入库数量（采购单位）乘以单价计算，也允许操作员直接修改金额；手工修改后不再被数量或单价变化自动覆盖。",
       "采购数量和差异从关联采购单实时计算，差异比例严格大于 10% 时高亮提示。",
       "已提交的采购入库单进入只读状态，隐藏删除、保存、确认提交和新增行操作。",
       "确认提交时按供应商、入库时间点和观麦待处理状态检查可补单入库单；候选需与当前单同一入库日期且不晚于当前时间，当前单无需先关联采购单。",
@@ -1110,13 +1111,15 @@ let pageAnnotations = {
       "字段【序号】表示明细行顺序，便于审核员逐行核对。",
       "字段【识别文本】表示 AI 从原始消息中切出的商品原文，作为核对商品名和数量的证据。",
       "字段【商品名称】表示人工确认后的商品名称，后续用于映射 SPU 和商品编码。",
+      "交互【商品搜索】采购单与采购入库单统一展示商品名称、规格名、采购规格、采购单位和规格 ID，选择后同步对应规格及单位信息。",
       "字段【采购单数量/单位】采购单详情中表示计划采购数量和单位，是采购计划口径。",
       "字段【采购数量】取关联采购单中对应商品的采购数量；未关联或未匹配到商品时留空。",
-      "字段【实收数】表示当前批次操作员确认的实际收货数量。",
-      "字段【差异】等于采购数量减实收数；绝对差异比例严格大于 10% 时只高亮对应行和数量单元格，不展示偏差百分比，也不阻断提交。",
+      "字段【入库数量（采购单位）】表示按商品采购单位确认的本批次实际入库数量。",
+      "字段【入库数量（基本单位）】按规格换算关系展示并支持确认基本单位数量。",
+      "字段【差异】等于采购数量减入库数量（采购单位）；绝对差异比例严格大于 10% 时只高亮对应行和数量单元格，不展示偏差百分比，也不阻断提交。",
       "字段【识别入库数】表示 AI 从供应商送货内容识别出的到货数量文本。",
       "字段【单价】表示采购入库单价，异常或缺失价格需要人工确认，不能自动补齐未知价格。",
-      "字段【金额】默认等于实收数乘以单价，并允许人工修改；正式业务以后端金额为准。",
+      "字段【金额】默认等于入库数量（采购单位）乘以单价，并允许人工修改；正式业务以后端金额为准。",
       "字段【SPU 名称】表示商品主数据匹配结果，未匹配时需人工处理。",
       "字段【商品编码】表示商品主数据编码，是后续入库、库存和财务核算的关联键。",
       "按钮【删除】删除选中或当前明细行；已提交采购入库单不可删除。",
@@ -1124,9 +1127,13 @@ let pageAnnotations = {
       "按钮【保存】采购入库单详情中保存当前审核结果，暂不提交观麦；不会被其它批次自动联动。",
       "按钮【确认提交】采购单详情中将采购单提交至观麦并等待审核。",
       "按钮【确认提交】采购入库单详情中检查可补单记录；关联采购单已审核或关闭时要求解除或更换。",
-      "规则【确认前阻断】无供应商、空商品、无效实收数或采购单供应商不一致时禁止提交。",
+      "按钮【字段设置】分别配置采购单、采购入库单的明细字段；字段分为必选字段、可选字段和自定义字段，并按当前单据类型独立保存。",
+      "字段设置【采购单可选字段】包含总价、备注、商品自定义编码、采购单（采购单位）；自定义字段包含采购用途、到货要求、供应商货号。",
+      "字段设置【采购入库单可选字段】包含单价、总价、备注、商品自定义编码、损耗数（基本单位）；自定义字段包含到货批次、到货温层、质检要求。",
+      "字段设置【展示顺序】右侧已显示字段均可拖拽排序；必选字段不可移除，可选字段和自定义字段可移除，保存后同步更新明细表格列顺序。",
+      "规则【确认前阻断】无供应商、空商品、无效入库数量（采购单位）或采购单供应商不一致时禁止提交。",
       "规则【确认弹窗精简】差异和单价信息由操作员在详情明细中核对，普通确认提交弹窗不再展示提交前注意事项。",
-      "规则【字段写回】操作员修改实收数和单价时更新默认金额；金额经人工修改后保留人工值，不再自动覆盖。",
+      "规则【字段写回】操作员修改入库数量（采购单位）和单价时更新默认金额；金额经人工修改后保留人工值，不再自动覆盖。",
       "规则【明细修正写回】商品名称和备注修改后立即写回当前任务；识别到货数保持只读证据。",
       "规则【供应商变更】人工修改供应商后，若与当前采购单不一致则先提示；确认后才解除原关联并应用新供应商。",
       "按钮【新增商品】添加明细行，用于补录 AI 漏识别商品。",
@@ -3624,11 +3631,19 @@ function getPurchaseDetailItems(task) {
       purchaseQty: Number(item.purchaseQty ?? item.receivedQty ?? item.qty) || 0,
       receivedQty: Number(item.receivedQty ?? item.qty) || 0,
       unit: item.unit || "",
+      purchaseUnit: item.purchaseUnit || item.unit || "",
+      baseReceivedQty: Number(item.baseReceivedQty ?? item.receivedQty ?? item.qty) || 0,
+      baseUnit: item.baseUnit || item.unit || "",
+      conversionRate: Number(item.conversionRate) || 1,
       price: item.price || "0.00",
       amount: item.amount || "0.00",
       remark: item.remark || "",
       spu: item.spu || item.name,
       code: item.code || "-",
+      purchaseSpec: item.purchaseSpec || "",
+      specName: item.specName || item.name,
+      specId: item.specId || "",
+      customFields: { ...(item.customFields || {}) },
     }));
   }
   const rows = purchaseDetailItems.filter((item) => item.supplier === task?.supplier);
@@ -3831,7 +3846,7 @@ function validateInboundBeforeConfirm(task) {
   if (!items.length) errors.push("当前采购入库单没有可提交的商品");
   if (items.some((item) => !item.name?.trim())) errors.push("存在未填写商品名称的明细");
   if (items.some((item) => !item.unit?.trim())) errors.push("存在未填写单位的商品明细");
-  if (items.some((item) => !Number.isFinite(Number(item.receivedQty)) || Number(item.receivedQty) <= 0)) errors.push("实收数量必须大于 0");
+  if (items.some((item) => !Number.isFinite(Number(item.receivedQty)) || Number(item.receivedQty) <= 0)) errors.push("入库数量（采购单位）必须大于 0");
   if (order && order.supplier !== task.supplier) errors.push("采购单供应商与当前采购入库单不一致");
   return { errors: [...new Set(errors)] };
 }
@@ -3958,6 +3973,156 @@ const purchaseDetailItems = [
   { supplier: "岭南肉禽", category: "肉禽冻品", raw: "猪五花 18 件", name: "猪五花", qty: "18 件", purchaseQty: 18, receivedQty: 18, unit: "件", price: "238.00", amount: "4284.00", remark: "按件入库", spu: "猪五花", code: "SPU-M-3021" },
 ];
 
+const purchaseProductCatalog = [
+  { name: "蒜苗", specName: "蒜苗", purchaseSpec: "鲜品 500g/份", purchaseUnit: "斤", baseUnit: "千克", conversionRate: 0.5, specId: "D7747320" },
+  { name: "洋蒜苗", specName: "洋蒜苗", purchaseSpec: "鲜品 1kg/袋", purchaseUnit: "斤", baseUnit: "千克", conversionRate: 0.5, specId: "D7747324" },
+  { name: "香蒜苗", specName: "香蒜苗", purchaseSpec: "净菜 500g/份", purchaseUnit: "斤", baseUnit: "千克", conversionRate: 0.5, specId: "D7747350" },
+  { name: "生抽", specName: "餐饮装生抽", purchaseSpec: "500ml×12瓶/箱", purchaseUnit: "箱", baseUnit: "瓶", conversionRate: 12, specId: "D4101001" },
+  { name: "白砂糖", specName: "一级白砂糖", purchaseSpec: "10kg/袋", purchaseUnit: "袋", baseUnit: "千克", conversionRate: 10, specId: "D4101002" },
+  { name: "鲜活鲈鱼", specName: "鲜活鲈鱼", purchaseSpec: "单条 500-750g", purchaseUnit: "条", baseUnit: "千克", conversionRate: 0.65, specId: "D1001001" },
+  { name: "基围虾", specName: "鲜活基围虾", purchaseSpec: "40-50头/斤", purchaseUnit: "斤", baseUnit: "千克", conversionRate: 0.5, specId: "D1001002" },
+];
+
+const purchaseDetailFieldDefinitions = {
+  order: {
+    title: "采购单字段设置",
+    fields: [
+      { key: "raw", label: "识别文本", category: "required", defaultVisible: true },
+      { key: "name", label: "商品名称", category: "required", defaultVisible: true },
+      { key: "quantityUnit", label: "数量 / 单位", category: "required", defaultVisible: true },
+      { key: "unitPrice", label: "单价", category: "required", defaultVisible: true },
+      { key: "totalAmount", label: "总价", category: "optional", defaultVisible: true },
+      { key: "remark", label: "备注", category: "optional", defaultVisible: true },
+      { key: "productCustomCode", label: "商品自定义编码", category: "optional", defaultVisible: false },
+      { key: "purchaseOrderPurchaseUnit", label: "采购单（采购单位）", category: "optional", defaultVisible: false },
+      { key: "purchasePurpose", label: "采购用途", category: "custom", defaultVisible: false },
+      { key: "arrivalRequirement", label: "到货要求", category: "custom", defaultVisible: false },
+      { key: "supplierSkuCode", label: "供应商货号", category: "custom", defaultVisible: false },
+    ],
+  },
+  inbound: {
+    title: "采购入库单字段设置",
+    fields: [
+      { key: "raw", label: "识别文本", category: "required", defaultVisible: true },
+      { key: "name", label: "商品名称", category: "required", defaultVisible: true },
+      { key: "receivedPurchaseQty", label: "入库数量（采购单位）", category: "required", defaultVisible: true },
+      { key: "receivedBaseQty", label: "入库数量（基本单位）", category: "required", defaultVisible: true },
+      { key: "purchaseQty", label: "采购数量", category: "required", defaultVisible: true },
+      { key: "difference", label: "差异", category: "required", defaultVisible: true },
+      { key: "unitPrice", label: "单价", category: "optional", defaultVisible: true },
+      { key: "totalAmount", label: "总价", category: "optional", defaultVisible: true },
+      { key: "remark", label: "备注", category: "optional", defaultVisible: true },
+      { key: "productCustomCode", label: "商品自定义编码", category: "optional", defaultVisible: false },
+      { key: "lossQuantityBaseUnit", label: "损耗数（基本单位）", category: "optional", defaultVisible: false },
+      { key: "arrivalBatch", label: "到货批次", category: "custom", defaultVisible: false },
+      { key: "temperatureZone", label: "到货温层", category: "custom", defaultVisible: false },
+      { key: "qualityRequirement", label: "质检要求", category: "custom", defaultVisible: false },
+    ],
+  },
+};
+
+function getPurchaseFieldsByCategory(type, category) {
+  const definition = purchaseDetailFieldDefinitions[type];
+  return definition.fields.filter((field) => field.category === category);
+}
+
+function getDefaultPurchaseFieldOrder(type) {
+  return purchaseDetailFieldDefinitions[type].fields.filter((field) => field.defaultVisible).map((field) => field.key);
+}
+
+function getPurchaseDisplayedFieldKeys(type) {
+  const definition = purchaseDetailFieldDefinitions[type];
+  const validKeys = new Set(definition.fields.map((field) => field.key));
+  const requiredKeys = definition.fields.filter((field) => field.category === "required").map((field) => field.key);
+  const stored = state.purchaseDetailFieldOrder[type];
+  const keys = Array.isArray(stored) ? stored.filter((key) => validKeys.has(key)) : getDefaultPurchaseFieldOrder(type);
+  requiredKeys.forEach((key) => {
+    if (!keys.includes(key)) keys.push(key);
+  });
+  state.purchaseDetailFieldOrder[type] = [...new Set(keys)];
+  return state.purchaseDetailFieldOrder[type];
+}
+
+function getPurchaseDisplayedFields(type) {
+  const definition = purchaseDetailFieldDefinitions[type];
+  return getPurchaseDisplayedFieldKeys(type).map((key) => definition.fields.find((field) => field.key === key)).filter(Boolean);
+}
+
+function purchaseFieldColumnClass(key) {
+  return `purchase-field-col purchase-field-col-${key}`;
+}
+
+function renderPurchaseFieldHeaders(type) {
+  return getPurchaseDisplayedFields(type).map((field) => `<th class="${purchaseFieldColumnClass(field.key)}" data-purchase-field-key="${field.key}">${field.label}</th>`).join("");
+}
+
+function renderPurchaseExtraFieldInput(field, item, contextAttributes, fallbackValue = "") {
+  const value = item.customFields?.[field.key] ?? fallbackValue;
+  return `<input class="purchase-custom-field-input" value="${escapeAttribute(value)}" data-purchase-custom-field="${field.key}" ${contextAttributes} placeholder="${field.label}" aria-label="${field.label}">`;
+}
+
+function renderPurchaseOrderFieldCells(task, group, item, itemIndex) {
+  const contextAttributes = `data-task-id="${task.id}" data-group-id="${group.id}" data-item-index="${itemIndex}"`;
+  return getPurchaseDisplayedFields("order").map((field) => {
+    let content = "";
+    if (field.key === "raw") content = escapeHTML(item.raw);
+    else if (field.key === "name") content = productSearchInput(item.name, `data-purchase-group-item-field="name" data-product-search-input data-product-search-kind="order" ${contextAttributes} aria-label="商品名称"`);
+    else if (field.key === "quantityUnit") content = `<input class="qty-input" value="${escapeAttribute(item.qty)}" data-purchase-group-item-field="qty" aria-label="数量和单位">`;
+    else if (field.key === "unitPrice") content = `<span class="money-input">¥ <input class="price-input" value="${escapeAttribute(item.price)}" data-purchase-group-item-field="price" aria-label="单价"></span>`;
+    else if (field.key === "totalAmount") content = `<span class="money-input">¥ <input class="amount-input" value="${escapeAttribute(item.amount)}" data-purchase-group-item-field="amount" aria-label="总价"></span>`;
+    else if (field.key === "remark") content = `<input class="remark-input" value="${escapeAttribute(item.remark)}" data-purchase-group-item-field="remark" placeholder="备注" aria-label="备注">`;
+    else if (field.key === "productCustomCode") content = renderPurchaseExtraFieldInput(field, item, contextAttributes, item.code || "");
+    else if (field.key === "purchaseOrderPurchaseUnit") content = renderPurchaseExtraFieldInput(field, item, contextAttributes, item.purchaseUnit || item.unit || "");
+    else content = renderPurchaseExtraFieldInput(field, item, contextAttributes);
+    return `<td class="${purchaseFieldColumnClass(field.key)}">${content}</td>`;
+  }).join("");
+}
+
+function getPurchaseProductProfile(item) {
+  return purchaseProductCatalog.find((product) => product.name === item?.name || product.specId === item?.specId) || null;
+}
+
+function getInboundBaseQuantity(item) {
+  if (Number.isFinite(Number(item?.baseReceivedQty))) return Number(item.baseReceivedQty);
+  const profile = getPurchaseProductProfile(item);
+  return Number(((Number(item?.receivedQty) || 0) * (Number(item?.conversionRate ?? profile?.conversionRate) || 1)).toFixed(3));
+}
+
+function renderInboundFieldCells(task, item, index, readonlyDetail) {
+  const disabledAttr = readonlyDetail ? " disabled" : "";
+  const purchaseQty = getInboundItemPurchaseQty(task, item);
+  const variance = getInboundVariance(purchaseQty, item.receivedQty);
+  const amount = formatInboundAmount(purchaseQty ?? item.receivedQty, item.receivedQty, item.price);
+  const productProfile = getPurchaseProductProfile(item);
+  const purchaseUnit = item.purchaseUnit || productProfile?.purchaseUnit || item.unit;
+  const baseUnit = item.baseUnit || productProfile?.baseUnit || item.unit;
+  const baseQuantity = getInboundBaseQuantity(item);
+  const contextAttributes = `data-task-id="${task.id}" data-item-index="${index}"`;
+  const editableContextAttributes = `${contextAttributes}${disabledAttr}`;
+  return getPurchaseDisplayedFields("inbound").map((field) => {
+    let content = "";
+    if (field.key === "raw") content = escapeHTML(item.raw);
+    else if (field.key === "name") content = productSearchInput(item.name, `data-inbound-name-input data-product-search-input data-product-search-kind="inbound" ${contextAttributes} aria-label="商品名称"${disabledAttr}`);
+    else if (field.key === "receivedPurchaseQty") content = `<input class="qty-input received-input" data-received-input value="${item.receivedQty}"${disabledAttr}> ${purchaseUnit}`;
+    else if (field.key === "receivedBaseQty") content = `<input class="qty-input base-received-input" data-base-received-input value="${formatQuantity(baseQuantity)}"${disabledAttr}> ${baseUnit}`;
+    else if (field.key === "purchaseQty") content = purchaseQty === null ? "" : `${formatQuantity(purchaseQty)} ${item.unit}`;
+    else if (field.key === "difference") content = variance === null ? "" : `${formatQuantity(variance.difference)} ${item.unit}`;
+    else if (field.key === "unitPrice") content = `¥ <input class="price-input" data-price-input value="${item.price}"${disabledAttr}>`;
+    else if (field.key === "totalAmount") content = `¥ <input class="amount-input" data-amount-input value="${item.amount ?? amount}"${disabledAttr}>`;
+    else if (field.key === "remark") content = `<input class="remark-input" data-inbound-remark-input value="${escapeAttribute(item.remark)}" aria-label="备注"${disabledAttr}>`;
+    else if (field.key === "productCustomCode") content = renderPurchaseExtraFieldInput(field, item, editableContextAttributes, item.code || "");
+    else if (field.key === "lossQuantityBaseUnit") content = `${renderPurchaseExtraFieldInput(field, item, editableContextAttributes)} ${baseUnit}`;
+    else content = renderPurchaseExtraFieldInput(field, item, editableContextAttributes);
+    const varianceClass = field.key === "receivedPurchaseQty" ? " received-qty-cell" : field.key === "receivedBaseQty" ? " base-received-qty-cell" : field.key === "purchaseQty" ? " purchase-qty-cell" : field.key === "difference" ? " difference-cell" : "";
+    const varianceAttribute = field.key === "purchaseQty" ? " data-purchase-qty-cell" : field.key === "difference" ? " data-difference-cell" : "";
+    return `<td class="${purchaseFieldColumnClass(field.key)}${varianceClass}"${varianceAttribute}>${content}</td>`;
+  }).join("");
+}
+
+function productSearchInput(value, attributes) {
+  return `<span class="purchase-product-search"><input value="${escapeAttribute(value || "")}" ${attributes} autocomplete="off"><span class="purchase-product-search-icon" aria-hidden="true">⌕</span></span>`;
+}
+
 const purchaseOrderRangeOptions = [
   { value: "1", label: "近 1 天" },
   { value: "3", label: "近 3 天" },
@@ -3996,67 +4161,29 @@ function purchaseAssociationSection(task) {
   const eligibleOrders = guanmaiPurchaseOrders.filter((order) => readonlyAssociation
     ? selectedOrderIds.includes(order.id)
     : (supplierName && order.supplier === supplierName && isGuanmaiOrderLinkable(order) && isPurchaseOrderInRange(order, supplierName, purchaseOrderRange)) || selectedOrderIds.includes(order.id));
-  const emptyAssociationText = readonlyAssociation
-    ? "本次提交未关联采购单。"
-    : supplierName
-      ? `未找到供应商“${escapeHTML(supplierName)}”在当前时间范围内待处理的可关联采购单。`
-      : "请先在“AI 识别采购入库单明细”中填写供应商。";
   return `
-    <section class="purchase-group po-association-card">
-      <div class="purchase-group-head">
-        <div>
-          <strong>关联采购单${readonlyAssociation ? "（只读）" : "（可选）"}</strong>
-          <span class="gm-tip">${readonlyAssociation ? "单据已提交，关联关系不可修改" : "最多选择一张观麦待处理采购单；未关联也可确认提交"}</span>
+    <section class="inbound-association-panel">
+      <div class="inbound-association-head">
+        <span class="inbound-association-title">
+          <strong>关联采购单</strong>
           <span class="inline-help association-help" role="button" tabindex="0" aria-label="关联采购单说明">
             <span class="inline-help-trigger" aria-hidden="true">?</span>
-            <span class="inline-help-content" role="tooltip">${readonlyAssociation ? "当前为已确认记录，下方仅用于查看采购单关联和历史批次信息。" : "系统默认展示当前供应商近 1 天的采购单。你可以调整时间范围，查找该供应商其它时间的采购单。"}</span>
+            <span class="inline-help-content" role="tooltip">${readonlyAssociation ? "当前为已确认记录，只能查看采购单关联结果。" : "只展示当前供应商在所选时间范围内、观麦尚未审核的采购单；不关联也可确认提交。"}</span>
           </span>
-        </div>
-        <div class="po-association-filter">
-          <span class="po-passive-supplier" title="供应商由 AI 识别采购入库单明细同步，不可在此修改">
-            <span>供应商</span>
-            <strong>${supplierName ? escapeHTML(supplierName) : "未填写"}</strong>
-          </span>
-          ${readonlyAssociation ? "" : `
-            <label>
-              <span>采购单时间</span>
-              <select data-po-date-range data-inbound-id="${task.id}">
-                ${purchaseOrderRangeOptions.map((option) => `<option value="${option.value}" ${purchaseOrderRange === option.value ? "selected" : ""}>${option.label}</option>`).join("")}
-              </select>
-            </label>
-          `}
-        </div>
+        </span>
+        ${readonlyAssociation ? "" : `
+          <label class="inbound-po-range">
+            <span>采购单时间</span>
+            <select data-po-date-range data-inbound-id="${task.id}">
+              ${purchaseOrderRangeOptions.map((option) => `<option value="${option.value}" ${purchaseOrderRange === option.value ? "selected" : ""}>${option.label}</option>`).join("")}
+            </select>
+          </label>
+        `}
       </div>
-      <div class="purchase-table-wrap po-link-table-wrap">
-        <table class="purchase-group-board-table po-link-table">
-          <thead><tr><th class="check-col">选择</th><th>采购单</th><th>关联的采购入库单</th><th>操作</th></tr></thead>
-          <tbody>
-            ${eligibleOrders.length ? eligibleOrders.map((order) => {
-              const isSelected = selectedOrderIds.includes(order.id);
-              const otherInboundIds = getOtherLinkedInboundIds(order, task.id);
-              const hasOtherInbounds = otherInboundIds.length > 0;
-              const rowDisabled = readonlyAssociation || (!isSelected && !isGuanmaiOrderLinkable(order));
-              return `
-                <tr>
-                  <td class="check-col"><label class="check-only"><input type="checkbox" ${isSelected ? "checked" : ""} ${rowDisabled ? "disabled" : ""} data-link-po="${order.id}" data-inbound-id="${task.id}" aria-label="${isSelected ? "取消关联" : "关联"}采购单 ${order.id}"></label></td>
-                  <td>
-                    <div class="po-row-main">
-                      <strong>${order.id}</strong>
-                      <span>${order.source} · ${order.orderDate}</span>
-                    </div>
-                  </td>
-                  <td>
-                    <div class="history-cell">
-                      ${hasOtherInbounds ? `<button class="text-btn" data-view-po-history="${order.id}" data-inbound-id="${task.id}">查看关联采购入库单</button>` : `<span class="tag green">无其它关联采购入库单</span>`}
-                    </div>
-                  </td>
-                  <td><button class="text-btn" data-view-gm-po="${order.id}">详情</button></td>
-                </tr>
-              `;
-            }).join("") : `<tr><td colspan="4"><div class="empty-note">${emptyAssociationText}</div></td></tr>`}
-          </tbody>
-        </table>
-      </div>
+      <select class="inbound-po-select" data-po-association-select data-inbound-id="${task.id}" aria-label="关联采购单" ${readonlyAssociation ? "disabled" : ""}>
+        <option value="">不关联采购单</option>
+        ${eligibleOrders.map((order) => `<option value="${order.id}" ${selectedOrderIds.includes(order.id) ? "selected" : ""}>${order.id} · ${order.source} · ${order.orderDate}</option>`).join("")}
+      </select>
     </section>
   `;
 }
@@ -4114,6 +4241,11 @@ function clonePurchaseOrderDetailItem(item = {}) {
     price: item.price || "",
     amount: item.amount || "",
     remark: item.remark || "",
+    purchaseSpec: item.purchaseSpec || "",
+    specName: item.specName || "",
+    purchaseUnit: item.purchaseUnit || "",
+    specId: item.specId || "",
+    customFields: { ...(item.customFields || {}) },
   };
 }
 
@@ -4179,18 +4311,13 @@ function purchaseOrderGroupCard(task, group, groupIndex, groupCount) {
         </label>
       </div>
       <div class="purchase-table-wrap purchase-order-group-table-wrap">
-        <table class="purchase-detail-table purchase-order-group-table">
-          <thead><tr><th>序号</th><th>识别文本</th><th>商品名称</th><th>数量 / 单位</th><th>单价</th><th>总价</th><th>备注</th><th class="operation-col">操作</th></tr></thead>
+        <table class="purchase-detail-table purchase-order-group-table" style="min-width:${Math.max(920, 210 + getPurchaseDisplayedFields("order").length * 170)}px">
+          <thead><tr><th class="sequence-col">序号</th>${renderPurchaseFieldHeaders("order")}<th class="operation-col">操作</th></tr></thead>
           <tbody>
             ${group.items.map((item, itemIndex) => `
               <tr data-purchase-group-row="${group.id}" data-item-index="${itemIndex}">
                 <td><span class="row-handle">⋮⋮</span><b>${itemIndex + 1}</b></td>
-                <td class="purchase-order-raw">${escapeHTML(item.raw)}</td>
-                <td><input value="${escapeAttribute(item.name)}" data-purchase-group-item-field="name" aria-label="商品名称"></td>
-                <td><input class="qty-input" value="${escapeAttribute(item.qty)}" data-purchase-group-item-field="qty" aria-label="数量和单位"></td>
-                <td><span class="money-input">¥ <input class="price-input" value="${escapeAttribute(item.price)}" data-purchase-group-item-field="price" aria-label="单价"></span></td>
-                <td><span class="money-input">¥ <input class="amount-input" value="${escapeAttribute(item.amount)}" data-purchase-group-item-field="amount" aria-label="总价"></span></td>
-                <td><input class="remark-input" value="${escapeAttribute(item.remark)}" data-purchase-group-item-field="remark" placeholder="备注" aria-label="备注"></td>
+                ${renderPurchaseOrderFieldCells(task, group, item, itemIndex)}
                 <td class="detail-row-actions"><button class="circle-btn plus" type="button" data-purchase-group-add-row="${group.id}" data-task-id="${task.id}" aria-label="在当前分组新增商品">+</button><button class="circle-btn minus" type="button" data-purchase-group-remove-row="${group.id}" data-task-id="${task.id}" data-item-index="${itemIndex}" aria-label="删除当前商品">-</button></td>
               </tr>
             `).join("")}
@@ -4229,17 +4356,13 @@ function purchaseDetailPage() {
   const confirmText = "确认提交";
   const confirmToast = isPurchaseOrder ? "采购单已提交至观麦系统，等待观麦操作员审核" : "";
   const detailKindLabel = isPurchaseOrder ? "采购单" : "采购入库单";
-  const qtyLabel = isPurchaseOrder ? "数量/单位" : "识别入库数";
-  const priceLabel = "单价";
-  const amountLabel = "金额";
-  const remarkLabel = isPurchaseOrder ? "采购备注" : "备注";
   const detailItems = getPurchaseDetailItems(task);
   const linkedOrder = !isPurchaseOrder ? getLinkedPurchaseOrder(task) : null;
   const inboundTimePoint = !isPurchaseOrder ? getInboundTimePoint(task) : null;
   const detailLineActions = readonlyDetail ? "" : `
     <div class="detail-line-actions">
       ${isPurchaseOrder ? `<button class="btn danger" data-toast="已删除选中的${detailKindLabel}商品">删除</button>` : ""}
-      <button class="btn" ${isPurchaseOrder ? `data-toast="${detailKindLabel}明细已保存"` : `data-save-inbound-draft="${task.id}"`}>保存</button>
+      <button class="btn" ${isPurchaseOrder ? `data-toast="${detailKindLabel}明细已保存"` : `data-save-inbound-draft="${task.id}"`}>${isPurchaseOrder ? "保存" : "保存草稿"}</button>
       <button class="btn primary" ${isPurchaseOrder ? `data-toast="${confirmToast}"` : `data-confirm-inbound="${task.id}"`}>${confirmText}</button>
     </div>
   `;
@@ -4258,7 +4381,7 @@ function purchaseDetailPage() {
     </section>
   ` : "";
   return `
-    <div class="purchase-detail-page ${isPurchaseOrder ? "purchase-order-detail-page" : ""}">
+    <div class="purchase-detail-page ${isPurchaseOrder ? "purchase-order-detail-page" : "inbound-detail-page"}">
       <aside class="detail-source">
         <div class="detail-tabs" role="tablist" aria-label="详情来源信息">
           <button class="detail-basic-tab" role="tab" aria-selected="false">基本信息</button>
@@ -4289,90 +4412,62 @@ ${isPurchaseOrder ? "价格缺失时留待操作员确认，不自动关联其�
       </aside>
 
       <main class="detail-main">
-        ${!isPurchaseOrder ? relationSection : ""}
         <div class="detail-header">
           <div>
             <h2>${detailTitle} ${statusTag(isPurchaseOrder ? task.status : getInboundDisplayStatus(task))}</h2>
             <div class="detail-meta">
-              ${isPurchaseOrder ? `<span>供应商：${task.supplier}</span>` : ""}
-              <span>操作员：${taskOperator}</span>
-              <span>来源群聊：${taskGroup}</span>
-              ${!isPurchaseOrder ? `<span>时间：${getInboundCreatedAt(task)}</span>` : ""}
+              ${isPurchaseOrder ? `<span>操作员：${taskOperator}</span><span>来源群聊：${taskGroup}</span>` : `<span>来源群聊：${taskGroup}</span>`}
               ${!isPurchaseOrder && task.gmInboundNo ? `<span>系统入库单：${task.gmInboundNo}</span>` : ""}
             </div>
+          </div>
+          <div class="detail-actions ${isPurchaseOrder ? "purchase-order-header-actions" : "inbound-header-actions"}">
+            <button class="btn" data-modal="purchase-field-settings" data-document-type="${isPurchaseOrder ? "order" : "inbound"}">字段设置</button>
+            ${!isPurchaseOrder && !readonlyDetail ? `
+              <button class="btn" data-save-inbound-draft="${task.id}">保存</button>
+              <button class="btn danger" data-toast="演示环境未实际删除采购入库单">删除</button>
+            ` : ""}
           </div>
         </div>
 
         ${inboundResult}
+        ${!isPurchaseOrder ? `
+          <section class="inbound-review-config">
+            <div class="inbound-review-fields">
+              <label class="inbound-supplier-field">
+                <span>供应商</span>
+                <input class="inbound-supplier-input" type="text" list="inbound-supplier-options-${task.id}" value="${escapeAttribute(task.supplier || "")}" data-inbound-supplier-input="${task.id}" placeholder="请输入或选择供应商" autocomplete="off"${disabledAttr}>
+                <datalist id="inbound-supplier-options-${task.id}">
+                  ${supplierOptions.map((name) => `<option value="${escapeAttribute(name)}"></option>`).join("")}
+                </datalist>
+              </label>
+              <label class="inbound-time-field">
+                <span>入库时间</span>
+                <input class="inbound-datetime-input" type="datetime-local" value="${inboundTimePoint.date}T${inboundTimePoint.time}" data-inbound-datetime="${task.id}" aria-label="入库时间"${disabledAttr}>
+              </label>
+            </div>
+            ${relationSection}
+          </section>
+        ` : ""}
         ${isPurchaseOrder ? purchaseOrderMultiGroupBoard(task) : `
-        <section class="purchase-group">
+        <section class="purchase-group inbound-product-card">
           <div class="purchase-group-head">
             <div>
-              <strong>AI 识别${detailKindLabel}明细</strong>
-              ${!isPurchaseOrder && !readonlyDetail ? `
-                <span class="inline-help" role="button" tabindex="0" aria-label="采购入库单明细说明">
-                  <span class="inline-help-trigger" aria-hidden="true">?</span>
-                  <span class="inline-help-content" role="tooltip">本次只提交当前采购入库单，不会自动提交其它暂存或待处理单据。提交时会检查是否存在观麦已提交但尚未审核、可继续补单的入库单。</span>
-                </span>
-              ` : ""}
+              <strong>商品明细</strong>
             </div>
             ${detailLineActions}
           </div>
-          <div class="purchase-form-row">
-            ${isPurchaseOrder
-              ? `<label>供应商 <select>${supplierOptions.map((name) => `<option>${name}</option>`).join("")}</select></label>`
-              : `<label class="inbound-supplier-field">
-                  <span>供应商</span>
-                  <input class="inbound-supplier-input" type="text" list="inbound-supplier-options-${task.id}" value="${escapeAttribute(task.supplier || "")}" data-inbound-supplier-input="${task.id}" placeholder="请输入或选择供应商" autocomplete="off"${disabledAttr}>
-                  <datalist id="inbound-supplier-options-${task.id}">
-                    ${supplierOptions.map((name) => `<option value="${escapeAttribute(name)}"></option>`).join("")}
-                  </datalist>
-                </label>
-                <label class="inbound-time-field">
-                  <span>入库时间</span>
-                  <span class="inbound-time-controls">
-                    <input class="inbound-date-input" type="date" value="${inboundTimePoint.date}" data-inbound-date="${task.id}" aria-label="入库日期"${disabledAttr}>
-                    <input class="inbound-time-input" type="time" value="${inboundTimePoint.time}" data-inbound-time="${task.id}" aria-label="入库时间"${disabledAttr}>
-                  </span>
-                </label>`}
-            <label class="wide">${remarkLabel} <input value="${isPurchaseOrder ? "价格待确认" : "复称，异常短缺请备注"}"${disabledAttr}></label>
-          </div>
-          ${!isPurchaseOrder ? `
-            <div class="inbound-summary-row product-count-summary">
-              <span><em>当前采购入库单商品数</em><b>${getInboundProductCount(task)} 个商品</b></span>
-              <i aria-hidden="true"></i>
-              <span><em>关联采购单</em><b class="${linkedOrder ? "linked" : "unlinked"}">${linkedOrder ? `${linkedOrder.id} · ${getPurchaseOrderProductCount(linkedOrder)} 个商品` : "未关联"}</b></span>
-            </div>
-          ` : ""}
           <div class="purchase-table-wrap">
-            <table class="purchase-detail-table simple-purchase-table">
+            <table class="purchase-detail-table simple-purchase-table inbound-review-table" style="min-width:${Math.max(1180, 210 + getPurchaseDisplayedFields("inbound").length * 170)}px">
               <thead>
-                ${isPurchaseOrder
-                  ? `<tr><th>序号</th><th>识别文本</th><th>商品名称</th><th>${qtyLabel}</th><th>${remarkLabel}</th><th>SPU 名称</th><th>商品编码</th>${operationHeader}</tr>`
-                  : `<tr><th>序号</th><th>识别文本</th><th>商品名称</th><th>采购数量</th><th>实收数</th><th>差异</th><th>${qtyLabel}</th><th>${priceLabel}</th><th>${amountLabel}</th><th>${remarkLabel}</th><th>SPU 名称</th><th>商品编码</th>${operationHeader}</tr>`}
+                <tr><th class="sequence-col">序号</th>${renderPurchaseFieldHeaders("inbound")}${operationHeader}</tr>
               </thead>
               <tbody>
                 ${detailItems.map((item, index) => {
                   const purchaseQty = !isPurchaseOrder ? getInboundItemPurchaseQty(task, item) : null;
                   const variance = getInboundVariance(purchaseQty, item.receivedQty);
-                  const amount = formatInboundAmount(purchaseQty ?? item.receivedQty, item.receivedQty, item.price);
-                  const purchaseQtyDisplay = purchaseQty === null ? "" : `${formatQuantity(purchaseQty)} ${item.unit}`;
-                  const differenceDisplay = variance === null ? "" : `${formatQuantity(variance.difference)} ${item.unit}`;
-                  return isPurchaseOrder
-                    ? `<tr><td><b>${index + 1}</b></td><td>${item.raw}</td><td><input value="${item.name}"${disabledAttr}></td><td><input class="qty-input" value="${item.qty}"${disabledAttr}></td><td><input class="remark-input" value="${item.remark || "按采购计划确认"}"${disabledAttr}></td><td>${item.spu}</td><td><code>${item.code}</code></td>${readonlyDetail ? "" : `<td class="detail-row-actions">${rowActions}</td>`}</tr>`
-                    : `<tr class="${variance?.warning ? "inbound-variance-warning" : ""}" data-inbound-detail-row data-inbound-id="${task.id}" data-item-index="${index}" data-purchase-qty="${purchaseQty ?? ""}">
+                  return `<tr class="${variance?.warning ? "inbound-variance-warning" : ""}" data-inbound-detail-row data-inbound-id="${task.id}" data-item-index="${index}" data-purchase-qty="${purchaseQty ?? ""}">
                         <td><b>${index + 1}</b></td>
-                        <td>${item.raw}</td>
-                        <td><input data-inbound-name-input value="${item.name}"${disabledAttr}></td>
-                        <td class="purchase-qty-cell" data-purchase-qty-cell>${purchaseQtyDisplay}</td>
-                        <td class="received-qty-cell"><input class="qty-input received-input" data-received-input value="${item.receivedQty}"${disabledAttr}> ${item.unit}</td>
-                        <td class="difference-cell" data-difference-cell>${differenceDisplay}</td>
-                        <td><span class="recognized-qty">${item.qty}</span></td>
-                        <td>¥ <input class="price-input" data-price-input value="${item.price}"${disabledAttr}></td>
-                        <td>¥ <input class="amount-input" data-amount-input value="${item.amount ?? amount}"${disabledAttr}></td>
-                        <td><input class="remark-input" data-inbound-remark-input value="${item.remark}"${disabledAttr}></td>
-                        <td>${item.spu}</td>
-                        <td><code>${item.code}</code></td>
+                        ${renderInboundFieldCells(task, item, index, readonlyDetail)}
                         ${readonlyDetail ? "" : `<td class="detail-row-actions">${rowActions}</td>`}
                       </tr>`;
                 }).join("")}
@@ -4385,6 +4480,215 @@ ${isPurchaseOrder ? "价格缺失时留待操作员确认，不自动关联其�
       </main>
     </div>
   `;
+}
+
+function purchaseFieldSettingsModal(type) {
+  const selected = new Set(getPurchaseDisplayedFieldKeys(type));
+  const requiredFields = getPurchaseFieldsByCategory(type, "required");
+  const optionalFields = getPurchaseFieldsByCategory(type, "optional");
+  const customFields = getPurchaseFieldsByCategory(type, "custom");
+  const choiceMarkup = (fields) => fields.map((field) => `<label data-field-choice-label="${field.label}"><input type="checkbox" value="${field.key}" data-purchase-field-choice ${selected.has(field.key) ? "checked" : ""}><span>${field.label}</span></label>`).join("");
+  return `
+    <div class="purchase-field-settings" data-purchase-field-settings-root data-document-type="${type}" data-field-order='${escapeAttribute(JSON.stringify(getPurchaseDisplayedFieldKeys(type)))}'>
+      <p class="purchase-field-settings-subtitle">配置${type === "order" ? "采购单" : "采购入库单"}系统字段和业务自定义字段</p>
+      <div class="purchase-field-settings-grid">
+        <section class="purchase-field-options-pane">
+          <label class="purchase-field-search"><span aria-hidden="true">⌕</span><input type="search" data-purchase-field-search placeholder="搜索字段" aria-label="搜索字段"></label>
+          <h4>必选字段</h4>
+          <div class="purchase-field-choice-grid required-fields">
+            ${requiredFields.map((field) => `<label data-field-choice-label="${field.label}"><input type="checkbox" value="${field.key}" checked disabled><span>${field.label}</span></label>`).join("")}
+          </div>
+          <h4>可选字段</h4>
+          <div class="purchase-field-choice-grid optional-fields">
+            ${choiceMarkup(optionalFields)}
+          </div>
+          <h4>自定义字段</h4>
+          <div class="purchase-field-choice-grid custom-fields">
+            ${choiceMarkup(customFields)}
+          </div>
+          <p class="purchase-field-source-note">字段来自当前租户的${type === "order" ? "采购业务配置" : "采购入库业务配置"}，仅影响当前单据类型的明细展示。</p>
+          <button class="btn" type="button" data-purchase-field-refresh>刷新字段</button>
+          <button class="btn" type="button" data-purchase-field-reset>恢复默认</button>
+        </section>
+        <section class="purchase-field-selected-pane">
+          <div class="purchase-field-selected-head"><strong>已显示字段</strong><span>拖拽调整展示顺序</span></div>
+          <div class="purchase-field-selected-list" data-purchase-field-selected-list></div>
+        </section>
+      </div>
+      <div class="purchase-field-settings-actions">
+        <button class="btn" type="button" data-close-modal>取消</button>
+        <button class="btn primary" type="button" data-purchase-field-save>保存</button>
+      </div>
+    </div>
+  `;
+}
+
+function getPurchaseModalFieldOrder(root) {
+  const fromRows = [...root.querySelectorAll("[data-selected-field]")].map((item) => item.dataset.selectedField);
+  if (fromRows.length) return fromRows;
+  try {
+    return JSON.parse(root.dataset.fieldOrder || "[]");
+  } catch {
+    return [];
+  }
+}
+
+function renderPurchaseFieldSelectedList(root, type, preferredOrder = getPurchaseModalFieldOrder(root)) {
+  const definition = purchaseDetailFieldDefinitions[type];
+  const requiredKeys = getPurchaseFieldsByCategory(type, "required").map((field) => field.key);
+  const chosenKeys = [...root.querySelectorAll("[data-purchase-field-choice]:checked")].map((input) => input.value);
+  const selectedKeys = new Set([...requiredKeys, ...chosenKeys]);
+  const orderedKeys = preferredOrder.filter((key) => selectedKeys.has(key));
+  definition.fields.forEach((field) => {
+    if (selectedKeys.has(field.key) && !orderedKeys.includes(field.key)) orderedKeys.push(field.key);
+  });
+  const rows = orderedKeys.map((key) => definition.fields.find((field) => field.key === key)).filter(Boolean);
+  root.dataset.fieldOrder = JSON.stringify(orderedKeys);
+  root.querySelector("[data-purchase-field-selected-list]").innerHTML = rows.map((field, index) => `
+    <div class="purchase-field-selected-item" draggable="true" data-selected-field="${field.key}">
+      <span class="purchase-field-drag" aria-hidden="true">⋮⋮</span>
+      <span class="purchase-field-order">${index + 1}</span>
+      <span>${field.label}</span>
+      ${field.category === "required" ? '<span class="purchase-field-required-mark">必选</span>' : `<button type="button" data-remove-purchase-field="${field.key}" aria-label="移除${field.label}">×</button>`}
+    </div>
+  `).join("");
+  root.querySelectorAll("[data-remove-purchase-field]").forEach((button) => {
+    button.onclick = () => {
+      const currentOrder = getPurchaseModalFieldOrder(root).filter((key) => key !== button.dataset.removePurchaseField);
+      const input = root.querySelector(`[data-purchase-field-choice][value="${button.dataset.removePurchaseField}"]`);
+      if (input) input.checked = false;
+      renderPurchaseFieldSelectedList(root, type, currentOrder);
+    };
+  });
+  let draggedItem = null;
+  root.querySelectorAll("[data-selected-field]").forEach((item) => {
+    item.ondragstart = () => {
+      draggedItem = item;
+      item.classList.add("dragging");
+    };
+    item.ondragover = (event) => {
+      event.preventDefault();
+      if (!draggedItem || draggedItem === item) return;
+      const insertAfter = event.clientY > item.getBoundingClientRect().top + item.offsetHeight / 2;
+      item.parentElement.insertBefore(draggedItem, insertAfter ? item.nextSibling : item);
+    };
+    item.ondrop = (event) => event.preventDefault();
+    item.ondragend = () => {
+      draggedItem?.classList.remove("dragging");
+      draggedItem = null;
+      root.querySelectorAll(".purchase-field-selected-item").forEach((row, index) => {
+        row.querySelector(".purchase-field-order").textContent = index + 1;
+      });
+      root.dataset.fieldOrder = JSON.stringify(getPurchaseModalFieldOrder(root));
+    };
+  });
+}
+
+function bindPurchaseFieldSettingsModal(type) {
+  const root = document.querySelector("[data-purchase-field-settings-root]");
+  if (!root) return;
+  renderPurchaseFieldSelectedList(root, type);
+  root.querySelectorAll("[data-purchase-field-choice]").forEach((input) => {
+    input.onchange = () => renderPurchaseFieldSelectedList(root, type, getPurchaseModalFieldOrder(root));
+  });
+  const search = root.querySelector("[data-purchase-field-search]");
+  search.oninput = () => {
+    const keyword = search.value.trim().toLowerCase();
+    root.querySelectorAll("[data-field-choice-label]").forEach((label) => {
+      label.hidden = Boolean(keyword) && !label.dataset.fieldChoiceLabel.toLowerCase().includes(keyword);
+    });
+  };
+  root.querySelector("[data-purchase-field-refresh]").onclick = () => toast("字段列表已刷新");
+  root.querySelector("[data-purchase-field-reset]").onclick = () => {
+    const defaults = new Set(getDefaultPurchaseFieldOrder(type));
+    root.querySelectorAll("[data-purchase-field-choice]").forEach((input) => { input.checked = defaults.has(input.value); });
+    renderPurchaseFieldSelectedList(root, type, getDefaultPurchaseFieldOrder(type));
+  };
+  root.querySelector("[data-purchase-field-save]").onclick = () => {
+    state.purchaseDetailFieldOrder[type] = getPurchaseModalFieldOrder(root);
+    closeModal();
+    toast(`${type === "order" ? "采购单" : "采购入库单"}字段设置已保存`);
+    renderContent();
+  };
+}
+
+function closePurchaseProductSearch() {
+  document.getElementById("purchaseProductSearchPopover")?.remove();
+}
+
+function applyPurchaseProductCandidate(input, product) {
+  const kind = input.dataset.productSearchKind;
+  if (kind === "order") {
+    const group = findPurchaseOrderDetailGroup(input.dataset.taskId, input.dataset.groupId);
+    const item = group?.items?.[Number(input.dataset.itemIndex)];
+    if (item) {
+      item.name = product.name;
+      item.specName = product.specName;
+      item.purchaseSpec = product.purchaseSpec;
+      item.purchaseUnit = product.purchaseUnit;
+      item.specId = product.specId;
+    }
+  } else {
+    const task = getInboundTaskById(input.dataset.taskId);
+    if (task && !Array.isArray(task.detailItems)) task.detailItems = getPurchaseDetailItems(task);
+    const item = task?.detailItems?.[Number(input.dataset.itemIndex)];
+    if (item) {
+      item.name = product.name;
+      item.specName = product.specName;
+      item.purchaseSpec = product.purchaseSpec;
+      item.purchaseUnit = product.purchaseUnit;
+      item.unit = product.purchaseUnit;
+      item.baseUnit = product.baseUnit;
+      item.conversionRate = product.conversionRate;
+      item.baseReceivedQty = Number(((Number(item.receivedQty) || 0) * product.conversionRate).toFixed(3));
+      item.specId = product.specId;
+    }
+  }
+  closePurchaseProductSearch();
+  renderContent();
+  toast(`已选择 ${product.name}，采购规格：${product.purchaseSpec}`);
+}
+
+function showPurchaseProductSearch(input) {
+  closePurchaseProductSearch();
+  const keyword = input.value.trim().toLowerCase();
+  const matches = purchaseProductCatalog.filter((product) => `${product.name}${product.specName}${product.purchaseSpec}${product.purchaseUnit}${product.specId}`.toLowerCase().includes(keyword));
+  const rect = input.getBoundingClientRect();
+  const width = Math.min(720, window.innerWidth - 24);
+  const left = Math.max(12, Math.min(rect.left, window.innerWidth - width - 12));
+  const popover = document.createElement("div");
+  popover.id = "purchaseProductSearchPopover";
+  popover.className = "purchase-product-search-popover";
+  popover.style.left = `${left}px`;
+  popover.style.top = `${Math.min(rect.bottom + 6, window.innerHeight - 250)}px`;
+  popover.style.width = `${width}px`;
+  popover.innerHTML = matches.length ? `
+    <table>
+      <thead><tr><th>商品名称</th><th>规格名</th><th>采购规格</th><th>采购单位</th><th>规格 ID</th></tr></thead>
+      <tbody>${matches.map((product, index) => `<tr data-purchase-product-candidate="${index}" tabindex="0"><td><strong>${product.name}</strong></td><td>${product.specName}</td><td class="purchase-spec-cell">${product.purchaseSpec}</td><td>${product.purchaseUnit}</td><td>${product.specId}</td></tr>`).join("")}</tbody>
+    </table>
+  ` : '<div class="purchase-product-search-empty">未找到匹配商品</div>';
+  document.body.appendChild(popover);
+  popover.querySelectorAll("[data-purchase-product-candidate]").forEach((row) => {
+    row.onmousedown = (event) => event.preventDefault();
+    row.onclick = () => applyPurchaseProductCandidate(input, matches[Number(row.dataset.purchaseProductCandidate)]);
+    row.onkeydown = (event) => { if (event.key === "Enter") row.click(); };
+  });
+}
+
+function bindPurchaseProductSearch(root = document) {
+  root.querySelectorAll("[data-product-search-input]").forEach((input) => {
+    input.addEventListener("focus", () => showPurchaseProductSearch(input));
+    input.addEventListener("input", () => showPurchaseProductSearch(input));
+    input.addEventListener("blur", () => setTimeout(closePurchaseProductSearch, 120));
+  });
+  if (!window.__purchaseProductSearchOutsideBound) {
+    window.__purchaseProductSearchOutsideBound = true;
+    document.addEventListener("mousedown", (event) => {
+      if (!event.target.closest("[data-product-search-input], #purchaseProductSearchPopover")) closePurchaseProductSearch();
+    });
+    window.addEventListener("resize", closePurchaseProductSearch);
+  }
 }
 
 function partyPage(type) {
@@ -5180,6 +5484,16 @@ function bindPurchaseAssociationActions(root = document) {
     };
   });
 
+  root.querySelectorAll("[data-inbound-datetime]").forEach((input) => {
+    input.onchange = () => {
+      const task = getInboundTaskById(input.dataset.inboundDatetime);
+      if (!task) return;
+      const [date, time] = String(input.value || "").split("T");
+      if (date) task.inboundDate = date;
+      if (time) task.inboundTime = time;
+    };
+  });
+
   root.querySelectorAll("[data-po-date-range]").forEach((select) => {
     select.onchange = () => {
       state.purchaseOrderRangeByInbound[select.dataset.inboundId] = select.value;
@@ -5557,6 +5871,25 @@ function bindPurchaseOrderGroupActions(root = document) {
     };
   });
 
+  root.querySelectorAll("[data-po-association-select]").forEach((select) => {
+    select.onchange = () => {
+      const task = getInboundTaskById(select.dataset.inboundId);
+      if (!task) return;
+      const currentOrders = getLinkedPurchaseOrders(task);
+      const nextOrder = select.value ? getGuanmaiOrderById(select.value) : null;
+      if (nextOrder && (!isGuanmaiOrderLinkable(nextOrder) || nextOrder.supplier !== task.supplier)) {
+        toast("该采购单当前不可关联，请刷新候选列表");
+        renderContent();
+        return;
+      }
+      currentOrders.forEach((order) => removeOrderInboundLink(order, task.id));
+      setLinkedPurchaseOrderIds(task, nextOrder ? [nextOrder.id] : []);
+      if (nextOrder) ensureOrderInboundLink(nextOrder, task.id);
+      toast(nextOrder ? `已关联采购单 ${nextOrder.id}` : "已取消关联采购单");
+      renderContent();
+    };
+  });
+
   root.querySelectorAll("[data-purchase-group-remove]").forEach((button) => {
     button.onclick = () => {
       const orderGroups = state.purchaseOrderGroupsByTask[button.dataset.taskId];
@@ -5714,6 +6047,14 @@ function wirePageInteractions() {
   document.querySelectorAll("[data-received-input], [data-price-input]").forEach((input) => {
     input.oninput = recalcInboundDetailRows;
   });
+  document.querySelectorAll("[data-base-received-input]").forEach((input) => {
+    input.oninput = () => {
+      const row = input.closest("[data-inbound-detail-row]");
+      const task = row ? getInboundTaskById(row.dataset.inboundId) : null;
+      const item = task ? getPurchaseDetailItems(task)[Number(row?.dataset.itemIndex)] : null;
+      if (item) item.baseReceivedQty = Number(input.value) || 0;
+    };
+  });
   document.querySelectorAll("[data-amount-input]").forEach((input) => {
     input.oninput = () => {
       const row = input.closest("[data-inbound-detail-row]");
@@ -5826,6 +6167,20 @@ function wirePageInteractions() {
       renderContent();
     };
   });
+  document.querySelectorAll("[data-purchase-custom-field]").forEach((input) => {
+    input.oninput = () => {
+      let item;
+      if (input.dataset.groupId) {
+        item = findPurchaseOrderDetailGroup(input.dataset.taskId, input.dataset.groupId)?.items?.[Number(input.dataset.itemIndex)];
+      } else {
+        const task = getInboundTaskById(input.dataset.taskId);
+        item = task ? getPurchaseDetailItems(task)[Number(input.dataset.itemIndex)] : null;
+      }
+      if (!item) return;
+      item.customFields ||= {};
+      item.customFields[input.dataset.purchaseCustomField] = input.value;
+    };
+  });
   document.querySelectorAll("[data-custom-calc-priority]").forEach((select) => {
     select.onchange = () => {
       state.purchaseCustomCalcPriority = select.value;
@@ -5836,6 +6191,7 @@ function wirePageInteractions() {
   bindModalLaunchers(document);
   bindPurchaseAssociationActions(document);
   bindPurchaseOrderGroupActions(document);
+  bindPurchaseProductSearch(document);
   document.querySelectorAll("[data-group-detail]").forEach((button) => {
     button.onclick = () => {
       const group = groups.find((item) => item.name === button.dataset.groupDetail) || groups[0];
@@ -5851,6 +6207,13 @@ function bindModalLaunchers(root) {
 }
 
 function openModalByType(type, button) {
+  if (type === "purchase-field-settings") {
+    const documentType = button?.dataset.documentType === "inbound" ? "inbound" : "order";
+    const definition = purchaseDetailFieldDefinitions[documentType];
+    openModal(definition.title, purchaseFieldSettingsModal(documentType), { wide: true, hideFooter: true, prdLabel: "字段设置" });
+    bindPurchaseFieldSettingsModal(documentType);
+    return;
+  }
   if (type === "customer-group" || type === "supplier-group") {
     openModal(type === "customer-group" ? "新建客户分组" : "新建供应商分组", groupBindingModal(type), { wide: true });
     return;
