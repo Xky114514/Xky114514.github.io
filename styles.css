@@ -4768,6 +4768,14 @@ tbody tr:hover {
   margin-top: 6px;
 }
 
+.purchase-memory-page .memory-tabs {
+  margin-top: 0;
+}
+
+.sales-memory-style {
+  min-height: 360px;
+}
+
 .memory-toolbar {
   min-height: 56px;
   display: flex;
@@ -4830,8 +4838,67 @@ tbody tr:hover {
   font-size: 12px;
 }
 
+.common-products-note {
+  margin: 0;
+  padding: 0 2px 12px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.common-products-table th:nth-child(1) {
+  width: 110px;
+}
+
+.common-products-table th:nth-child(2) {
+  width: 330px;
+}
+
+.common-products-table td:nth-child(2) strong {
+  font-size: 14px;
+}
+
+.common-remark-tag {
+  padding: 1px 5px;
+  border: 1px solid #d9d9d9;
+  border-radius: 3px;
+  background: #fafafa;
+  font-size: 12px;
+}
+
 .group-memory-detail {
   min-width: 780px;
+}
+
+.memory-detail-summary {
+  min-height: 46px;
+  padding: 0 12px;
+  border: 1px solid #e6f4ff;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #f5f9ff;
+}
+
+.memory-detail-summary span,
+.memory-detail-summary em {
+  color: var(--muted);
+  font-size: 12px;
+  font-style: normal;
+}
+
+.memory-detail-summary strong {
+  color: var(--primary-strong);
+}
+
+.memory-detail-summary em {
+  margin-left: auto;
+}
+
+.memory-empty {
+  height: 120px !important;
+  color: var(--muted);
+  text-align: center;
 }
 
 .memory-edit-form {

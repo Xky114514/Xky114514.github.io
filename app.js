@@ -425,6 +425,30 @@ const groups = [
   { name: "肉禽采购群", members: 22, salesBound: "-", purchaseBound: "1 个供应商", purchaseDocType: "inbound", reviewer: "赵倩", bot: "正常", time: "00:00-23:30", pending: 2 },
 ];
 
+const purchaseGroupMemoryMappings = {
+  "海鲜供应商对接群": [
+    { supplier: "海盛水产", original: "海盛", hits: 18, status: "已验证", updated: "08-18 16:42" },
+    { supplier: "海盛水产", original: "黄沙水产吴经理", hits: 7, status: "待验证", updated: "08-16 10:21" },
+  ],
+  "蔬菜采购群": [
+    { supplier: "春田蔬菜基地", original: "春田", hits: 26, status: "已验证", updated: "08-19 09:35" },
+    { supplier: "春田蔬菜基地", original: "三水菜场", hits: 9, status: "待验证", updated: "08-17 14:08" },
+  ],
+  "蔬菜供应商入库群": [
+    { supplier: "春田蔬菜基地", original: "春田基地", hits: 31, status: "已验证", updated: "08-19 11:12" },
+    { supplier: "春田蔬菜基地", original: "林主管蔬菜", hits: 6, status: "待验证", updated: "08-15 17:44" },
+  ],
+  "采购内部下单群": [
+    { supplier: "海盛水产", original: "海鲜供应商", hits: 14, status: "已验证", updated: "08-19 15:20" },
+    { supplier: "春田蔬菜基地", original: "蔬菜供应商", hits: 21, status: "已验证", updated: "08-19 15:18" },
+    { supplier: "岭南肉禽", original: "冻品陈经理", hits: 8, status: "待验证", updated: "08-18 13:06" },
+  ],
+  "肉禽采购群": [
+    { supplier: "岭南肉禽", original: "岭南冻品", hits: 17, status: "已验证", updated: "08-18 18:30" },
+    { supplier: "岭南肉禽", original: "陈经理肉禽", hits: 5, status: "待验证", updated: "08-14 09:52" },
+  ],
+};
+
 const prdProjects = [
   {
     id: "ai-order",
@@ -1305,23 +1329,27 @@ let pageAnnotations = {
   },
   "purchase-memory": {
     "title": "采购 AI 记忆",
-    "overview": "采购 AI 记忆页展示采购单和采购入库单在人工确认后沉淀的供应商记忆与群聊记忆，用于提高后续识别准确率，同时保持两类单据记忆隔离。",
+    "overview": "采购 AI 记忆页沿用销售订单录单 AI 记忆的页面结构，统一展示供应商记忆和群聊记忆，用于提高后续供应商与商品识别准确率。",
     "dev": [
-      "页面由 purchaseMemoryPage 渲染，purchaseDocTab 控制采购单/采购入库单记忆，memoryScope 控制供应商记忆/群聊记忆。",
+      "页面由 purchaseMemoryPage 渲染，memoryScope 控制供应商记忆/群聊记忆，不再按采购单和采购入库单拆分页签。",
       "供应商记忆表由 purchasePartyMemoryTable 渲染，群聊记忆表由 purchaseGroupMemoryTable 渲染。",
+      "群聊记忆详情由 groupMemoryDetail 渲染，按群聊展示供应商原始名到标准供应商名的映射。",
       "查看详情、新增映射当前为演示按钮，后续可接记忆详情、审批、禁用和回滚接口。"
     ],
     "business": [
-      "字段【采购单/采购入库单页签】决定当前查看哪类单据沉淀的记忆，采购数量规则不能影响入库实收规则。",
       "字段【供应商记忆页签】按供应商汇总商品修正、习惯和常购商品。",
-      "字段【群聊记忆页签】按群聊汇总群级映射和话术习惯。",
+      "字段【群聊记忆页签】按群聊汇总供应商名称映射，主要记录供应商原始名和标准供应商名。",
       "字段【按供应商名/供应商 ID 搜索】用于定位供应商记忆。",
       "字段【供应商 ID】是记忆归属的供应商主数据标识。",
       "字段【供应商名称】是记忆归属的业务对象名称。",
       "字段【商品修正】表示人工把供应商原始商品名修正为标准商品的累计规则数量。",
-      "字段【下单习惯】采购单页签中表示采购计划习惯，如默认采购日期或采购数量表达。",
-      "字段【入库习惯】采购入库单页签中表示收货习惯，如复称规则、到货日期或异常备注方式。",
-      "字段【常购商品】表示该供应商常见商品范围，可辅助 AI 匹配。",
+      "字段【采购习惯】表示供应商相关的采购计划和到货习惯，如默认采购日期、复称规则或异常备注方式。",
+      "字段【常购商品】按供应商汇总历史采购中的高频规格，数据只读并由同步任务维护。",
+      "字段【规格名称】展示常购规格名称、采购单位及参考价格，并在下一行保留规格 ID。",
+      "字段【采购次数】表示该规格出现在历史采购单中的累计次数。",
+      "字段【累计数量】表示该规格历史采购数量合计。",
+      "字段【基本单位】表示累计数量采用的商品基本计量单位。",
+      "字段【常用备注】展示该规格历史采购中常见的备注内容。",
       "字段【累计订单】表示该供应商历史单据累计数量，用于判断记忆置信度。",
       "字段【最近下单】表示最近一次采购或入库相关业务发生时间。",
       "字段【最近更新】表示记忆最后更新时间，过旧记忆应可复核。",
@@ -1330,11 +1358,16 @@ let pageAnnotations = {
       "按钮【新增映射】新增群聊中的别名、供应商或业务表达映射。",
       "字段【群聊名称】表示群级记忆归属来源。",
       "字段【映射条目数】表示该群沉淀的规则数量。",
+      "字段【供应商原始名】表示群聊消息中出现、尚未标准化的供应商称呼。",
+      "字段【供应商名】表示供应商原始名最终映射到的标准供应商主数据名称。",
+      "字段【命中】表示该映射被后续消息识别采用的累计次数。",
+      "字段【状态】表示映射是否已验证；待验证映射仍需人工复核。",
       "按钮【群聊记忆查看详情】打开群聊记忆明细。",
-      "规则【记忆隔离】采购单记忆和采购入库单记忆分开沉淀，避免采购计划数量覆盖实际收货数量。",
+      "规则【记忆归属】群聊记忆按群聊独立沉淀，同一供应商原始名在不同群聊中可以映射到不同供应商。",
       "规则【错误记忆治理】错误记忆应支持禁用、回滚或审批，避免长期影响识别结果。"
     ],
     "iteration": [
+      "2026-08-20 采购 AI 记忆对齐销售订单录单样式，页签统一为供应商记忆和群聊记忆，并补充群聊供应商名称映射。",
       "2026-07-10 扩写采购 AI 记忆页供应商记忆、群聊记忆、字段和按钮说明。",
       "V0.7 增加采购单/采购入库单 AI 记忆切换。",
       "2026-07-10 页面批注同步采购单记忆和采购入库单记忆隔离规则。"
@@ -5082,41 +5115,39 @@ function memoryPage(type) {
 }
 
 function purchaseMemoryPage() {
-  const isPurchaseOrder = state.purchaseDocTab === "order";
   const partyRows = suppliers.map((supplier, index) => ({
     ...supplier,
     fix: [27, 29, 14, 8][index] ?? 3,
-    habit: isPurchaseOrder ? [13, 41, 6, 1][index] ?? 0 : [8, 12, 4, 2][index] ?? 0,
+    habit: [21, 53, 10, 3][index] ?? 0,
     common: [223, 248, 193, 34][index] ?? 12,
     total: [339, 542, 230, 39][index] ?? 18,
     lastOrder: index === 3 ? "06-17 13:26" : "07-02 13:58",
     updated: index === 3 ? "06-17 13:26" : "07-02 13:58",
   }));
-  const groupRows = groups.filter((group) => getGroupDomain(group) === "purchase" && getPurchaseDocType(group) === state.purchaseDocTab);
+  const groupRows = groups.filter((group) => getGroupDomain(group) === "purchase");
   return `
-    <div class="page wide-page memory-page">
-      <section class="table-card memory-card">
-        ${purchaseDocTabs()}
+    <div class="page wide-page memory-page purchase-memory-page">
+      <section class="table-card memory-card sales-memory-style">
         <div class="tabs memory-tabs">
           <button class="subtab ${state.memoryScope === "party" ? "active" : ""}" data-memory-scope="party">供应商记忆</button>
           <button class="subtab ${state.memoryScope === "group" ? "active" : ""}" data-memory-scope="group">群聊记忆</button>
         </div>
-        ${state.memoryScope === "party" ? purchasePartyMemoryTable(partyRows, isPurchaseOrder) : purchaseGroupMemoryTable(groupRows)}
+        ${state.memoryScope === "party" ? purchasePartyMemoryTable(partyRows) : purchaseGroupMemoryTable(groupRows)}
       </section>
     </div>
   `;
 }
 
-function purchasePartyMemoryTable(rows, isPurchaseOrder) {
+function purchasePartyMemoryTable(rows) {
   return `
     <div class="memory-toolbar">
-      <label class="field"><input placeholder="按供应商名 / 供应商 ID 搜索"></label>
+      <label class="field memory-search-field"><input data-purchase-memory-search="supplier" placeholder="按供应商名 / 供应商 ID 搜索" aria-label="按供应商名或供应商 ID 搜索"></label>
     </div>
     <div class="table-scroll">
       <table class="memory-table">
-        <thead><tr><th>供应商 ID</th><th>供应商名称</th><th class="right">商品修正</th><th class="right">${isPurchaseOrder ? "下单习惯" : "入库习惯"}</th><th class="right">常购商品</th><th class="right">累计订单</th><th>最近下单</th><th>最近更新</th><th>操作</th></tr></thead>
+        <thead><tr><th>供应商 ID</th><th>供应商名称</th><th class="right">商品修正</th><th class="right">采购习惯</th><th class="right">常购商品</th><th class="right">累计单据</th><th>最近采购</th><th>最近更新</th><th>操作</th></tr></thead>
         <tbody>${rows.map((row) => `
-          <tr>
+          <tr data-memory-search-row data-memory-search-value="${escapeAttribute(`${row.id} ${row.name}`)}">
             <td><code>${row.id}</code></td>
             <td><strong>${row.name}</strong></td>
             <td class="right">${row.fix}</td>
@@ -5125,7 +5156,7 @@ function purchasePartyMemoryTable(rows, isPurchaseOrder) {
             <td class="right">${row.total}</td>
             <td>${row.lastOrder}</td>
             <td>${row.updated}</td>
-            <td><button class="text-btn" data-modal="supplier-memory">查看详情</button></td>
+            <td><button class="text-btn" data-modal="supplier-memory" data-supplier-name="${escapeAttribute(row.name)}" data-supplier-id="${escapeAttribute(row.id)}">查看详情</button></td>
           </tr>
         `).join("")}</tbody>
       </table>
@@ -5136,20 +5167,26 @@ function purchasePartyMemoryTable(rows, isPurchaseOrder) {
 function purchaseGroupMemoryTable(rows) {
   return `
     <div class="memory-toolbar">
-      <label class="field"><input placeholder="按群聊名称搜索"></label>
-      <button class="btn primary" data-modal="group-memory-map">新增映射</button>
+      <label class="field memory-search-field"><input data-purchase-memory-search="group" placeholder="按群聊名称搜索" aria-label="按群聊名称搜索"></label>
     </div>
     <div class="table-scroll">
       <table class="memory-table">
-        <thead><tr><th>群聊名称</th><th class="right">映射条目数</th><th>最近更新</th><th>操作</th></tr></thead>
-        <tbody>${rows.map((row, index) => `
-          <tr>
+        <thead><tr><th>群聊名称</th><th class="right">供应商数</th><th class="right">映射条目数</th><th class="right">累计命中</th><th>最近更新</th><th>操作</th></tr></thead>
+        <tbody>${rows.map((row) => {
+          const mappings = purchaseGroupMemoryMappings[row.name] || [];
+          const supplierCount = new Set(mappings.map((mapping) => mapping.supplier)).size;
+          const hitCount = mappings.reduce((total, mapping) => total + mapping.hits, 0);
+          const latestUpdate = mappings.map((mapping) => mapping.updated).sort().at(-1) || "-";
+          return `
+          <tr data-memory-search-row data-memory-search-value="${escapeAttribute(row.name)}">
             <td><strong>${row.name}</strong></td>
-            <td class="right">${16 - index}</td>
-            <td>2026-07-02 10:${53 - index}</td>
+            <td class="right">${supplierCount}</td>
+            <td class="right">${mappings.length}</td>
+            <td class="right">${hitCount}</td>
+            <td>${latestUpdate}</td>
             <td><button class="text-btn" data-modal="group-memory-detail" data-group-name="${escapeAttribute(row.name)}">查看详情</button></td>
           </tr>
-        `).join("")}</tbody>
+        `;}).join("")}</tbody>
       </table>
     </div>
   `;
@@ -6149,6 +6186,14 @@ function wirePageInteractions() {
       renderContent();
     };
   });
+  document.querySelectorAll("[data-purchase-memory-search]").forEach((input) => {
+    input.oninput = () => {
+      const keyword = input.value.trim().toLowerCase();
+      input.closest(".memory-card")?.querySelectorAll("[data-memory-search-row]").forEach((row) => {
+        row.hidden = Boolean(keyword) && !row.dataset.memorySearchValue.toLowerCase().includes(keyword);
+      });
+    };
+  });
   document.querySelectorAll("[data-settings-tab]").forEach((button) => {
     button.onclick = () => {
       state.settingsTab = button.dataset.settingsTab;
@@ -6219,20 +6264,22 @@ function openModalByType(type, button) {
     return;
   }
   if (type === "supplier-memory") {
-    openModal("张三水果（S3866320） - 供应商记忆", supplierMemoryDetail(), { drawer: true, hideFooter: true, prdLabel: "供应商记忆详情" });
+    const supplierName = button?.dataset.supplierName || "海盛水产";
+    const supplierId = button?.dataset.supplierId || "S20011";
+    openModal(`${supplierName}（${supplierId}） - 供应商记忆`, supplierMemoryDetail(supplierName), { drawer: true, hideFooter: true, prdLabel: "供应商记忆详情" });
     return;
   }
   if (type === "supplier-memory-edit") {
-    openModal("新增修正（供应商级）", supplierMemoryEditModal());
+    openModal("新增修正（供应商级）", supplierMemoryEditModal(button?.dataset.supplierName || "海盛水产"));
     return;
   }
   if (type === "group-memory-detail") {
     const groupName = button?.dataset.groupName || "AI录单测试群-BD";
-    openModal(`${groupName} - 群聊记忆`, groupMemoryDetail(), { drawer: true, hideFooter: true, prdLabel: "群聊记忆详情" });
+    openModal(`${groupName} - 群聊记忆`, groupMemoryDetail(groupName), { drawer: true, hideFooter: true, prdLabel: "群聊记忆详情" });
     return;
   }
   if (type === "group-memory-map") {
-    openModal("编辑群聊记忆映射", groupMemoryModal());
+    openModal("编辑群聊记忆映射", groupMemoryModal(button?.dataset.groupName || ""));
     return;
   }
   if (type === "prompt-import") {
@@ -6438,7 +6485,7 @@ function manualProductModal() {
   `;
 }
 
-function supplierMemoryDetail() {
+function supplierMemoryDetail(supplierName = "海盛水产") {
   const fixRows = [
     { raw: "五花肉切片", match: "鲜五花肉（斤）", id: "D7750423", hits: 2, status: "生效", source: "自动(旧)", updated: "04-28 00:53" },
     { raw: "前上肉", match: "猪带皮二刀肉（斤）", id: "D7750419", hits: 2, status: "生效", source: "自动(旧)", updated: "04-29 18:37" },
@@ -6448,24 +6495,27 @@ function supplierMemoryDetail() {
     { raw: "猪肉", match: "鲜猪肉丝（斤）", id: "D7750405", hits: 1, status: "草稿", source: "文本", updated: "05-02 10:24" },
   ];
   const habitRows = [
-    ["下单习惯", "上午消息默认当天采购，晚间消息默认次日采购", 13, "07-02 13:58"],
+    ["采购习惯", "上午消息默认当天采购，晚间消息默认次日采购", 13, "07-02 13:58"],
     ["备注规则", "出现“老板要”时保留为采购备注，不参与商品名匹配", 6, "06-28 18:10"],
     ["单位习惯", "未写单位的肉类默认按斤，冻品默认按件", 11, "06-24 15:06"],
   ];
   const commonRows = [
-    ["鲜五花肉", "斤", 223, "07-02 13:58"],
-    ["生菜", "斤", 97, "06-29 18:37"],
-    ["大白菜", "公斤", 88, "06-25 16:50"],
+    { rank: 1, specName: "鲜活鲈鱼 / 条 · ¥18.50", specId: "D1001001", purchases: 18, quantity: "106.00", baseUnit: "千克", remark: "—" },
+    { rank: 2, specName: "鲜活基围虾 / 斤 · ¥39.00", specId: "D1001002", purchases: 12, quantity: "86.50", baseUnit: "千克", remark: "冰鲜" },
+    { rank: 3, specName: "云南生菜 / 斤 · ¥3.20", specId: "D2002031", purchases: 9, quantity: "72.00", baseUnit: "千克", remark: "本地" },
+    { rank: 4, specName: "冻鸡腿 / 件 · ¥126.00", specId: "D3003018", purchases: 7, quantity: "56.00", baseUnit: "千克", remark: "冷冻" },
+    { rank: 5, specName: "生抽 / 箱 · ¥48.00", specId: "D4101001", purchases: 5, quantity: "60.00", baseUnit: "瓶", remark: "餐饮装" },
+    { rank: 6, specName: "白砂糖 / 袋 · ¥52.00", specId: "D4101002", purchases: 4, quantity: "40.00", baseUnit: "千克", remark: "—" },
   ];
   return `
     <div class="memory-detail">
       <div class="tabs memory-detail-tabs">
         <button class="subtab active" data-memory-detail-tab="fix">商品修正</button>
-        <button class="subtab" data-memory-detail-tab="habit">下单习惯</button>
+        <button class="subtab" data-memory-detail-tab="habit">采购习惯</button>
         <button class="subtab" data-memory-detail-tab="common">常购商品</button>
       </div>
       <section class="memory-detail-panel active" data-memory-detail-panel="fix">
-        <div class="memory-detail-toolbar"><button class="btn primary" data-modal="supplier-memory-edit">＋ 新增商品修正</button></div>
+        <div class="memory-detail-toolbar"><button class="btn primary" data-modal="supplier-memory-edit" data-supplier-name="${escapeAttribute(supplierName)}">＋ 新增商品修正</button></div>
         <table class="memory-detail-table">
           <thead><tr><th>原始输入</th><th>匹配商品</th><th class="right">命中</th><th>状态</th><th>来源</th><th>更新时间</th><th>操作</th></tr></thead>
           <tbody>${fixRows.map((row) => `
@@ -6476,7 +6526,7 @@ function supplierMemoryDetail() {
               <td><span class="tag ${row.status === "生效" ? "green" : "gold"}">${row.status}</span></td>
               <td><span class="tag ${row.source === "文本" ? "blue" : ""}">${row.source}</span></td>
               <td>${row.updated}</td>
-              <td><button class="text-btn" data-toast="已打开商品修正详情">详情</button><button class="text-btn" data-modal="supplier-memory-edit">编辑</button><button class="text-btn muted" data-toast="演示环境未实际删除修正">删除</button></td>
+              <td><button class="text-btn" data-toast="已打开商品修正详情">详情</button><button class="text-btn" data-modal="supplier-memory-edit" data-supplier-name="${escapeAttribute(supplierName)}">编辑</button><button class="text-btn muted" data-toast="演示环境未实际删除修正">删除</button></td>
             </tr>
           `).join("")}</tbody>
         </table>
@@ -6488,19 +6538,20 @@ function supplierMemoryDetail() {
         </table>
       </section>
       <section class="memory-detail-panel" data-memory-detail-panel="common">
-        <table class="memory-detail-table">
-          <thead><tr><th>商品名称</th><th>默认单位</th><th class="right">累计订单</th><th>最近更新</th><th>操作</th></tr></thead>
-          <tbody>${commonRows.map((row) => `<tr><td><strong>${row[0]}</strong></td><td>${row[1]}</td><td class="right">${row[2]}</td><td>${row[3]}</td><td><button class="text-btn" data-toast="常购商品已更新">编辑</button></td></tr>`).join("")}</tbody>
+        <p class="common-products-note">数据由历史采购单同步聚合，只读。删除请通过同步任务重置。</p>
+        <table class="memory-detail-table common-products-table">
+          <thead><tr><th>高频序号</th><th>规格名称</th><th class="right">采购次数</th><th class="right">累计数量</th><th>基本单位</th><th>常用备注</th></tr></thead>
+          <tbody>${commonRows.map((row) => `<tr><td>${row.rank}</td><td><strong>${row.specName}</strong><small>${row.specId}</small></td><td class="right">${row.purchases}</td><td class="right">${row.quantity}</td><td>${row.baseUnit}</td><td>${row.remark === "—" ? '<span class="muted">—</span>' : `<span class="common-remark-tag">${row.remark}</span>`}</td></tr>`).join("")}</tbody>
         </table>
       </section>
     </div>
   `;
 }
 
-function supplierMemoryEditModal() {
+function supplierMemoryEditModal(supplierName = "海盛水产") {
   return `
     <div class="memory-edit-form">
-      <div class="form-note">所属供应商：<span class="tag green">张三水果</span></div>
+      <div class="form-note">所属供应商：<span class="tag green">${escapeHTML(supplierName)}</span></div>
       <label class="field required"><span>供应商原始输入</span><input placeholder="例如：白才"></label>
       <label class="field required"><span>目标商品</span><input placeholder="搜索该供应商可见商品"></label>
       <label class="field"><span>目标单位</span><input placeholder="例如：斤"></label>
@@ -6508,42 +6559,40 @@ function supplierMemoryEditModal() {
   `;
 }
 
-function groupMemoryDetail() {
-  const rows = [
-    ["店名", "李四小学", "小水幼儿", "05-11 17:50"],
-    ["店名", "张三超市", "张三猪肉铺", "07-02 10:53"],
-    ["文件名", "观麦大学", "AI表格导入.xlsx", "06-08 14:38"],
-    ["店名", "张三大排档", "张三", "06-08 15:27"],
-    ["店名", "观麦大学", "深圳大学", "06-08 15:49"],
-    ["店名", "张三水果", "第三包老区-白享", "05-27 15:09"],
-    ["店名", "桐乡市振东小学", "东北商贸", "06-27 14:30"],
-  ];
+function groupMemoryDetail(groupName) {
+  const rows = purchaseGroupMemoryMappings[groupName] || [];
   return `
     <div class="group-memory-detail">
-      <div class="memory-detail-toolbar"><button class="btn primary" data-modal="group-memory-map">＋ 新增映射</button></div>
+      <div class="memory-detail-summary">
+        <span>当前群聊</span><strong>${escapeHTML(groupName)}</strong><em>共 ${rows.length} 条供应商名称映射</em>
+      </div>
+      <div class="memory-detail-toolbar"><button class="btn primary" data-modal="group-memory-map" data-group-name="${escapeAttribute(groupName)}">＋ 新增映射</button></div>
       <table class="memory-detail-table">
-        <thead><tr><th>类型</th><th>→ 供应商</th><th>原始名</th><th>更新时间</th><th>操作</th></tr></thead>
+        <thead><tr><th>类型</th><th>→ 供应商</th><th>供应商原始名</th><th class="right">命中</th><th>状态</th><th>更新时间</th><th>操作</th></tr></thead>
         <tbody>${rows.map((row) => `
           <tr>
-            <td><span class="tag ${row[0] === "文件名" ? "green" : "blue"}">${row[0]}</span></td>
-            <td><strong>${row[1]}</strong></td>
-            <td><strong>${row[2]}</strong></td>
-            <td>${row[3]}</td>
-            <td><button class="text-btn" data-modal="group-memory-map">编辑</button><button class="text-btn muted" data-toast="演示环境未实际删除映射">删除</button></td>
+            <td><span class="tag blue">供应商</span></td>
+            <td><strong>${escapeHTML(row.supplier)}</strong></td>
+            <td><strong>${escapeHTML(row.original)}</strong></td>
+            <td class="right">${row.hits}</td>
+            <td><span class="tag ${row.status === "已验证" ? "green" : ""}">${row.status}</span></td>
+            <td>${row.updated}</td>
+            <td><button class="text-btn" data-modal="group-memory-map" data-group-name="${escapeAttribute(groupName)}">编辑</button><button class="text-btn muted" data-toast="演示环境未实际删除映射">删除</button></td>
           </tr>
-        `).join("")}</tbody>
+        `).join("") || '<tr><td colspan="7" class="memory-empty">暂无供应商名称映射</td></tr>'}</tbody>
       </table>
     </div>
   `;
 }
 
-function groupMemoryModal() {
+function groupMemoryModal(groupName) {
   return `
     <div class="memory-edit-form">
-      <label class="field required"><span>映射类型</span><select><option>店名映射</option><option>文件名映射</option><option>Sheet 名映射</option></select></label>
-      <label class="field required"><span>原始名</span><input value="小水幼儿" placeholder="LLM 识别到的店名 / 文件名 / Sheet名"></label>
-      <label class="field required"><span>供应商</span><select>${suppliers.map((supplier) => `<option>${supplier.name} (${supplier.id})</option>`).join("")}</select></label>
-      <p class="form-help">映射类型 / 原始名是 unique key，编辑时不能修改；如需更换请删除后新建。</p>
+      ${groupName ? `<div class="form-note">所属群聊：<span class="tag blue">${escapeHTML(groupName)}</span></div>` : ""}
+      <label class="field required"><span>映射类型</span><select disabled><option>供应商名称映射</option></select></label>
+      <label class="field required"><span>供应商原始名</span><input placeholder="请输入群聊中出现的供应商称呼"></label>
+      <label class="field required"><span>供应商名</span><select>${suppliers.map((supplier) => `<option>${supplier.name} (${supplier.id})</option>`).join("")}</select></label>
+      <p class="form-help">同一供应商原始名按群聊独立生效，用于将群聊中的非标准称呼识别为标准供应商。</p>
     </div>
   `;
 }
