@@ -1344,10 +1344,11 @@ let pageAnnotations = {
       "字段【供应商名称】是记忆归属的业务对象名称。",
       "字段【商品修正】表示人工把供应商原始商品名修正为标准商品的累计规则数量。",
       "字段【采购习惯】表示供应商相关的采购计划和到货习惯，如默认采购日期、复称规则或异常备注方式。",
-      "字段【常购商品】按供应商汇总历史采购中的高频规格，数据只读并由同步任务维护。",
+      "字段【常购商品】按生效场景拆分为采购单和采购入库单两套独立记忆，数据只读并由各自同步任务维护。",
+      "字段【生效场景】用于切换采购单常购商品与采购入库单常购商品；两类记忆独立统计、独立排序，不跨单据类型混用。",
       "字段【规格名称】展示常购规格名称、采购单位及参考价格，并在下一行保留规格 ID。",
-      "字段【采购次数】表示该规格出现在历史采购单中的累计次数。",
-      "字段【累计数量】表示该规格历史采购数量合计。",
+      "字段【采购次数/入库次数】分别表示该规格出现在历史采购单或采购入库单中的累计次数。",
+      "字段【累计采购数量/累计入库数量】分别表示该规格在对应单据类型中的历史数量合计。",
       "字段【基本单位】表示累计数量采用的商品基本计量单位。",
       "字段【常用备注】展示该规格历史采购中常见的备注内容。",
       "字段【累计订单】表示该供应商历史单据累计数量，用于判断记忆置信度。",
@@ -6499,7 +6500,7 @@ function supplierMemoryDetail(supplierName = "海盛水产") {
     ["备注规则", "出现“老板要”时保留为采购备注，不参与商品名匹配", 6, "06-28 18:10"],
     ["单位习惯", "未写单位的肉类默认按斤，冻品默认按件", 11, "06-24 15:06"],
   ];
-  const commonRows = [
+  const purchaseOrderCommonRows = [
     { rank: 1, specName: "鲜活鲈鱼 / 条 · ¥18.50", specId: "D1001001", purchases: 18, quantity: "106.00", baseUnit: "千克", remark: "—" },
     { rank: 2, specName: "鲜活基围虾 / 斤 · ¥39.00", specId: "D1001002", purchases: 12, quantity: "86.50", baseUnit: "千克", remark: "冰鲜" },
     { rank: 3, specName: "云南生菜 / 斤 · ¥3.20", specId: "D2002031", purchases: 9, quantity: "72.00", baseUnit: "千克", remark: "本地" },
@@ -6507,6 +6508,14 @@ function supplierMemoryDetail(supplierName = "海盛水产") {
     { rank: 5, specName: "生抽 / 箱 · ¥48.00", specId: "D4101001", purchases: 5, quantity: "60.00", baseUnit: "瓶", remark: "餐饮装" },
     { rank: 6, specName: "白砂糖 / 袋 · ¥52.00", specId: "D4101002", purchases: 4, quantity: "40.00", baseUnit: "千克", remark: "—" },
   ];
+  const purchaseInboundCommonRows = [
+    { rank: 1, specName: "鲜活基围虾 / 斤 · ¥39.00", specId: "D1001002", purchases: 15, quantity: "82.00", baseUnit: "千克", remark: "冰鲜称重" },
+    { rank: 2, specName: "鲜活鲈鱼 / 条 · ¥18.50", specId: "D1001001", purchases: 11, quantity: "98.00", baseUnit: "千克", remark: "到货复称" },
+    { rank: 3, specName: "冻鸡腿 / 件 · ¥126.00", specId: "D3003018", purchases: 8, quantity: "53.50", baseUnit: "千克", remark: "冷冻入库" },
+    { rank: 4, specName: "云南生菜 / 斤 · ¥3.20", specId: "D2002031", purchases: 7, quantity: "66.00", baseUnit: "千克", remark: "损耗另记" },
+    { rank: 5, specName: "生抽 / 箱 · ¥48.00", specId: "D4101001", purchases: 4, quantity: "48.00", baseUnit: "瓶", remark: "整箱入库" },
+  ];
+  const renderCommonProductRows = (rows) => rows.map((row) => `<tr><td>${row.rank}</td><td><strong>${row.specName}</strong><small>${row.specId}</small></td><td class="right">${row.purchases}</td><td class="right">${row.quantity}</td><td>${row.baseUnit}</td><td>${row.remark === "—" ? '<span class="muted">—</span>' : `<span class="common-remark-tag">${row.remark}</span>`}</td></tr>`).join("");
   return `
     <div class="memory-detail">
       <div class="tabs memory-detail-tabs">
@@ -6538,11 +6547,27 @@ function supplierMemoryDetail(supplierName = "海盛水产") {
         </table>
       </section>
       <section class="memory-detail-panel" data-memory-detail-panel="common">
-        <p class="common-products-note">数据由历史采购单同步聚合，只读。删除请通过同步任务重置。</p>
-        <table class="memory-detail-table common-products-table">
-          <thead><tr><th>高频序号</th><th>规格名称</th><th class="right">采购次数</th><th class="right">累计数量</th><th>基本单位</th><th>常用备注</th></tr></thead>
-          <tbody>${commonRows.map((row) => `<tr><td>${row.rank}</td><td><strong>${row.specName}</strong><small>${row.specId}</small></td><td class="right">${row.purchases}</td><td class="right">${row.quantity}</td><td>${row.baseUnit}</td><td>${row.remark === "—" ? '<span class="muted">—</span>' : `<span class="common-remark-tag">${row.remark}</span>`}</td></tr>`).join("")}</tbody>
-        </table>
+        <div class="common-products-scope-bar">
+          <span class="common-products-scope-label">生效场景</span>
+          <div class="common-products-segment" role="tablist" aria-label="常购商品生效场景">
+            <button class="active" type="button" role="tab" aria-selected="true" data-memory-common-scope="order">采购单</button>
+            <button type="button" role="tab" aria-selected="false" data-memory-common-scope="inbound">采购入库单</button>
+          </div>
+        </div>
+        <div class="common-products-scope-panel active" data-memory-common-panel="order">
+          <p class="common-products-note">数据由历史采购单同步聚合，只读。删除请通过采购单同步任务重置。</p>
+          <table class="memory-detail-table common-products-table">
+            <thead><tr><th>高频序号</th><th>规格名称</th><th class="right">采购次数</th><th class="right">累计采购数量</th><th>基本单位</th><th>常用采购备注</th></tr></thead>
+            <tbody>${renderCommonProductRows(purchaseOrderCommonRows)}</tbody>
+          </table>
+        </div>
+        <div class="common-products-scope-panel" data-memory-common-panel="inbound">
+          <p class="common-products-note">数据由历史采购入库单同步聚合，只读。删除请通过采购入库单同步任务重置。</p>
+          <table class="memory-detail-table common-products-table">
+            <thead><tr><th>高频序号</th><th>规格名称</th><th class="right">入库次数</th><th class="right">累计入库数量</th><th>基本单位</th><th>常用入库备注</th></tr></thead>
+            <tbody>${renderCommonProductRows(purchaseInboundCommonRows)}</tbody>
+          </table>
+        </div>
       </section>
     </div>
   `;
@@ -6684,6 +6709,21 @@ function bindMemoryDetailTabs() {
       modalRoot.querySelectorAll("[data-memory-detail-tab]").forEach((item) => item.classList.toggle("active", item === button));
       modalRoot.querySelectorAll("[data-memory-detail-panel]").forEach((panel) => {
         panel.classList.toggle("active", panel.dataset.memoryDetailPanel === tab);
+      });
+      decorateExplainableControls();
+      renderAnnotationPanel();
+    };
+  });
+  modalRoot.querySelectorAll("[data-memory-common-scope]").forEach((button) => {
+    button.onclick = () => {
+      const scope = button.dataset.memoryCommonScope;
+      modalRoot.querySelectorAll("[data-memory-common-scope]").forEach((item) => {
+        const isActive = item === button;
+        item.classList.toggle("active", isActive);
+        item.setAttribute("aria-selected", String(isActive));
+      });
+      modalRoot.querySelectorAll("[data-memory-common-panel]").forEach((panel) => {
+        panel.classList.toggle("active", panel.dataset.memoryCommonPanel === scope);
       });
       decorateExplainableControls();
       renderAnnotationPanel();

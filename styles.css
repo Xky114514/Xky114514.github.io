@@ -4845,6 +4845,68 @@ tbody tr:hover {
   font-size: 12px;
 }
 
+.common-products-scope-bar {
+  min-height: 48px;
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border: 1px solid #e5e6eb;
+  border-radius: 6px;
+  background: #fafafa;
+}
+
+.common-products-scope-label {
+  color: #4e5969;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.common-products-segment {
+  display: inline-flex;
+  padding: 2px;
+  border-radius: 5px;
+  background: #f2f3f5;
+}
+
+.common-products-segment button {
+  min-width: 126px;
+  height: 32px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: #4e5969;
+  cursor: pointer;
+  font: inherit;
+}
+
+.common-products-segment button:focus {
+  outline: none;
+}
+
+.common-products-segment button:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 1px;
+}
+
+.common-products-segment button.active {
+  background: #fff;
+  color: var(--primary);
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.common-products-scope-panel {
+  display: none;
+}
+
+.common-products-scope-panel.active {
+  display: block;
+}
+
 .common-products-table th:nth-child(1) {
   width: 110px;
 }
