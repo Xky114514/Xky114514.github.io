@@ -6,7 +6,7 @@
   <meta name="description" content="销售回单应用前端交互原型">
   <title>回单审核｜销售回单</title>
   <link rel="stylesheet" href="./styles.css">
-  <link rel="stylesheet" href="./reference.css">
+  <link rel="stylesheet" href="./reference.css?v=20260825-receipt-review">
 </head>
 <body data-page="receipts" >
   <div class="shell">
@@ -68,7 +68,7 @@
       </div>
 
       <section class="filters">
-        <label class="field"><span>状态</span><select data-filter-status><option value="all">全部状态</option><option>待处理</option><option>已完成</option></select></label>
+        <label class="field"><span>状态</span><select data-filter-status><option value="all">全部状态</option><option>待处理</option><option>已完成</option><option>已作废</option></select></label>
         <label class="field"><span>商户</span><select data-filter-merchant><option value="all">全部商户</option><option>华南鲜食店</option><option>城东实验小学</option><option>观麦大学</option></select></label>
         <label class="field task-time-filter"><span>时间范围</span><span class="date-range"><input type="date" value="2026-07-25" data-filter-start aria-label="开始日期"><i>→</i><input type="date" value="2026-07-27" data-filter-end aria-label="结束日期"></span></label>
         <label class="field"><span>操作员</span><select data-filter-operator><option value="all">全部操作员</option><option>王明</option><option>赵倩</option><option>李娜</option><option>系统自动处理</option></select></label>
@@ -79,15 +79,15 @@
         <div class="table-toolbar"><strong>回单列表（<span data-result-count>6</span>）</strong><div class="table-actions"><button class="btn" type="button" data-toast="回单列表已刷新">刷新</button></div></div>
         <div class="table-wrap">
           <table data-task-table>
-            <thead><tr><th>状态</th><th>时间</th><th>来源</th><th>商户</th><th>操作员</th><th>操作</th></tr></thead>
+            <thead><tr><th>状态</th><th>时间</th><th>来源</th><th>商户</th><th>操作员</th><th>处理概况</th><th>操作</th></tr></thead>
             <tbody>
-              <tr class="task-row" data-task-id="SR-20260727-021" data-status="待处理" data-merchant="华南鲜食店" data-operator="王明" data-time="2026-07-27T11:06"><td><span class="status pending"><span class="status-dot"></span>待处理</span></td><td>07-27 11:06</td><td>华南鲜食店收货群</td><td>华南鲜食店</td><td>王明</td><td class="task-actions"><a class="text-btn" href="receipt-detail.html?scenario=ambiguous-order">查看</a><button class="text-btn danger" type="button" data-delete-task>删除</button></td></tr>
-              <tr class="task-row" data-task-id="SR-20260727-019" data-status="已完成" data-merchant="华南鲜食店" data-operator="李娜" data-time="2026-07-27T10:28"><td><span class="status completed"><span class="status-dot"></span>已完成</span></td><td>07-27 10:28</td><td>华南鲜食店收货群</td><td>华南鲜食店</td><td>李娜</td><td class="task-actions"><a class="text-btn" href="receipt-completed.html?scenario=complete-manual">查看</a><button class="text-btn danger" type="button" data-delete-task>删除</button></td></tr>
-              <tr class="task-row" data-task-id="SR-20260726-015" data-status="待处理" data-merchant="城东实验小学" data-operator="赵倩" data-time="2026-07-26T10:16"><td><span class="status pending"><span class="status-dot"></span>待处理</span></td><td>07-26 10:16</td><td>城东实验小学配送群</td><td>城东实验小学</td><td>赵倩</td><td class="task-actions"><a class="text-btn" href="receipt-detail.html?scenario=extra-item">查看</a><button class="text-btn danger" type="button" data-delete-task>删除</button></td></tr>
-              <tr class="task-row" data-task-id="SR-20260726-012" data-status="待处理" data-merchant="观麦大学" data-operator="王明" data-time="2026-07-26T09:28"><td><span class="status pending"><span class="status-dot"></span>待处理</span></td><td>07-26 09:28</td><td>观麦大学食堂回单群</td><td>观麦大学</td><td>王明</td><td class="task-actions"><a class="text-btn" href="receipt-detail.html?scenario=missed-item">查看</a><button class="text-btn danger" type="button" data-delete-task>删除</button></td></tr>
-              <tr class="task-row" data-task-id="SR-20260725-009" data-status="待处理" data-merchant="华南鲜食店" data-operator="李娜" data-time="2026-07-25T18:44"><td><span class="status pending"><span class="status-dot"></span>待处理</span></td><td>07-25 18:44</td><td>华南鲜食店收货群</td><td>华南鲜食店</td><td>李娜</td><td class="task-actions"><a class="text-btn" href="receipt-detail.html?scenario=unique-document">查看</a><button class="text-btn danger" type="button" data-delete-task>删除</button></td></tr>
-              <tr class="task-row" data-task-id="SR-20260725-006" data-status="待处理" data-merchant="华南鲜食店" data-operator="赵倩" data-time="2026-07-25T16:08"><td><span class="status pending"><span class="status-dot"></span>待处理</span></td><td>07-25 16:08</td><td>华南鲜食店收货群</td><td>华南鲜食店</td><td>赵倩</td><td class="task-actions"><a class="text-btn" href="receipt-detail.html?scenario=merchant-multiple">查看</a><button class="text-btn danger" type="button" data-delete-task>删除</button></td></tr>
-              <tr class="empty-row hidden"><td colspan="6">没有符合当前条件的回单任务</td></tr>
+              <tr class="task-row" data-task-id="SR-20260727-021" data-status="待处理" data-merchant="华南鲜食店" data-operator="王明" data-time="2026-07-27T11:06"><td><span class="status pending"><span class="status-dot"></span>待处理</span></td><td>07-27 11:06</td><td>华南鲜食店收货群</td><td>华南鲜食店</td><td>王明</td><td><span class="processing-summary issue" data-processing-summary>待核对 3 · 差异 2</span></td><td class="task-actions"><a class="text-btn" href="receipt-detail.html?scenario=ambiguous-order">查看</a><button class="text-btn danger" type="button" data-void-task data-delete-task>作废</button></td></tr>
+              <tr class="task-row" data-task-id="SR-20260727-019" data-status="已完成" data-merchant="华南鲜食店" data-operator="李娜" data-time="2026-07-27T10:28"><td><span class="status completed"><span class="status-dot"></span>已完成</span></td><td>07-27 10:28</td><td>华南鲜食店收货群</td><td>华南鲜食店</td><td>李娜</td><td><span class="processing-summary completed" data-processing-summary>售后 3 · 已同步</span></td><td class="task-actions"><a class="text-btn" href="receipt-completed.html?scenario=complete-manual">查看</a></td></tr>
+              <tr class="task-row" data-task-id="SR-20260726-015" data-status="待处理" data-merchant="城东实验小学" data-operator="赵倩" data-time="2026-07-26T10:16"><td><span class="status pending"><span class="status-dot"></span>待处理</span></td><td>07-26 10:16</td><td>城东实验小学配送群</td><td>城东实验小学</td><td>赵倩</td><td><span class="processing-summary issue" data-processing-summary>待核对 2 · 售后 1</span></td><td class="task-actions"><a class="text-btn" href="receipt-detail.html?scenario=extra-item">查看</a><button class="text-btn danger" type="button" data-void-task data-delete-task>作废</button></td></tr>
+              <tr class="task-row" data-task-id="SR-20260726-012" data-status="待处理" data-merchant="观麦大学" data-operator="王明" data-time="2026-07-26T09:28"><td><span class="status pending"><span class="status-dot"></span>待处理</span></td><td>07-26 09:28</td><td>观麦大学食堂回单群</td><td>观麦大学</td><td>王明</td><td><span class="processing-summary issue" data-processing-summary>未识别 1 · 差异 1</span></td><td class="task-actions"><a class="text-btn" href="receipt-detail.html?scenario=missed-item">查看</a><button class="text-btn danger" type="button" data-void-task data-delete-task>作废</button></td></tr>
+              <tr class="task-row" data-task-id="SR-20260725-009" data-status="待处理" data-merchant="华南鲜食店" data-operator="李娜" data-time="2026-07-25T18:44"><td><span class="status pending"><span class="status-dot"></span>待处理</span></td><td>07-25 18:44</td><td>华南鲜食店收货群</td><td>华南鲜食店</td><td>李娜</td><td><span class="processing-summary" data-processing-summary>差异 3 · 售后 4</span></td><td class="task-actions"><a class="text-btn" href="receipt-detail.html?scenario=unique-document">查看</a><button class="text-btn danger" type="button" data-void-task data-delete-task>作废</button></td></tr>
+              <tr class="task-row" data-task-id="SR-20260725-006" data-status="待处理" data-merchant="华南鲜食店" data-operator="赵倩" data-time="2026-07-25T16:08"><td><span class="status pending"><span class="status-dot"></span>待处理</span></td><td>07-25 16:08</td><td>华南鲜食店收货群</td><td>华南鲜食店</td><td>赵倩</td><td><span class="processing-summary issue" data-processing-summary>待关联订单</span></td><td class="task-actions"><a class="text-btn" href="receipt-detail.html?scenario=merchant-multiple">查看</a><button class="text-btn danger" type="button" data-void-task data-delete-task>作废</button></td></tr>
+              <tr class="empty-row hidden"><td colspan="7">没有符合当前条件的回单任务</td></tr>
             </tbody>
           </table>
         </div>
@@ -113,26 +113,26 @@
   <ul><li>使用角色：有销售回单查看权限的操作员和系统管理员。</li><li>待处理：允许进入可编辑详情，核对默认关联、签收数、售后类型和售后原因。</li><li>已完成：只允许进入只读详情；销售订单、签收数、售后类型、售后原因、处理结果及备注均不可修改。</li></ul>
   <h3>3. 筛选字段</h3>
   <table><thead><tr><th>字段</th><th>组件与来源</th><th>规则</th></tr></thead><tbody>
-    <tr><td>状态</td><td>单选下拉；全部状态、待处理、已完成</td><td>默认全部状态，不提供“识别中”选项。</td></tr>
+    <tr><td>状态</td><td>单选下拉；全部状态、待处理、已完成、已作废</td><td>默认全部状态，不提供“识别中”选项。</td></tr>
     <tr><td>商户</td><td>单选下拉；来自当前数据权限内商户</td><td>默认全部商户。</td></tr>
     <tr><td>时间范围</td><td>开始日期＋结束日期</td><td>按回单进入系统的时间筛选，包含开始日和结束日；开始日期不得晚于结束日期。</td></tr>
     <tr><td>操作员</td><td>单选下拉；来自任务处理人</td><td>默认全部操作员，包含系统自动处理。</td></tr>
   </tbody></table>
   <h3>4. 列表字段</h3>
-  <ul><li>状态：展示待处理或已完成。</li><li>时间：回单材料进入系统的时间，页面精确到分钟。</li><li>来源：提交回单的商户入口或群聊名称。</li><li>商户：当前回单归属商户。</li><li>操作员：最近一次人工处理人；系统自动提交时显示“系统自动处理”。</li><li>操作：统一提供“查看”和“删除”。</li></ul>
+  <ul><li>状态：展示待处理或已完成。</li><li>时间：回单材料进入系统的时间，页面精确到分钟。</li><li>来源、商户、操作员：展示任务归属和最近处理人。</li><li>处理概况：紧凑展示待核对、差异、售后或同步结果。</li><li>操作：待处理提供查看和作废，已完成仅提供查看。</li></ul>
   <h3>5. 操作与反馈</h3>
-  <ul><li>查询：按状态、商户、时间范围和操作员的交集刷新列表与总数；条件不合法时不查询，并提示“开始日期不能晚于结束日期”。</li><li>重置：恢复全部状态、全部商户、全部操作员及页面默认时间范围，并立即刷新列表。</li><li>刷新：保留当前筛选条件，重新读取命中数据。</li><li>查看：待处理进入可编辑详情；已完成进入只读详情。</li><li>删除：先显示回单编号二次确认；确认后仅移出当前任务列表，取消不改变数据。</li></ul>
+  <ul><li>查询与重置按状态、商户、时间范围和操作员联合筛选。</li><li>刷新保留当前筛选条件。</li><li>查看：待处理进入可编辑详情；已完成进入只读详情。</li><li>作废：仅待处理任务可用，必须填写原因；已完成任务不可作废或删除。</li></ul>
   <h3>6. 空态与异常</h3>
-  <ul><li>无命中数据时显示“没有符合当前条件的回单任务”，结果数和分页总数均为 0。</li><li>查询失败时保留筛选条件和原列表，提示“回单任务加载失败，请重试”。</li><li>删除失败时保留原行，提示“删除失败，请重试”。</li></ul>
+  <ul><li>无命中数据时显示“没有符合当前条件的回单任务”，结果数和分页总数均为 0。</li><li>查询或作废失败时保留筛选条件和原列表，并提示重试。</li></ul>
   <h3>7. 验收标准</h3>
-  <ul><li>列表及状态筛选中均不出现识别中任务。</li><li>列表列固定为状态、时间、来源、商户、操作员和操作，不展示业务场景。</li><li>操作员筛选与状态、商户、时间范围按交集生效。</li><li>同一筛选条件下，表头数量、可见行数和分页总数一致。</li><li>待处理查看页可编辑；已完成查看页所有业务字段和关联订单均不可修改。</li><li>查询/重置位于筛选栏，列表工具栏仅保留刷新。</li></ul>
+  <ul><li>列表列固定为状态、时间、来源、商户、操作员、处理概况和操作。</li><li>同一筛选条件下，表头数量、可见行数和分页总数一致。</li><li>待处理可编辑和作废；已完成只读且无删除入口。</li></ul>
 </template>
 
-  <div class="modal-backdrop" id="deleteTaskConfirm">
+  <div class="modal-backdrop" id="deleteTaskConfirm" data-void-task-confirm>
     <div class="modal compact" role="dialog" aria-modal="true" aria-labelledby="deleteTaskTitle">
-      <div class="modal-head"><span id="deleteTaskTitle">确认删除</span><button class="modal-close" type="button" data-close-modal>×</button></div>
-      <div class="modal-body"><p>确认删除回单任务 <strong data-delete-task-name>--</strong>？</p></div>
-      <div class="modal-foot"><button class="btn" type="button" data-close-modal>取消</button><button class="btn danger" type="button" data-confirm-delete-task>删除</button></div>
+      <div class="modal-head"><span id="deleteTaskTitle">作废回单</span><button class="modal-close" type="button" data-close-modal>×</button></div>
+      <div class="modal-body void-task-form"><p>回单任务 <strong data-delete-task-name data-void-task-name>--</strong></p><label><span>作废原因</span><textarea rows="3" placeholder="请输入作废原因" data-void-reason></textarea></label></div>
+      <div class="modal-foot"><button class="btn" type="button" data-close-modal>取消</button><button class="btn danger" type="button" data-confirm-delete-task data-confirm-void-task>确认作废</button></div>
     </div>
   </div>
 
@@ -146,7 +146,7 @@
   </aside>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-  <script src="./app.js"></script>
+  <script src="./app.js?v=20260825-receipt-review"></script>
   <script src="../business-specs.js"></script>
 </body>
 </html>

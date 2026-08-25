@@ -6,9 +6,9 @@
   <meta name="description" content="销售回单应用前端交互原型">
   <title>回单详情｜销售回单</title>
   <link rel="stylesheet" href="./styles.css">
-  <link rel="stylesheet" href="./reference.css?v=20260813-non-product-fields">
+  <link rel="stylesheet" href="./reference.css?v=20260825-inline-after-sales">
 </head>
-<body data-page="detail-pending" data-receipt-id="SR-20260725-009" data-order-id="SO-20260725-1028" data-order-association-source="ai" data-receipt-mode="after-sales">
+<body data-page="detail-pending" data-receipt-id="SR-20260725-009" data-order-id="SO-20260725-1028" data-order-association-source="ai">
   <div class="shell">
     <aside class="sider">
       <a class="brand" href="index.html" title="原型总览">AI</a>
@@ -117,14 +117,13 @@
           <div class="related-order-toolbar">
             <div class="related-order-title">
               <h3>回单组</h3>
-              <span class="receipt-mode-badge after-sales" data-receipt-mode-badge>售后单处理</span>
               <div class="receipt-order-summary" data-order-summary hidden>
                 <span>订单商品 <strong data-summary-product-count>0</strong></span>
                 <span>差异商品 <strong data-summary-difference-count>0</strong></span>
               </div>
             </div>
             <div class="order-group-actions">
-              <button class="btn receipt-mode-action" type="button" data-receipt-mode-action>正常签收</button>
+              <button class="btn after-sales-entry" type="button" data-enter-after-sales>售后处理</button>
               <div class="order-edit-actions" data-edit-actions>
                 <button class="btn" type="button" data-save-now>保存</button>
                 <button class="btn primary" type="button" data-confirm-submit>确认提交</button>
@@ -143,9 +142,36 @@
             <label class="receive-time-field time-range-field"><span>收货时间</span><span class="datetime-range-control"><input type="datetime-local" value="2026-07-26T09:30" data-ai-receive-start aria-label="收货开始时间"><i>→</i><input type="datetime-local" value="2026-07-26T11:00" data-ai-receive-end aria-label="收货结束时间"></span></label>
             <label class="wide"><span>备注</span><input value="青椒有压坏，按商户实收数调整" data-detail-remark></label>
           </div>
-          <div class="table-wrap">
+          <div class="receipt-workspace-tabs" role="tablist" aria-label="回单审核工作区">
+            <button class="active" type="button" role="tab" aria-selected="true" data-receipt-workspace-tab="products">商品核对</button>
+            <button type="button" role="tab" aria-selected="false" data-receipt-workspace-tab="after-sales">售后处理 <em data-after-sales-tab-count hidden>0</em></button>
+          </div>
+          <div data-receipt-workspace-panel="products">
+          <div class="large-order-tools" data-large-order-tools hidden>
+            <label class="large-order-search"><span class="search-symbol">⌕</span><input type="search" placeholder="搜索商品、编码" aria-label="搜索回单商品" data-product-search></label>
+            <div class="large-order-filters" role="group" aria-label="商品筛选">
+              <button class="active" type="button" data-product-filter="all">全部</button>
+              <button type="button" data-product-filter="pending">待核对</button>
+              <button type="button" data-product-filter="difference">有差异</button>
+              <button type="button" data-product-filter="unrecognized">未识别</button>
+              <button type="button" data-product-filter="modified">已修改</button>
+              <button type="button" data-product-filter="after-sales">已售后</button>
+            </div>
+            <select class="large-order-sort" aria-label="商品排序" data-product-sort><option value="issue">问题优先</option><option value="order">订单顺序</option></select>
+            <div class="issue-nav"><button class="btn" type="button" data-prev-issue aria-label="上一条待核对商品">上一条</button><button class="btn" type="button" data-next-issue aria-label="下一条待核对商品">下一条</button></div>
+            <button class="btn" type="button" data-batch-toggle>批量操作</button>
+          </div>
+          <div class="batch-operation-bar" data-batch-tools hidden>
+            <span>已选 <strong data-selected-count>0</strong></span>
+            <button class="btn" type="button" data-select-filtered>选择当前结果</button>
+            <button class="btn" type="button" data-batch-after-sales>加入售后</button>
+            <button class="btn" type="button" data-batch-remark>批量备注</button>
+            <button class="btn" type="button" data-batch-reviewed>标记已核对</button>
+            <button class="btn text" type="button" data-batch-undo disabled>撤销</button>
+          </div>
+          <div class="table-wrap receipt-products-wrap" data-products-table-wrap>
             <table class="quantity-table receipt-reference-table" data-receipt-products-table>
-              <thead><tr><th>序号</th><th>订单商品</th><th>识别商品</th><th class="right">下单数</th><th>签收数</th><th class="right">差异数</th><th>备注</th><th data-after-sales-column>售后类型</th><th data-after-sales-column>售后原因</th><th data-after-sales-column>售后处理</th><th data-after-sales-column>操作</th></tr></thead>
+              <thead><tr><th>序号</th><th>订单商品</th><th>识别商品</th><th class="right">下单数</th><th>签收数</th><th class="right">差异数</th><th>备注</th></tr></thead>
               <tbody data-quantity-body hidden>
         <tr class="row-short" data-quantity-row data-order-line data-outbound="25" data-unit="斤" data-box="box-1" data-current-diff="3">
           <td>1</td>
@@ -167,7 +193,6 @@
             </div>
           </td>
           <td class="right"><span class="variance short" data-variance>3 斤</span></td>
-          <td>斤</td>
           <td><input class="detail-remark-input" value="按商户实收数调整" placeholder="填写备注" aria-label="大白菜备注"></td>
         </tr>
 
@@ -190,7 +215,6 @@
             </div>
           </td>
           <td class="right"><span class="variance " data-variance>--</span></td>
-          <td>斤</td>
           <td><input class="detail-remark-input" value="AI 漏识别，待人工填写" placeholder="填写备注" aria-label="青椒备注"></td>
         </tr>
 
@@ -214,7 +238,6 @@
             </div>
           </td>
           <td class="right"><span class="variance short" data-variance>0.5 斤</span></td>
-          <td>斤</td>
           <td><input class="detail-remark-input" value="按商户实收数调整" placeholder="填写备注" aria-label="油麦菜备注"></td>
         </tr>
         <tr class="row-error" data-quantity-row data-order-line data-outbound="9" data-unit="斤" data-current-diff="">
@@ -224,26 +247,65 @@
           <td class="right"><strong>9</strong></td>
           <td><div class="quantity-input-wrap"><input class="quantity-input actual-input" inputmode="decimal" value="" placeholder="请填写" aria-label="白萝卜签收数" data-item-id="SKU-10148"><span class="unit-suffix">斤</span></div></td>
           <td class="right"><span class="variance" data-variance>--</span></td>
-          <td>斤</td>
           <td><input class="detail-remark-input" value="AI 漏识别，待人工填写" placeholder="填写备注" aria-label="白萝卜备注"></td>
         </tr>
-        <tr class="exception-section-row"><td colspan="8"><strong>AI 未匹配条目（2）</strong></td></tr>
+        <tr class="exception-section-row"><td colspan="7"><strong>AI 未匹配条目（2）</strong></td></tr>
         <tr class="exception-row" data-unmatched-row>
           <td>附加 1</td>
           <td><span class="receipt-recognition-text">土豆 5斤</span><span class="cell-sub">订单无此商品</span></td>
           <td><strong>土豆</strong><span class="cell-sub">AI 新增条目</span></td>
-          <td class="right">--</td><td>--</td><td class="right">--</td><td>斤</td>
-          <td>不回写</td>
+          <td class="right">--</td><td>--</td><td class="right">--</td><td>不回写</td>
         </tr>
         <tr class="exception-row" data-unmatched-row>
           <td>附加 2</td>
           <td><span class="receipt-recognition-text">大白菜 21斤</span><span class="cell-sub">重复识别</span></td>
           <td><strong>大白菜</strong><span class="cell-sub">多余的第 2 条 AI 结果</span></td>
-          <td class="right">--</td><td>--</td><td class="right">--</td><td>斤</td>
-          <td>不回写</td>
+          <td class="right">--</td><td>--</td><td class="right">--</td><td>不回写</td>
         </tr>
               </tbody>
             </table>
+          </div>
+          </div>
+          <div class="receipt-after-sales-panel" data-receipt-workspace-panel="after-sales" hidden>
+            <section class="after-sales-inline-workspace" data-after-sales-workbench>
+              <section class="after-sales-section">
+                <div class="after-sales-workbench-head">
+                  <div><strong>商品售后</strong></div>
+                  <button class="btn" type="button" data-add-after-sales-product>＋ 新增售后商品</button>
+                </div>
+                <div class="after-sales-group-tools" data-after-sales-group-tools hidden>
+                  <label class="after-sales-product-search"><span class="search-symbol">⌕</span><input type="search" placeholder="搜索售后商品" aria-label="搜索已添加售后商品" data-after-sales-group-search></label>
+                  <button class="btn text" type="button" data-toggle-all-after-sales-groups>全部收起</button>
+                </div>
+                <div class="after-sales-product-picker-inline" data-after-sales-product-picker hidden>
+                  <div class="after-sales-product-tools">
+                    <label class="after-sales-product-search"><span class="search-symbol">⌕</span><input type="search" placeholder="搜索商品、编码" aria-label="搜索售后商品" data-after-sales-product-search></label>
+                    <div class="after-sales-product-filters" role="group" aria-label="售后商品筛选">
+                      <button class="active" type="button" data-after-sales-product-filter="all">全部</button>
+                      <button type="button" data-after-sales-product-filter="difference">有差异</button>
+                      <button type="button" data-after-sales-product-filter="unrecognized">未识别</button>
+                    </div>
+                    <span class="after-sales-selected-count">已选 <strong data-after-sales-product-selected-count>0</strong></span>
+                  </div>
+                  <div class="table-wrap after-sales-product-options-wrap">
+                    <table class="after-sales-product-options-table"><thead><tr><th>选择</th><th>商品</th><th class="right">下单数</th><th class="right">签收数</th><th class="right">差异数</th></tr></thead><tbody data-after-sales-product-options></tbody></table>
+                  </div>
+                  <div class="after-sales-product-empty" data-after-sales-product-empty hidden>当前单据没有可选商品</div>
+                  <div class="after-sales-picker-actions"><button class="btn" type="button" data-cancel-add-after-sales-products>取消</button><button class="btn primary" type="button" data-confirm-add-after-sales-products>确认添加</button></div>
+                </div>
+                <div class="after-sales-product-groups" data-after-sales-body></div>
+                <div class="after-sales-workbench-empty" data-after-sales-empty>暂无商品售后</div>
+              </section>
+              <section class="after-sales-section non-product-exception-section">
+                <div class="after-sales-workbench-head">
+                  <div><strong>非商品异常</strong></div>
+                  <button class="btn" type="button" data-add-non-product-exception>＋ 新增异常</button>
+                </div>
+                <div class="non-product-exception-list" data-non-product-exception-list></div>
+                <div class="after-sales-workbench-empty" data-non-product-exception-empty>暂无非商品异常</div>
+              </section>
+              <div class="after-sales-inline-actions"><button class="btn primary" type="button" data-save-after-sales>完成</button></div>
+            </section>
           </div>
         </section>
       </main>
@@ -255,9 +317,9 @@
   </div>
   <template id="pageSpec">
   <h3>1. 页面目标与状态边界</h3>
-  <p>供操作员核对回单、确认观麦销售订单并修正签收数。待处理详情默认进入售后单处理视图，并在商品主表中完整维护售后字段；切换为正常签收后收起售后字段。本页不修改销售订单下单数。</p>
+  <p>供操作员核对回单、确认观麦销售订单、修正签收数并按需登记售后处理。本页不修改销售订单下单数。</p>
   <h3>2. 页面结构</h3>
-  <ul><li>来源区保留回单图片、原始文件和群聊消息。</li><li>回单摘要展示群聊、下单员、创建时间和任务状态。</li><li>商品主表完全由当前关联销售订单生成；正常签收视图展示序号、订单商品、识别商品、下单数、签收数、差异数和备注 7 列，售后单处理视图追加售后类型、售后原因、售后处理和操作 4 列。</li><li>待处理回单默认展示“售后单处理”，右侧模式按钮展示“正常签收”；切换后按钮反向展示“售后单处理”。商品统计只展示订单商品数和差异商品数。</li></ul>
+  <ul><li>来源区保留回单图片、原始文件和群聊消息。</li><li>回单摘要展示群聊、下单员、创建时间和任务状态。</li><li>商品主表完全由当前关联销售订单生成，固定展示序号、订单商品、识别商品、下单数、签收数、差异数和备注 7 列。</li><li>商品核对与售后处理在同一审核区切换，售后不打开独立弹窗。</li></ul>
   <h3>3. AI 识别字段</h3>
   <table><thead><tr><th>字段</th><th>来源</th><th>编辑性</th><th>查询作用</th></tr></thead><tbody>
     <tr><td>商户</td><td>AI 识别</td><td>待处理可编辑</td><td>辅助匹配订单归属商户。</td></tr>
@@ -270,7 +332,7 @@
   <h3>4. 查询与关联销售订单</h3>
   <ul><li>只查询状态为“等待分拣、分拣中、配送中、已签收”的销售订单。</li><li>订单号精确命中时优先；否则综合订单号片段、商户、下单具体时间段及收货具体时间段评分并默认关联最高项。</li><li>查询条件和结果均不展示总金额，也不展示“已关联回单”提示。</li><li>商品条目尚未人工修改时，全部候选订单均可选择；选择并确认后才更新当前关联。</li><li>无结果、取消或关联失败时保留原关联和当前商品数据；未关联订单时禁止确认提交。</li></ul>
   <h3>5. 更换已有订单与商品重匹配</h3>
-  <ul><li>修改签收数或商品备注后，当前关联订单立即锁定。</li><li>锁定后“更换订单”按钮禁用并说明原因，查询入口与确认改绑均做逻辑拦截。</li><li>锁定状态随回单草稿持久化，保存或刷新不解除；未关联时仍允许完成首次关联。</li><li>商品尚未人工修改时可更换订单；系统按新订单商品顺序重新生成主表，更新签收匹配并重新计算差异数。</li></ul>
+  <ul><li>始终允许更换订单；存在人工修改或售后草稿时，先确认影响再执行。</li><li>确认后按新订单重建商品明细并清空商品售后；任务级非商品异常保留并标记为待重新确认。</li><li>取消或关联失败时保留原订单、商品与售后数据；改绑前快照进入操作记录。</li></ul>
   <h3>6. 商品字段与数量口径</h3>
   <table><thead><tr><th>字段</th><th>来源</th><th>规则</th></tr></thead><tbody>
     <tr><td>订单商品顺序</td><td>销售订单</td><td>关联后按订单顺序展示；订单外或重复识别条目不进入主表。</td></tr>
@@ -279,11 +341,11 @@
     <tr><td>签收数</td><td>AI 识别或人工修正</td><td>允许 0 和小数；观麦开启销售实收时确认提交后写入出库数。</td></tr>
     <tr><td>差异数</td><td>系统计算</td><td>下单数－签收数，保留正负号。</td></tr>
   </tbody></table>
-  <p>默认售后单处理模式下，主表自动将差异商品加入售后集合并直接展示完整编辑字段；差异为 0 的商品可通过“加入售后”纳入处理。切换为正常签收只收起售后字段，不清空已填草稿；再次切回即可继续编辑。非商品异常填写异常原因、责任部门、跟进部门、处理方式、金额变动和描述；商品异常—异常填写异常数；商品异常—退货填写应退数并在观麦创建退货入库单。</p>
+  <p>商品是否进入售后由操作员自主选择，不受下单数、签收数或差异数限制；同一商品只展示一个分组，分组下允许登记多条售后动作。非商品异常归属当前回单任务，可新增多条；金额按增加、扣减或无影响记录，退款和补差价必须填写金额。</p>
   <h3>7. 保存、提交与异常恢复</h3>
-  <ul><li>主表不提供订单商品新增、删除或改名入口；售后视图中的“加入售后/移出售后”只维护售后集合，不改变主表商品和签收数。</li><li>售后字段随输入自动保存为草稿；切换模式不丢失草稿，也不弹出清空确认。</li><li>正常签收可直接提交，不要求处理差异商品；售后单提交前在主表原位校验全部售后类型、原因及对应金额或数量，错误字段直接高亮并聚焦。</li><li>最终提交时读取观麦销售实收开关：开启则签收数写入出库数，关闭则不修改出库数；未关联订单不得提交。</li></ul>
+  <ul><li>主表不提供订单商品新增、删除或改名入口；新增或移除商品售后不改变主表商品和签收数。</li><li>签收数空值表示待核对，只有明确输入 0 才表示零签收；存在待核对项时不得提交。</li><li>商品售后与非商品异常分别保存为当前回单任务的售后草稿；无售后内容时必须明确确认无需售后。</li><li>提交前全量校验，不受当前搜索或筛选影响；校验失败时定位首个问题。</li></ul>
   <h3>8. 验收标准</h3>
-  <ul><li>详情页和订单查询弹窗均无总金额字段。</li><li>候选订单不显示其他回单占用信息；商品未修改时可选择任一候选订单。</li><li>正常签收展示 7 列；售后单处理追加 4 个售后字段列，商品均只来自当前关联销售订单。</li><li>待处理回单默认显示“售后单处理”，模式按钮显示“正常签收”，两种模式即时互相切换且保留草稿。</li><li>售后视图首次默认加入差异商品，支持将当前订单其他商品加入或移出售后集合。</li><li>售后字段不完整时在主表原位提示，不打开弹窗打断编辑。</li><li>销售实收开启时签收数写入出库数，关闭时不写；下单数始终不变。</li></ul>
+  <ul><li>商品主表始终展示 7 列，不出现售后模式切换和售后字段列。</li><li>大单支持搜索、问题筛选、问题导航与批量处理，筛选不影响全量提交校验。</li><li>售后工作区按商品分组，支持搜索、完整性筛选、折叠及同商品多条动作；非商品异常支持新增多条。</li><li>销售实收开启时签收数写入出库数，关闭时不写；下单数始终不变。</li></ul>
 </template>
 
   <div class="modal-backdrop" id="orderQueryModal">
@@ -301,47 +363,27 @@
     </div>
   </div>
 
+  <div class="modal-backdrop" id="rebindConfirmModal" data-rebind-confirm-modal>
+    <div class="modal compact" role="dialog" aria-modal="true" aria-labelledby="rebindConfirmModalTitle">
+      <div class="modal-head"><span id="rebindConfirmModalTitle">确认更换订单</span><button class="modal-close" type="button" data-close-modal aria-label="关闭更换订单确认">×</button></div>
+      <div class="modal-body"><div class="rebind-impact-summary" data-rebind-impact-summary></div></div>
+      <div class="modal-foot"><button class="btn" type="button" data-close-modal>取消</button><button class="btn primary" type="button" data-confirm-safe-rebind>确认更换</button></div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="batchRemarkModal" data-batch-remark-modal>
+    <div class="modal compact" role="dialog" aria-modal="true" aria-labelledby="batchRemarkModalTitle">
+      <div class="modal-head"><span id="batchRemarkModalTitle">批量备注</span><button class="modal-close" type="button" data-close-modal aria-label="关闭批量备注">×</button></div>
+      <div class="modal-body batch-remark-form"><textarea rows="4" placeholder="填写备注" data-batch-remark-input></textarea></div>
+      <div class="modal-foot"><button class="btn" type="button" data-close-modal>取消</button><button class="btn primary" type="button" data-confirm-batch-remark>应用</button></div>
+    </div>
+  </div>
+
   <div class="modal-backdrop" id="submitConfirmModal">
     <div class="modal submit-confirm-modal" role="dialog" aria-modal="true" aria-labelledby="submitConfirmModalTitle">
       <div class="modal-head"><span id="submitConfirmModalTitle">确认审核</span><button class="modal-close" type="button" data-close-modal aria-label="关闭确认审核弹窗">×</button></div>
       <div class="modal-body" data-submit-summary></div>
       <div class="modal-foot"><button class="btn" type="button" data-close-modal>取消</button><button class="btn primary" type="button" data-confirm-submit-action>确认提交</button></div>
-    </div>
-  </div>
-
-  <div class="modal-backdrop" id="afterSalesWorkbenchModal" data-after-sales-workbench>
-    <div class="modal wide after-sales-workbench-modal" role="dialog" aria-modal="true" aria-labelledby="afterSalesWorkbenchModalTitle">
-      <div class="modal-head"><span id="afterSalesWorkbenchModalTitle">售后处理</span><button class="modal-close" type="button" data-close-modal aria-label="关闭售后处理">×</button></div>
-      <div class="modal-body">
-        <div class="after-sales-workbench-head"><div><strong>售后商品</strong><span>仅维护当前关联销售订单中的商品</span></div><em>共 <b data-after-sales-count>0</b> 项</em></div>
-        <div class="table-wrap after-sales-workbench-table-wrap">
-          <table class="after-sales-workbench-table"><thead><tr><th>序号</th><th>商品</th><th class="right">下单数</th><th class="right">签收数</th><th class="right">差异数</th><th>售后类型</th><th>售后原因</th><th>售后处理</th><th>操作</th></tr></thead><tbody data-after-sales-body></tbody></table>
-        </div>
-        <div class="after-sales-workbench-empty" data-after-sales-empty hidden>暂无售后商品，可点击“新增售后商品”添加</div>
-      </div>
-      <div class="modal-foot after-sales-workbench-foot"><div><button class="btn danger-text" type="button" data-cancel-after-sales hidden>取消售后处理</button><button class="btn" type="button" data-add-after-sales-product>＋ 新增售后商品</button></div><div><button class="btn" type="button" data-close-modal>关闭</button><button class="btn primary" type="button" data-save-after-sales>保存售后处理</button></div></div>
-    </div>
-  </div>
-
-  <div class="modal-backdrop" id="afterSalesProductModal" data-after-sales-product-picker>
-    <div class="modal after-sales-product-modal" role="dialog" aria-modal="true" aria-labelledby="afterSalesProductModalTitle">
-      <div class="modal-head"><span id="afterSalesProductModalTitle">新增售后商品</span><button class="modal-close" type="button" data-close-modal aria-label="关闭新增售后商品">×</button></div>
-      <div class="modal-body">
-        <p class="after-sales-product-tip">从当前单据商品中选择</p>
-        <div class="table-wrap after-sales-product-options-wrap">
-          <table class="after-sales-product-options-table"><thead><tr><th>选择</th><th>商品</th><th class="right">下单数</th><th class="right">签收数</th><th class="right">差异数</th></tr></thead><tbody data-after-sales-product-options></tbody></table>
-        </div>
-        <div class="after-sales-product-empty" data-after-sales-product-empty hidden>当前单据没有可新增的商品</div>
-      </div>
-      <div class="modal-foot"><button class="btn" type="button" data-close-modal>取消</button><button class="btn primary" type="button" data-confirm-add-after-sales-products>确认新增</button></div>
-    </div>
-  </div>
-
-  <div class="modal-backdrop" id="cancelAfterSalesModal">
-    <div class="modal cancel-after-sales-modal" role="dialog" aria-modal="true" aria-labelledby="cancelAfterSalesModalTitle">
-      <div class="modal-head"><span id="cancelAfterSalesModalTitle">切换为正常签收</span><button class="modal-close" type="button" data-close-modal aria-label="关闭切换确认">×</button></div>
-      <div class="modal-body cancel-after-sales-content"><strong>确定切换为正常签收吗？</strong><p>已填写的售后草稿将被清空，签收数会保留。</p></div>
-      <div class="modal-foot"><button class="btn" type="button" data-close-modal>暂不切换</button><button class="btn danger" type="button" data-confirm-cancel-after-sales>确定切换</button></div>
     </div>
   </div>
 
@@ -364,7 +406,7 @@
   </aside>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-  <script src="./app.js?v=20260813-aftersales-default"></script>
+  <script src="./app.js?v=20260825-inline-after-sales"></script>
   <script src="../business-specs.js"></script>
 </body>
 </html>

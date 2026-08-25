@@ -8,13 +8,28 @@
   let pendingOrderId = "";
   let pendingDeleteRow = null;
   let pendingSubmitPayload = null;
-  let receiptMode = "aftersales";
+  let taskNonProductExceptions = [];
+  let taskNonProductExceptionsLoadedKey = "";
+  let nonProductExceptionSequence = 0;
+  let productAfterSalesActions = [];
+  let productAfterSalesDraftActions = null;
+  let productAfterSalesActionsLoadedKey = "";
+  let productAfterSalesActionSequence = 0;
+  let afterSalesDecision = "undecided";
+  let afterSalesDecisionLoadedKey = "";
+  let pendingRebindOrderId = "";
+  const afterSalesPickerSelection = new Set();
+  const largeOrderState = {
+    search: "",
+    filter: "all",
+    sort: "original",
+    batchMode: false,
+    selected: new Set(),
+    issueCursor: -1,
+    undo: null,
+  };
 
   const afterSalesTypes = {
-    non_product_exception: {
-      label: "非商品异常",
-      fieldLabel: "异常金额",
-    },
     product_exception: {
       label: "商品异常—异常",
       fieldLabel: "异常数",
@@ -33,6 +48,23 @@
     "无需处理",
     "其他",
   ];
+
+  const nonProductAmountDirections = [
+    { value: "deduct", label: "扣减" },
+    { value: "increase", label: "增加" },
+    { value: "none", label: "无金额" },
+  ];
+
+  const receiptDepartmentOptions = [
+    "销售部",
+    "客服部",
+    "运营部",
+    "配送部",
+    "仓储部",
+    "财务部",
+  ];
+
+  const nonProductProcessingStatuses = ["待跟进", "处理中", "已完成", "无需处理"];
 
   // 生产环境由观麦同步；静态原型先用示例数据演示可输入下拉。
   const guanmaiAfterSalesReasonOptions = [
@@ -77,7 +109,7 @@
           spec: "中号",
           outbound: 12,
           price: 30,
-          actual: "0",
+          actual: "",
           unit: "斤",
           aiText: "青椒，实收字迹模糊",
           remark: "",
@@ -99,7 +131,7 @@
           spec: "散装",
           outbound: 9,
           price: 9.5,
-          actual: "0",
+          actual: "",
           unit: "斤",
           aiText: "",
           remark: "",
@@ -184,7 +216,7 @@
           spec: "中号",
           outbound: 15,
           price: 28,
-          actual: "0",
+          actual: "",
           unit: "斤",
           aiText: "青椒，实收字迹模糊",
           remark: "",
@@ -206,7 +238,7 @@
           spec: "大果",
           outbound: 12,
           price: 8,
-          actual: "0",
+          actual: "",
           unit: "斤",
           aiText: "",
           remark: "",
@@ -217,7 +249,7 @@
           spec: "30枚/盒",
           outbound: 24,
           price: 5,
-          actual: "0",
+          actual: "",
           unit: "盒",
           aiText: "",
           remark: "",
@@ -302,7 +334,7 @@
           spec: "中号",
           outbound: 12,
           price: 30,
-          actual: "0",
+          actual: "",
           unit: "斤",
           aiText: "",
           remark: "",
@@ -347,6 +379,42 @@
     })),
   };
 
+  const largeOrderProductNames = [
+    "大白菜", "青椒", "油麦菜", "白萝卜", "西红柿", "土豆",
+    "胡萝卜", "黄瓜", "茄子", "芹菜", "生菜", "菠菜",
+  ];
+  receiptOrderCatalog["SO-20260728-1200"] = {
+    id: "SO-20260728-1200",
+    merchant: "华南鲜食店",
+    orderDate: "2026-07-28",
+    orderTime: "2026-07-28T07:30",
+    orderTimeEnd: "2026-07-28T07:45",
+    receiveTime: "2026-07-28T10:00",
+    receiveTimeEnd: "2026-07-28T12:00",
+    totalAmount: 28680,
+    orderStatus: "已签收",
+    matchLabel: "AI 唯一匹配",
+    matchReason: "大单审核场景",
+    lines: Array.from({ length: 120 }, (_, index) => {
+      const outbound = 8 + (index % 17);
+      const unknown = index % 19 === 7;
+      const difference = index % 8 === 0 ? 2 : index % 13 === 0 ? -1 : 0;
+      const name = `${largeOrderProductNames[index % largeOrderProductNames.length]}${Math.floor(index / largeOrderProductNames.length) + 1}`;
+      const actual = unknown ? "" : String(outbound - difference);
+      return {
+        id: `LARGE-SKU-${String(index + 1).padStart(3, "0")}`,
+        name,
+        spec: index % 3 === 0 ? "散装" : index % 3 === 1 ? "精选" : "标准",
+        outbound,
+        price: 4 + (index % 23),
+        actual,
+        unit: index % 11 === 0 ? "件" : "斤",
+        aiText: unknown ? "" : `${name} ${actual}${index % 11 === 0 ? "件" : "斤"}`,
+        remark: "",
+      };
+    }),
+  };
+
   // 静态原型不模拟其他回单对订单的占用；生产环境的一单一回单约束由服务端兜底。
   const receiptOrderBindings = new Map();
 
@@ -373,25 +441,18 @@
       "SKU-10021": {
         type: "product_exception",
         reason: "商品质量异常",
+        afterSalesQuantity: "3",
       },
       "SKU-10083": {
         type: "product_return",
         reason: "商品破损",
+        afterSalesQuantity: "2",
         returnInboundId: "THRK-20260726-0081",
-      },
-      "SKU-10126": {
-        type: "non_product_exception",
-        reason: "价格或优惠调整",
-        exceptionReason: "其它",
-        responsibleDepartment: "销售部",
-        followUpDepartment: "运营部",
-        handlingMethod: "补差价",
-        exceptionAmount: "15.00",
-        exceptionDescription: "按商户确认结果调整订单差额",
       },
       "SKU-10148": {
         type: "product_return",
         reason: "商户拒收",
+        afterSalesQuantity: "1",
         returnInboundId: "THRK-20260726-0081",
       },
     },
@@ -399,15 +460,76 @@
       "SKU-10021": {
         type: "product_exception",
         reason: "商品质量异常",
+        afterSalesQuantity: "3",
       },
       "SKU-10083": {
         type: "product_return",
         reason: "商品破损",
+        afterSalesQuantity: "2",
         returnInboundId: "THRK-20260726-0086",
       },
-      "SKU-10126": {
-        type: "non_product_exception",
-        reason: "价格或优惠调整",
+    },
+    "SO-20260727-1120": {
+      "SKU-10021": {
+        type: "product_exception",
+        reason: "商品质量异常",
+        afterSalesQuantity: "3",
+      },
+      "SKU-10083": {
+        type: "product_return",
+        reason: "商品破损",
+        afterSalesQuantity: "2",
+        returnInboundId: "THRK-20260727-0093",
+      },
+      "SKU-10208": { type: "product_return", reason: "商户拒收", afterSalesQuantity: "1" },
+      "SKU-10311": {
+        type: "product_exception",
+        reason: "错配漏配",
+        afterSalesQuantity: "1",
+      },
+    },
+    "SO-20260726-2058": {
+      "SKU-20021": {
+        type: "product_exception",
+        reason: "商品质量异常",
+        afterSalesQuantity: "1",
+      },
+      "SKU-20126": { type: "product_return", reason: "商品破损", afterSalesQuantity: "1" },
+    },
+    "SO-20260726-3054": {
+      "SKU-30083": { type: "product_return", reason: "缺货未配", afterSalesQuantity: "1" },
+    },
+  };
+  receiptAfterSalesCatalog["SO-20260727-1205"] = {
+    ...receiptAfterSalesCatalog["SO-20260727-1120"],
+    "SKU-10021": [
+      receiptAfterSalesCatalog["SO-20260727-1120"]["SKU-10021"],
+      {
+        type: "product_return",
+        reason: "商品破损",
+        afterSalesQuantity: "1",
+        returnInboundId: "THRK-20260727-0093",
+      },
+    ],
+  };
+  receiptAfterSalesCatalog["SO-20260725-0997"] =
+    receiptAfterSalesCatalog["SO-20260727-1120"];
+
+  const receiptNonProductExceptionCatalog = {
+    "SR-20260725-009": [
+      {
+        id: "NP-20260725-001",
+        exceptionReason: "其它",
+        responsibleDepartment: "销售部",
+        followUpDepartment: "运营部",
+        handlingMethod: "补差价",
+        exceptionAmount: "15.00",
+        exceptionDescription: "按商户确认结果调整订单差额",
+      },
+    ],
+    "SR-20260726-004": [
+      {
+        id: "NP-20260726-001",
         exceptionReason: "其它",
         responsibleDepartment: "销售部",
         followUpDepartment: "运营部",
@@ -415,48 +537,17 @@
         exceptionAmount: "12.00",
         exceptionDescription: "优惠金额与回单记录不一致",
       },
-    },
-    "SO-20260727-1120": {
-      "SKU-10021": {
-        type: "product_exception",
-        reason: "商品质量异常",
+      {
+        id: "NP-20260726-002",
+        exceptionReason: "配送延误",
+        responsibleDepartment: "配送部",
+        followUpDepartment: "客服部",
+        handlingMethod: "线下协商",
+        exceptionAmount: "8.00",
+        exceptionDescription: "按约定补偿配送延误",
       },
-      "SKU-10083": {
-        type: "product_return",
-        reason: "商品破损",
-        returnInboundId: "THRK-20260727-0093",
-      },
-      "SKU-10126": {
-        type: "non_product_exception",
-        reason: "价格或优惠调整",
-        exceptionReason: "其它",
-        responsibleDepartment: "销售部",
-        followUpDepartment: "运营部",
-        handlingMethod: "补差价",
-        exceptionAmount: "13.00",
-        exceptionDescription: "按最终签收结果补录差额",
-      },
-      "SKU-10208": { type: "product_return", reason: "商户拒收" },
-      "SKU-10311": {
-        type: "product_exception",
-        reason: "错配漏配",
-      },
-    },
-    "SO-20260726-2058": {
-      "SKU-20021": {
-        type: "product_exception",
-        reason: "商品质量异常",
-      },
-      "SKU-20126": { type: "product_return", reason: "商品破损" },
-    },
-    "SO-20260726-3054": {
-      "SKU-30083": { type: "product_return", reason: "缺货未配" },
-    },
+    ],
   };
-  receiptAfterSalesCatalog["SO-20260727-1205"] =
-    receiptAfterSalesCatalog["SO-20260727-1120"];
-  receiptAfterSalesCatalog["SO-20260725-0997"] =
-    receiptAfterSalesCatalog["SO-20260727-1120"];
 
   const receiptAiExceptions = [
     {
@@ -495,7 +586,7 @@
       id: "AI-ORIGINAL-02",
       text: "青椒，实收字迹模糊",
       name: "青椒",
-      actual: "0",
+      actual: "",
       unit: "斤",
     },
     {
@@ -652,11 +743,11 @@
       documentNumber: "SO-20260726-3054",
       orderId: "SO-20260726-3054",
       candidateIds: ["SO-20260726-3054"],
-      remark: "青椒未识别，签收数按规则填 0",
+      remark: "青椒未识别，待人工核对",
       messages: [
         "单据编号：SO-20260726-3054。",
         "AI 识别到大白菜实收 25 斤、油麦菜实收 18 斤。",
-        "销售订单中还有青椒，回单材料未识别到该商品，签收数填 0。",
+        "销售订单中还有青椒，回单材料未识别到该商品，签收数待核对。",
       ],
       author: "陈老师",
       exceptionIds: [],
@@ -758,6 +849,34 @@
       ],
       exceptionIds: [],
     },
+  };
+
+  receiptScenarioCatalog["large-order"] = {
+    sceneLabel: "大单审核",
+    receiptId: "SR-20260728-120",
+    state: "待处理",
+    merchant: "华南鲜食店",
+    group: "华南鲜食店收货群",
+    operator: "王明",
+    createdTime: "2026-07-28 12:06:18",
+    signDate: "2026-07-28",
+    signClock: "12:06",
+    documentNumber: "SO-20260728-1200",
+    orderId: "SO-20260728-1200",
+    candidateIds: ["SO-20260728-1200"],
+    remark: "",
+    messages: ["单据编号：SO-20260728-1200。", "本次回单共 120 个商品条目。"],
+    author: "刘店长",
+    aiLines: receiptOrderCatalog["SO-20260728-1200"].lines
+      .filter((line) => line.aiText)
+      .map((line, index) => ({
+        id: `AI-LARGE-${String(index + 1).padStart(3, "0")}`,
+        text: line.aiText,
+        name: line.name,
+        actual: line.actual,
+        unit: line.unit,
+      })),
+    exceptionIds: [],
   };
 
   const one = (selector, root = document) => root.querySelector(selector);
@@ -1198,7 +1317,6 @@
           "订单外识别条目不进入主商品表；主表不提供新增、删除或行级操作。",
           "商品尚未人工修改时可更换关联订单，更换后按新订单重新生成全部商品行。",
           "差异数＝下单数－签收数，输入时实时计算并保留正负号。",
-          "默认按正常签收处理；只有操作员点击售后处理后，当前回单才切换为售后单。",
         ],
         ["商品主表固定为七列：序号、订单商品、识别商品、下单数、签收数、差异数、备注。"],
         ["下单数只读；签收数允许 0 和最多两位小数，不允许空值、负数或非数字。"],
@@ -1237,25 +1355,26 @@
       html: specHtml(
         "用于反映观麦下单数与商户签收数之间的有向差额。",
         ["差异数＝下单数－签收数；正数表示少收，0 表示一致，负数表示多收。"],
-        ["签收数变化时当前行立即重算；售后单首次纳入差异商品时，异常数或应退数默认取差异绝对量，操作员可修正。"],
+        ["签收数变化时当前行立即重算；差异数仅供参考，不自动选择售后商品或填写售后数量。"],
         ["差异只针对当前关联销售订单商品计算。"],
       ),
     },
     {
       id: "detail-after-sales-entry",
-      selectors: ["[data-enter-after-sales]", "[data-cancel-after-sales]"],
+      selectors: ["[data-enter-after-sales]"],
       title: "售后处理｜独立弹窗维护",
       html: specHtml(
-        "主页面始终保持签收核对视图；点击后在独立弹窗维护售后商品和处理方式。",
+        "商品核对与售后处理在同一审核区切换；售后按商品分组维护。",
         [
-          "首次打开时默认加入当前差异商品，并可从关联订单已有商品继续新增或移除售后明细。",
+          "操作员可从关联订单商品中自主选择需要处理的商品。",
+          "同一商品只展示一个分组，分组下可新增多条售后类型。",
           "移除售后明细不删除订单商品，也不清除签收数。",
-          "非商品异常对应观麦销售订单异常金额。",
+          "非商品异常按回单任务独立维护，可新增多条，对应观麦销售订单异常金额。",
           "商品异常—异常对应观麦商品异常数。",
           "商品异常—退货对应观麦商品应退数，并生成退货入库单。",
         ],
-        ["点击“保存售后处理”后才更新草稿；直接关闭不保存本次弹窗改动。已保存售后可二次确认取消。"],
-        ["未关联订单时不能打开售后处理；售后单没有商品或字段未完善时不能提交。"],
+        ["点击“完成”保存售后草稿；标签页切换不丢失当前填写内容。"],
+        ["未关联订单时不能进入售后处理；已有售后内容的字段必须填写完整。"],
       ),
     },
     {
@@ -1263,11 +1382,8 @@
       selectors: [".receipt-order-summary"],
       title: "关联订单汇总｜签收处理进度",
       html: specHtml(
-        "关联销售订单后，仅汇总订单商品数和差异商品数；当前单据模式只由回单组标题区的单个标签展示。",
-        [
-          "正常模式不因差异自动转售后。",
-          "售后模式的明细状态在售后处理弹窗内查看。",
-        ],
+        "关联销售订单后，汇总订单商品数和差异商品数。",
+        ["售后明细状态在同页售后处理工作区查看。"],
         ["签收数或售后草稿变化时立即重算。"],
         ["未关联销售订单时不展示汇总。"],
       ),
@@ -1288,11 +1404,11 @@
       selectors: ["[data-confirm-submit]"],
       title: "确认提交｜写入与状态终点",
       html: specHtml(
-        "根据当前单据模式提交正常签收结果或售后单结果。",
+        "提交销售回单及其已维护的售后处理内容。",
         [
           "前置条件：已关联唯一销售订单且签收数合法。",
-          "正常模式即使存在差异，也按正常签收提交，不写入售后三字段。",
-          "售后模式至少保留一个售后商品，且每项售后类型、原因和处理值完整。",
+          "没有售后内容时可直接完成回单；存在售后内容时校验对应字段。",
+          "商品售后和任务级非商品异常可单独存在，也可同时提交。",
           "未关联订单时按钮禁用，提交校验再次拦截；AI 默认关联可直接作为有效关联提交。",
           "提交时读取观麦销售实收开关；开启时签收数写入出库数，关闭时不修改出库数。",
           "下单数不参与写入并始终保持不变。",
@@ -1469,6 +1585,42 @@
     const end = one("[data-filter-end]");
     const count = one("[data-result-count]");
     const pagerCount = one("[data-pager-count]");
+    const voidedStorageKey = `${storagePrefix}:voided-receipts-v1`;
+    let voidedReceipts = {};
+
+    try {
+      const stored = JSON.parse(localStorage.getItem(voidedStorageKey) || "{}");
+      if (stored && typeof stored === "object" && !Array.isArray(stored)) {
+        voidedReceipts = stored;
+      }
+    } catch {
+      voidedReceipts = {};
+    }
+
+    const applyVoidedState = (row, reason) => {
+      if (!row) return;
+      row.dataset.status = "已作废";
+      row.dataset.voidReason = String(reason || "");
+      const statusCell = one("td:first-child", row);
+      if (statusCell) {
+        statusCell.innerHTML = '<span class="status"><span class="status-dot"></span>已作废</span>';
+      }
+      one("[data-delete-task]", row)?.remove();
+      one('a[href*="receipt-detail.html"]', row)?.remove();
+      const summary = one("[data-processing-summary]", row);
+      if (summary) {
+        summary.className = "processing-summary";
+        summary.textContent = "已作废";
+        summary.title = reason ? `作废原因：${reason}` : "";
+      }
+    };
+
+    all(".task-row", table).forEach((row) => {
+      const taskId = row.dataset.taskId || "";
+      if (taskId && Object.hasOwn(voidedReceipts, taskId)) {
+        applyVoidedState(row, voidedReceipts[taskId]);
+      }
+    });
 
     const query = new URLSearchParams(window.location.search);
     if (status && query.get("status")) status.value = query.get("status");
@@ -1531,20 +1683,43 @@
       button.addEventListener("click", () => {
         const row = button.closest(".task-row");
         if (!row) return;
+        if (row.dataset.status === "已完成") {
+          showToast("已完成回单不可作废");
+          return;
+        }
         pendingDeleteRow = row;
         const target = one("[data-delete-task-name]");
         if (target) target.textContent = row.dataset.taskId || "当前回单";
+        const reason = one("[data-void-reason]");
+        if (reason) reason.value = "";
         openModal("deleteTaskConfirm");
       });
     });
 
     one("[data-confirm-delete-task]")?.addEventListener("click", () => {
       if (!pendingDeleteRow) return;
-      pendingDeleteRow.remove();
+      const reason = one("[data-void-reason]");
+      if (!reason?.value.trim()) {
+        reason?.classList.add("invalid");
+        reason?.focus();
+        showToast("请填写作废原因");
+        return;
+      }
+      const taskId = pendingDeleteRow.dataset.taskId || "";
+      const voidReason = reason.value.trim();
+      applyVoidedState(pendingDeleteRow, voidReason);
+      if (taskId) {
+        voidedReceipts[taskId] = voidReason;
+        try {
+          localStorage.setItem(voidedStorageKey, JSON.stringify(voidedReceipts));
+        } catch {
+          // The prototype remains usable when browser storage is unavailable.
+        }
+      }
       pendingDeleteRow = null;
       closeModal("deleteTaskConfirm");
       apply();
-      showToast("回单任务已删除");
+      showToast("回单已作废");
     });
     apply();
   }
@@ -1585,6 +1760,202 @@
     return receiptAfterSalesCatalog[orderId]?.[line.id] || {};
   }
 
+  function createProductAfterSalesActionId() {
+    productAfterSalesActionSequence += 1;
+    return `AS-${Date.now()}-${productAfterSalesActionSequence}`;
+  }
+
+  function normalizeProductAfterSalesAction(item = {}, itemId = "") {
+    return {
+      id: String(item.id || createProductAfterSalesActionId()),
+      itemId: String(item.itemId || itemId || ""),
+      type: Object.hasOwn(afterSalesTypes, item.type) ? String(item.type) : "",
+      reason: String(item.reason || ""),
+      afterSalesQuantity: String(item.afterSalesQuantity ?? item.quantity ?? ""),
+      returnInboundId: String(item.returnInboundId || ""),
+      syncStatus: String(item.syncStatus || "pending"),
+      origin: String(item.origin || "current"),
+      locked: Boolean(item.locked),
+      submittedAt: String(item.submittedAt || ""),
+    };
+  }
+
+  function supportsAfterSalesContinuation() {
+    return document.body.dataset.afterSalesContinuation === "true";
+  }
+
+  function createDraftProductAfterSalesAction(itemId) {
+    return normalizeProductAfterSalesAction({
+      itemId,
+      origin: supportsAfterSalesContinuation() ? "followup" : "current",
+    });
+  }
+
+  function productAfterSalesActionsStorageKey(orderId = document.body.dataset.orderId || "unassociated") {
+    return `${storagePrefix}:${currentReceiptId() || "receipt-demo"}:${orderId}:product-after-sales-actions-v4`;
+  }
+
+  function followUpAfterSalesStorageKey(orderId = document.body.dataset.orderId || "unassociated") {
+    return `${storagePrefix}:${currentReceiptId() || "receipt-demo"}:${orderId}:follow-up-after-sales-v1`;
+  }
+
+  function afterSalesDecisionStorageKey() {
+    return `${storagePrefix}:${currentReceiptId() || "receipt-demo"}:after-sales-decision-v1`;
+  }
+
+  function setAfterSalesDecision(value, persist = true) {
+    afterSalesDecision = ["undecided", "has_actions", "confirmed_none"].includes(value)
+      ? value
+      : "undecided";
+    if (!persist || document.body.dataset.readonly === "true") return;
+    try {
+      localStorage.setItem(afterSalesDecisionStorageKey(), afterSalesDecision);
+    } catch {
+      // The prototype remains usable when browser storage is unavailable.
+    }
+  }
+
+  function ensureAfterSalesDecisionLoaded() {
+    const key = `${currentReceiptId() || "receipt-demo"}:${document.body.dataset.readonly === "true"}`;
+    if (afterSalesDecisionLoadedKey === key) return;
+    afterSalesDecisionLoadedKey = key;
+    afterSalesDecision = "undecided";
+    if (document.body.dataset.readonly === "true") {
+      afterSalesDecision = "has_actions";
+      return;
+    }
+    try {
+      const stored = localStorage.getItem(afterSalesDecisionStorageKey());
+      if (["undecided", "has_actions", "confirmed_none"].includes(stored)) {
+        afterSalesDecision = stored;
+      }
+    } catch {
+      // The prototype remains usable when browser storage is unavailable.
+    }
+  }
+
+  function flattenCatalogAfterSales(orderId) {
+    const catalog = receiptAfterSalesCatalog[orderId] || {};
+    return Object.entries(catalog).flatMap(([itemId, raw]) =>
+      (Array.isArray(raw) ? raw : [raw]).map((item) =>
+        normalizeProductAfterSalesAction(item, itemId),
+      ),
+    );
+  }
+
+  function syncProductActionIndicators() {
+    all("[data-order-line]").forEach((row) => {
+      const itemId = one(".actual-input", row)?.dataset.itemId || "";
+      const actions = productAfterSalesActions.filter((item) => item.itemId === itemId);
+      const primary = actions[0] || {};
+      row.dataset.afterSalesSelected = actions.length ? "true" : "false";
+      row.dataset.afterSalesActionCount = String(actions.length);
+      row.dataset.afterSalesType = primary.type || "";
+      row.dataset.afterSalesReason = primary.reason || "";
+      row.dataset.afterSalesQuantity = primary.afterSalesQuantity || "";
+      row.dataset.returnInboundId = primary.returnInboundId || "";
+    });
+  }
+
+  function ensureProductAfterSalesActionsLoaded(force = false) {
+    const orderId = document.body.dataset.orderId || "";
+    const stateKey = `${currentReceiptId() || "receipt-demo"}:${orderId}:${document.body.dataset.readonly === "true"}:${supportsAfterSalesContinuation()}`;
+    if (!force && productAfterSalesActionsLoadedKey === stateKey) {
+      syncProductActionIndicators();
+      return;
+    }
+    productAfterSalesActionsLoadedKey = stateKey;
+    productAfterSalesActions = [];
+    if (!orderId) return;
+    if (document.body.dataset.readonly === "true") {
+      productAfterSalesActions = flattenCatalogAfterSales(orderId).map((action) => ({
+        ...action,
+        origin: "historical",
+        locked: true,
+        syncStatus: "success",
+      }));
+      if (supportsAfterSalesContinuation()) {
+        try {
+          const stored = localStorage.getItem(followUpAfterSalesStorageKey(orderId));
+          const parsed = stored ? JSON.parse(stored) : null;
+          if (Array.isArray(parsed)) {
+            productAfterSalesActions.push(
+              ...parsed.map((item) => normalizeProductAfterSalesAction({
+                ...item,
+                origin: "followup",
+              })),
+            );
+          }
+        } catch {
+          // The prototype remains usable when browser storage is unavailable.
+        }
+      }
+    } else {
+      try {
+        const stored = localStorage.getItem(productAfterSalesActionsStorageKey(orderId));
+        const parsed = stored ? JSON.parse(stored) : null;
+        if (Array.isArray(parsed)) {
+          productAfterSalesActions = parsed.map((item) => normalizeProductAfterSalesAction(item));
+        } else {
+          all("[data-order-line]").forEach((row) => {
+            const itemId = one(".actual-input", row)?.dataset.itemId || "";
+            const legacy = localStorage.getItem(
+              `${quantityStorageKey(currentReceiptId() || "receipt-demo", itemId)}:product-after-sales-v3`,
+            );
+            if (!legacy) return;
+            const item = JSON.parse(legacy);
+            if (item.selected || item.type) {
+              productAfterSalesActions.push(
+                normalizeProductAfterSalesAction(
+                  {
+                    type: item.type,
+                    reason: item.reason,
+                    afterSalesQuantity: item.afterSalesQuantity,
+                  },
+                  itemId,
+                ),
+              );
+            }
+          });
+        }
+      } catch {
+        productAfterSalesActions = [];
+      }
+    }
+    ensureAfterSalesDecisionLoaded();
+    if (productAfterSalesActions.length) afterSalesDecision = "has_actions";
+    syncProductActionIndicators();
+  }
+
+  function persistProductAfterSalesActions() {
+    if (document.body.dataset.readonly === "true" && !supportsAfterSalesContinuation()) return;
+    try {
+      localStorage.setItem(
+        supportsAfterSalesContinuation()
+          ? followUpAfterSalesStorageKey()
+          : productAfterSalesActionsStorageKey(),
+        JSON.stringify(
+          supportsAfterSalesContinuation()
+            ? productAfterSalesActions.filter((action) => action.origin === "followup")
+            : productAfterSalesActions,
+        ),
+      );
+    } catch {
+      // The prototype remains usable when browser storage is unavailable.
+    }
+    setAfterSalesDecision(
+      productAfterSalesActions.length || taskNonProductExceptions.length
+        ? "has_actions"
+        : afterSalesDecision === "confirmed_none"
+          ? "confirmed_none"
+          : "undecided",
+    );
+  }
+
+  function productActionsForItem(itemId) {
+    return productAfterSalesActions.filter((item) => item.itemId === itemId);
+  }
+
   function ensureAfterSalesReasonOptions() {
     if (document.getElementById("afterSalesReasonOptions")) return;
     const list = document.createElement("datalist");
@@ -1618,21 +1989,41 @@
     ].join("");
   }
 
+  function renderSelectOptions(options, value, placeholder = "请选择") {
+    return [
+      `<option value="">${placeholder}</option>`,
+      ...options.map((item) => {
+        const option = typeof item === "string" ? { value: item, label: item } : item;
+        return `<option value="${escapeHTML(option.value)}"${option.value === value ? " selected" : ""}>${escapeHTML(option.label)}</option>`;
+      }),
+    ].join("");
+  }
+
+  function nonProductAmountRequired(method) {
+    return ["退款", "补差价"].includes(method);
+  }
+
   function renderNonProductExceptionDetails({
     exceptionReason = "",
     responsibleDepartment = "",
     followUpDepartment = "",
     handlingMethod = "",
+    amountDirection = "",
     exceptionAmount = "",
     exceptionDescription = "",
+    processingStatus = "待跟进",
   }) {
     const readonly = document.body.dataset.readonly === "true";
+    const directionLabel =
+      nonProductAmountDirections.find((item) => item.value === amountDirection)?.label ||
+      (Number(exceptionAmount) ? "--" : "无金额");
     const fields = [
       ["异常原因", exceptionReason],
       ["责任部门", responsibleDepartment],
       ["跟进部门", followUpDepartment],
       ["处理方式", handlingMethod],
-      ["金额变动", `${Number(exceptionAmount || 0).toFixed(2)} 元`],
+      ["金额变动", amountDirection === "none" || !exceptionAmount ? "--" : `${directionLabel} ${Number(exceptionAmount).toFixed(2)} 元`],
+      ["处理状态", processingStatus],
       ["描述", exceptionDescription],
     ];
     if (readonly) {
@@ -1645,46 +2036,222 @@
     }
     return `<div class="non-product-exception-grid">
       <label class="non-product-exception-field"><span>异常原因</span><input class="non-product-exception-reason-input" value="${escapeHTML(exceptionReason)}" placeholder="如：其它" maxlength="100" aria-label="异常原因"></label>
-      <label class="non-product-exception-field"><span>责任部门</span><input class="non-product-responsible-department-input" value="${escapeHTML(responsibleDepartment)}" placeholder="填写部门" maxlength="50" aria-label="责任部门"></label>
-      <label class="non-product-exception-field"><span>跟进部门</span><input class="non-product-follow-up-department-input" value="${escapeHTML(followUpDepartment)}" placeholder="填写部门" maxlength="50" aria-label="跟进部门"></label>
+      <label class="non-product-exception-field"><span>责任部门</span><select class="non-product-responsible-department-input" aria-label="责任部门">${renderSelectOptions(receiptDepartmentOptions, responsibleDepartment)}</select></label>
+      <label class="non-product-exception-field"><span>跟进部门</span><select class="non-product-follow-up-department-input" aria-label="跟进部门">${renderSelectOptions(receiptDepartmentOptions, followUpDepartment)}</select></label>
       <label class="non-product-exception-field"><span>处理方式</span><select class="non-product-handling-method-select" aria-label="处理方式">${renderNonProductHandlingOptions(handlingMethod)}</select></label>
-      <label class="non-product-exception-field"><span>金额变动</span><span class="after-sales-money"><input class="exception-amount-input" inputmode="decimal" value="${escapeHTML(exceptionAmount)}" placeholder="0.00" aria-label="金额变动"><b>元</b></span></label>
+      <label class="non-product-exception-field"><span>金额方向</span><select class="non-product-amount-direction-select" aria-label="金额方向">${renderSelectOptions(nonProductAmountDirections, amountDirection)}</select></label>
+      <label class="non-product-exception-field"><span>金额</span><span class="after-sales-money"><input class="exception-amount-input" inputmode="decimal" value="${escapeHTML(exceptionAmount)}" placeholder="0.00" aria-label="金额"><b>元</b></span></label>
+      <label class="non-product-exception-field"><span>处理状态</span><select class="non-product-processing-status-select" aria-label="处理状态">${renderSelectOptions(nonProductProcessingStatuses, processingStatus)}</select></label>
       <label class="non-product-exception-field"><span>描述</span><input class="non-product-exception-description-input" value="${escapeHTML(exceptionDescription)}" placeholder="填写描述" maxlength="200" aria-label="描述"></label>
     </div>`;
   }
 
+  function taskNonProductExceptionStorageKey() {
+    return `${storagePrefix}:${currentReceiptId() || "receipt-demo"}:task-non-product-v4`;
+  }
+
+  function createNonProductExceptionId() {
+    nonProductExceptionSequence += 1;
+    return `NP-${Date.now()}-${nonProductExceptionSequence}`;
+  }
+
+  function normalizeNonProductException(item = {}) {
+    const method = String(item.handlingMethod || "");
+    const rawAmount = String(item.exceptionAmount ?? "");
+    const defaultDirection = rawAmount && Number(rawAmount) > 0 ? "deduct" : "none";
+    return {
+      id: String(item.id || createNonProductExceptionId()),
+      exceptionReason: String(item.exceptionReason || ""),
+      responsibleDepartment: String(item.responsibleDepartment || ""),
+      followUpDepartment: String(item.followUpDepartment || ""),
+      handlingMethod: method,
+      amountDirection: String(item.amountDirection || defaultDirection),
+      exceptionAmount: rawAmount,
+      exceptionDescription: String(item.exceptionDescription || ""),
+      processingStatus: String(item.processingStatus || (method === "无需处理" ? "无需处理" : "待跟进")),
+      needsReconfirm: Boolean(item.needsReconfirm),
+    };
+  }
+
+  function ensureTaskNonProductExceptionsLoaded() {
+    const receiptId = currentReceiptId() || "receipt-demo";
+    const stateKey = `${receiptId}:${document.body.dataset.readonly === "true"}`;
+    if (taskNonProductExceptionsLoadedKey === stateKey) return;
+    taskNonProductExceptionsLoadedKey = stateKey;
+    if (document.body.dataset.readonly === "true") {
+      taskNonProductExceptions = (receiptNonProductExceptionCatalog[receiptId] || []).map(
+        normalizeNonProductException,
+      );
+      return;
+    }
+    taskNonProductExceptions = [];
+    try {
+      const stored =
+        localStorage.getItem(taskNonProductExceptionStorageKey()) ||
+        localStorage.getItem(
+          `${storagePrefix}:${currentReceiptId() || "receipt-demo"}:task-non-product-v3`,
+        );
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) {
+          taskNonProductExceptions = parsed.map(normalizeNonProductException);
+        }
+      }
+    } catch {
+      // The prototype remains usable when browser storage is unavailable.
+    }
+  }
+
+  function persistTaskNonProductExceptions() {
+    if (document.body.dataset.readonly === "true") return;
+    try {
+      localStorage.setItem(
+        taskNonProductExceptionStorageKey(),
+        JSON.stringify(taskNonProductExceptions),
+      );
+    } catch {
+      // The prototype remains usable when browser storage is unavailable.
+    }
+    if (taskNonProductExceptions.length || productAfterSalesActions.length) {
+      setAfterSalesDecision("has_actions");
+    } else if (afterSalesDecision !== "confirmed_none") {
+      setAfterSalesDecision("undecided");
+    }
+  }
+
+  function renderTaskNonProductExceptionItem(item, index) {
+    const readonly = document.body.dataset.readonly === "true";
+    const collapsed = readonly || (isNonProductExceptionComplete(item) && !item.needsReconfirm);
+    const amountSummary =
+      item.amountDirection && item.amountDirection !== "none" && Number(item.exceptionAmount) > 0
+        ? ` · ${nonProductAmountDirections.find((entry) => entry.value === item.amountDirection)?.label || ""}${formatMoney(item.exceptionAmount)}`
+        : "";
+    return `<div class="non-product-exception-item" data-non-product-exception-item data-exception-id="${escapeHTML(item.id)}" data-needs-reconfirm="${item.needsReconfirm ? "true" : "false"}" data-collapsed="${collapsed ? "true" : "false"}">
+      <div class="non-product-exception-item-head"><strong>异常 ${index + 1}</strong><span class="non-product-exception-summary">${escapeHTML(item.exceptionReason || "未填写")} · ${escapeHTML(item.handlingMethod || "未处理")}${escapeHTML(amountSummary)}</span><button class="link" type="button" data-non-product-exception-toggle>${collapsed ? "展开" : "收起"}</button>${readonly ? "" : `${item.needsReconfirm ? '<button class="btn" type="button" data-confirm-non-product-rebind>重新确认</button>' : ""}<button class="link danger" type="button" data-remove-non-product-exception>删除</button>`}</div>
+      ${renderNonProductExceptionDetails(item)}
+    </div>`;
+  }
+
+  function renderTaskNonProductExceptions() {
+    ensureTaskNonProductExceptionsLoaded();
+    const target = one("[data-non-product-exception-list]");
+    if (!target) return;
+    target.innerHTML = taskNonProductExceptions
+      .map((item, index) => renderTaskNonProductExceptionItem(item, index))
+      .join("");
+  }
+
+  function readTaskNonProductExceptions() {
+    return all("[data-non-product-exception-item]").map((item) =>
+      normalizeNonProductException({
+        id: item.dataset.exceptionId,
+        exceptionReason:
+          one(".non-product-exception-reason-input", item)?.value.trim() || "",
+        responsibleDepartment:
+          one(".non-product-responsible-department-input", item)?.value.trim() || "",
+        followUpDepartment:
+          one(".non-product-follow-up-department-input", item)?.value.trim() || "",
+        handlingMethod:
+          one(".non-product-handling-method-select", item)?.value || "",
+        amountDirection:
+          one(".non-product-amount-direction-select", item)?.value || "",
+        exceptionAmount:
+          one(".exception-amount-input", item)?.value.trim() || "",
+        exceptionDescription:
+          one(".non-product-exception-description-input", item)?.value.trim() || "",
+        processingStatus:
+          one(".non-product-processing-status-select", item)?.value || "",
+        needsReconfirm: item.dataset.needsReconfirm === "true" || Boolean(one("[data-confirm-non-product-rebind]", item)),
+      }),
+    );
+  }
+
+  function isNonProductExceptionComplete(item) {
+    const amount = item.exceptionAmount.trim();
+    const amountValid = amount === "" || (/^\d+(?:\.\d{1,2})?$/.test(amount) && Number(amount) >= 0);
+    const monetaryRequired = nonProductAmountRequired(item.handlingMethod);
+    return (
+      item.exceptionReason.trim() &&
+      item.responsibleDepartment.trim() &&
+      item.followUpDepartment.trim() &&
+      item.handlingMethod.trim() &&
+      item.processingStatus.trim() &&
+      !item.needsReconfirm &&
+      amountValid &&
+      (!monetaryRequired || (item.amountDirection !== "none" && Number(amount) > 0)) &&
+      (!amount || Number(amount) === 0 || item.amountDirection !== "none") &&
+      item.exceptionDescription.trim()
+    );
+  }
+
+  function validateTaskNonProductExceptions() {
+    const rows = all("[data-non-product-exception-item]");
+    for (const row of rows) {
+      row.dataset.collapsed = "false";
+      const toggle = one("[data-non-product-exception-toggle]", row);
+      if (toggle) toggle.textContent = "收起";
+      const requiredFields = [
+        [".non-product-exception-reason-input", "请填写异常原因"],
+        [".non-product-responsible-department-input", "请填写责任部门"],
+        [".non-product-follow-up-department-input", "请填写跟进部门"],
+        [".non-product-handling-method-select", "请选择处理方式"],
+        [".non-product-processing-status-select", "请选择处理状态"],
+        [".non-product-exception-description-input", "请填写描述"],
+      ];
+      for (const [selector, message] of requiredFields) {
+        const field = one(selector, row);
+        field?.classList.remove("invalid");
+        if (!field?.value.trim()) {
+          field?.classList.add("invalid");
+          field?.focus();
+          showToast(message);
+          return false;
+        }
+      }
+      if (one("[data-confirm-non-product-rebind]", row)) {
+        row.scrollIntoView({ behavior: "smooth", block: "center" });
+        showToast("请重新确认订单变更前的非商品异常");
+        return false;
+      }
+      const method = one(".non-product-handling-method-select", row)?.value || "";
+      const direction = one(".non-product-amount-direction-select", row);
+      const amount = one(".exception-amount-input", row);
+      const raw = amount?.value.trim() || "";
+      direction?.classList.remove("invalid");
+      amount?.classList.remove("invalid");
+      if (raw && (!/^\d+(?:\.\d{1,2})?$/.test(raw) || Number(raw) < 0)) {
+        amount?.classList.add("invalid");
+        amount?.focus();
+        showToast("请填写有效金额");
+        return false;
+      }
+      if (nonProductAmountRequired(method) && (!raw || Number(raw) <= 0)) {
+        amount?.classList.add("invalid");
+        amount?.focus();
+        showToast("请填写大于 0 的金额");
+        return false;
+      }
+      if ((nonProductAmountRequired(method) || Number(raw) > 0) && (!direction?.value || direction.value === "none")) {
+        direction?.classList.add("invalid");
+        direction?.focus();
+        showToast("请选择金额方向");
+        return false;
+      }
+    }
+    return true;
+  }
+
   function renderAfterSalesValue({
     type,
-    difference,
     unit,
-    exceptionReason = "",
-    responsibleDepartment = "",
-    followUpDepartment = "",
-    handlingMethod = "",
-    exceptionAmount = "",
-    exceptionDescription = "",
     afterSalesQuantity = "",
     returnInboundId = "",
+    readonly = document.body.dataset.readonly === "true" && !supportsAfterSalesContinuation(),
   }) {
     if (!type) {
       return '<span class="after-sales-empty pending">请选择类型</span>';
     }
-    const defaultQuantity =
-      Number.isFinite(difference) && difference !== 0
-        ? Math.abs(difference)
-        : "";
-    const quantity = afterSalesQuantity === "" ? defaultQuantity : afterSalesQuantity;
-    const readonly = document.body.dataset.readonly === "true";
-    if (type === "non_product_exception") {
-      return renderNonProductExceptionDetails({
-        exceptionReason,
-        responsibleDepartment,
-        followUpDepartment,
-        handlingMethod,
-        exceptionAmount,
-        exceptionDescription,
-      });
-    }
+    const quantity = afterSalesQuantity;
     const fieldLabel = type === "product_exception" ? "异常数" : "应退数";
     const quantityControl = readonly
       ? `<strong>${formatNumber(Number(quantity || 0))} ${escapeHTML(unit)}</strong>`
@@ -1699,224 +2266,21 @@
     return `<label class="after-sales-field return"><span>应退数</span>${quantityControl}${completedReference}</label>`;
   }
 
-  function renderInlineAfterSalesCells({
-    productName = "当前商品",
-    selected = false,
-    type = "",
-    reason = "",
-    difference = Number.NaN,
-    unit = "",
-    exceptionReason = "",
-    responsibleDepartment = "",
-    followUpDepartment = "",
-    handlingMethod = "",
-    exceptionAmount = "",
-    exceptionDescription = "",
-    afterSalesQuantity = "",
-    returnInboundId = "",
-  } = {}) {
-    const readonly = document.body.dataset.readonly === "true";
-    const typeControl = !selected
-      ? '<span class="after-sales-empty">未纳入售后</span>'
-      : readonly
-        ? `<span class="after-sales-type-text">${escapeHTML(afterSalesTypes[type]?.label || "--")}</span>`
-        : `<select class="after-sales-select" aria-label="${escapeHTML(productName)}售后类型">${renderAfterSalesOptions(type)}</select>`;
-    const reasonControl = !selected
-      ? '<span class="after-sales-empty">--</span>'
-      : readonly
-        ? `<span class="after-sales-reason-text">${escapeHTML(reason || "--")}</span>`
-        : `<input class="after-sales-reason-input" list="afterSalesReasonOptions" value="${escapeHTML(reason)}" placeholder="选择或输入" maxlength="100" autocomplete="off" aria-label="${escapeHTML(productName)}售后原因">`;
-    const valueControl = selected
-      ? renderAfterSalesValue({
-          type,
-          difference,
-          unit,
-          exceptionReason,
-          responsibleDepartment,
-          followUpDepartment,
-          handlingMethod,
-          exceptionAmount,
-          exceptionDescription,
-          afterSalesQuantity,
-          returnInboundId,
-        })
-      : '<span class="after-sales-empty">--</span>';
-    const actionControl = readonly
-      ? ""
-      : `<button class="link ${selected ? "danger" : ""}" type="button" data-toggle-after-sales-row>${selected ? "移出售后" : "加入售后"}</button>`;
-    return {
-      typeControl,
-      reasonControl,
-      valueControl,
-      actionControl,
-    };
-  }
-
-  function inlineAfterSalesState(row) {
-    const selected = row?.dataset.afterSalesSelected === "true";
-    return {
-      productName: row?.dataset.orderProductName || "当前商品",
-      selected,
-      type: selected ? row.dataset.afterSalesType || "" : "",
-      reason: selected ? row.dataset.afterSalesReason || "" : "",
-      difference: rowDifference(row),
-      unit: row?.dataset.unit || "",
-      exceptionReason: selected ? row.dataset.exceptionReason || "" : "",
-      responsibleDepartment: selected
-        ? row.dataset.responsibleDepartment || ""
-        : "",
-      followUpDepartment: selected ? row.dataset.followUpDepartment || "" : "",
-      handlingMethod: selected ? row.dataset.handlingMethod || "" : "",
-      exceptionAmount: selected ? row.dataset.exceptionAmount || "" : "",
-      exceptionDescription: selected
-        ? row.dataset.exceptionDescription || ""
-        : "",
-      afterSalesQuantity: selected ? row.dataset.afterSalesQuantity || "" : "",
-      returnInboundId: selected ? row.dataset.returnInboundId || "" : "",
-    };
-  }
-
-  function refreshInlineAfterSalesRow(row) {
-    if (!row?.matches("[data-order-line]")) return;
-    const controls = renderInlineAfterSalesCells(inlineAfterSalesState(row));
-    const typeCell = one("[data-after-sales-type-cell]", row);
-    const reasonCell = one("[data-after-sales-reason-cell]", row);
-    const valueCell = one("[data-after-sales-value]", row);
-    const actionCell = one("[data-after-sales-action-cell]", row);
-    if (typeCell) typeCell.innerHTML = controls.typeControl;
-    if (reasonCell) reasonCell.innerHTML = controls.reasonControl;
-    if (valueCell) valueCell.innerHTML = controls.valueControl;
-    if (actionCell) actionCell.innerHTML = controls.actionControl;
-    row.classList.toggle(
-      "after-sales-row-excluded",
-      row.dataset.afterSalesSelected !== "true",
-    );
-  }
-
-  function refreshInlineAfterSalesRows() {
-    all("[data-order-line]").forEach(refreshInlineAfterSalesRow);
-  }
-
-  function syncInlineAfterSalesInputs(row) {
-    if (!row?.matches("[data-order-line]")) return;
-    const value = (selector, fallback = "") =>
-      one(selector, row)?.value.trim() ?? fallback;
-    row.dataset.afterSalesReason = value(
-      ".after-sales-reason-input",
-      row.dataset.afterSalesReason || "",
-    );
-    row.dataset.exceptionReason = value(
-      ".non-product-exception-reason-input",
-      row.dataset.exceptionReason || "",
-    );
-    row.dataset.responsibleDepartment = value(
-      ".non-product-responsible-department-input",
-      row.dataset.responsibleDepartment || "",
-    );
-    row.dataset.followUpDepartment = value(
-      ".non-product-follow-up-department-input",
-      row.dataset.followUpDepartment || "",
-    );
-    row.dataset.handlingMethod = value(
-      ".non-product-handling-method-select",
-      row.dataset.handlingMethod || "",
-    );
-    row.dataset.exceptionAmount = value(
-      ".exception-amount-input",
-      row.dataset.exceptionAmount || "",
-    );
-    row.dataset.exceptionDescription = value(
-      ".non-product-exception-description-input",
-      row.dataset.exceptionDescription || "",
-    );
-    row.dataset.afterSalesQuantity = value(
-      ".after-sales-quantity-input",
-      row.dataset.afterSalesQuantity || "",
-    );
-    row.dataset.abnormalCount =
-      row.dataset.afterSalesType === "product_exception"
-        ? row.dataset.afterSalesQuantity
-        : "";
-    row.dataset.returnCount =
-      row.dataset.afterSalesType === "product_return"
-        ? row.dataset.afterSalesQuantity
-        : "";
-  }
-
-  function resetAfterSalesRow(row) {
-    if (!row?.matches("[data-order-line]")) return;
-    row.dataset.afterSalesSelected = "false";
-    row.dataset.afterSalesType = "";
-    row.dataset.afterSalesReason = "";
-    row.dataset.exceptionReason = "";
-    row.dataset.responsibleDepartment = "";
-    row.dataset.followUpDepartment = "";
-    row.dataset.handlingMethod = "";
-    row.dataset.exceptionAmount = "";
-    row.dataset.exceptionDescription = "";
-    row.dataset.afterSalesQuantity = "";
-    row.dataset.afterSalesQuantityManual = "false";
-    row.dataset.abnormalCount = "";
-    row.dataset.returnCount = "";
-    row.dataset.returnInboundId = "";
-  }
-
   function syncAfterSalesRow(row, preferred = {}) {
     if (!row?.matches("[data-order-line]")) return;
-    const difference = rowDifference(row);
-    let type = preferred.type ?? row.dataset.afterSalesType ?? "";
-    const currentAmount =
-      preferred.exceptionAmount ??
-      row.dataset.exceptionAmount ??
-      "";
-    const isNonProductException = type === "non_product_exception";
-    const exceptionAmount = isNonProductException ? currentAmount : "";
-    const nonProductDetails = {
-      exceptionReason: isNonProductException
-        ? preferred.exceptionReason ?? row.dataset.exceptionReason ?? ""
-        : "",
-      responsibleDepartment: isNonProductException
-        ? preferred.responsibleDepartment ?? row.dataset.responsibleDepartment ?? ""
-        : "",
-      followUpDepartment: isNonProductException
-        ? preferred.followUpDepartment ?? row.dataset.followUpDepartment ?? ""
-        : "",
-      handlingMethod: isNonProductException
-        ? preferred.handlingMethod ?? row.dataset.handlingMethod ?? ""
-        : "",
-      exceptionDescription: isNonProductException
-        ? preferred.exceptionDescription ?? row.dataset.exceptionDescription ?? ""
-        : "",
-    };
-    let reason =
+    const type = preferred.type ?? row.dataset.afterSalesType ?? "";
+    const reason =
       preferred.reason ??
       row.dataset.afterSalesReason ??
       "";
-    const fallbackQuantity =
-      Number.isFinite(difference) && difference !== 0
-        ? String(Math.abs(difference))
-        : "";
-    const shouldResetQuantity = preferred.resetQuantity === true;
     let afterSalesQuantity =
       preferred.afterSalesQuantity ?? row.dataset.afterSalesQuantity ?? "";
-    if (type === "product_exception" || type === "product_return") {
-      const hasPreferredQuantity = preferred.afterSalesQuantity !== undefined;
-      if (
-        shouldResetQuantity ||
-        (!hasPreferredQuantity && row.dataset.afterSalesQuantityManual !== "true")
-      ) {
-        afterSalesQuantity = fallbackQuantity;
-      }
-    } else {
+    if (!Object.hasOwn(afterSalesTypes, type)) {
       afterSalesQuantity = "";
     }
 
     row.dataset.afterSalesType = type;
     row.dataset.afterSalesReason = reason;
-    row.dataset.exceptionAmount = exceptionAmount;
-    Object.entries(nonProductDetails).forEach(([key, value]) => {
-      row.dataset[key] = value;
-    });
     row.dataset.afterSalesQuantity = afterSalesQuantity;
     row.dataset.abnormalCount =
       type === "product_exception" ? afterSalesQuantity : "";
@@ -1955,37 +2319,34 @@
       if (productTarget) productTarget.textContent = String(rows.length);
       if (differenceTarget) differenceTarget.textContent = String(differenceRows.length);
     }
-    const modeAction = one("[data-receipt-mode-action]");
-    if (modeAction) {
-      modeAction.disabled = !order;
-      modeAction.textContent =
-        receiptMode === "aftersales" ? "正常签收" : "售后单处理";
-      modeAction.className =
-        receiptMode === "aftersales"
-          ? "btn receipt-mode-action"
-          : "btn receipt-mode-action after-sales-entry";
-      modeAction.title = order
-        ? receiptMode === "aftersales"
-          ? "切换为正常签收"
-          : "切换为售后单处理"
-        : "请先关联销售订单";
-    }
+    ensureTaskNonProductExceptionsLoaded();
+    ensureProductAfterSalesActionsLoaded();
+    const currentItemIds = new Set(
+      rows
+        .map((row) => one(".actual-input", row)?.dataset.itemId || "")
+        .filter(Boolean),
+    );
+    const currentProductAfterSalesCount = productAfterSalesActions.filter(
+      (action) => currentItemIds.has(action.itemId),
+    ).length;
+    const afterSalesTotal =
+      currentProductAfterSalesCount + taskNonProductExceptions.length;
     const enterButton = one("[data-enter-after-sales]");
     if (enterButton) {
       enterButton.disabled = !order;
       enterButton.title = order ? "打开售后处理" : "请先关联销售订单";
-    }
-    const badge = one("[data-receipt-mode-badge]");
-    if (badge) {
-      badge.hidden = false;
-      badge.textContent = receiptMode === "aftersales"
-        ? document.body.dataset.readonly === "true"
-          ? "售后单"
-          : "售后单处理"
-        : "正常签收";
-      badge.className = receiptMode === "aftersales"
-        ? "receipt-mode-badge after-sales"
-        : "receipt-mode-badge normal";
+      const label = supportsAfterSalesContinuation()
+        ? "继续售后"
+        : document.body.dataset.readonly === "true"
+          ? "查看售后处理"
+          : "售后处理";
+      enterButton.innerHTML = afterSalesTotal
+        ? `${label}<em data-after-sales-total>${afterSalesTotal}</em>`
+        : label;
+      enterButton.hidden =
+        document.body.dataset.readonly === "true" &&
+        !supportsAfterSalesContinuation() &&
+        afterSalesTotal === 0;
     }
   }
 
@@ -2003,33 +2364,31 @@
   }
 
   function receiptAfterSalesRows() {
-    return all("[data-order-line]").filter(
-      (row) => row.dataset.afterSalesSelected === "true",
+    ensureProductAfterSalesActionsLoaded();
+    const itemIds = new Set(productAfterSalesActions.map((item) => item.itemId));
+    return all("[data-order-line]").filter((row) =>
+      itemIds.has(one(".actual-input", row)?.dataset.itemId || ""),
     );
   }
 
   function isAfterSalesRowComplete(row) {
     if (!row) return false;
-    const type = row.dataset.afterSalesType || "";
-    const reason = (row.dataset.afterSalesReason || "").trim();
-    if (!type || !reason || reason.length > 100) return false;
-    if (type === "non_product_exception") {
-      const amount = Number(row.dataset.exceptionAmount);
-      const requiredDetails = [
-        row.dataset.exceptionReason,
-        row.dataset.responsibleDepartment,
-        row.dataset.followUpDepartment,
-        row.dataset.handlingMethod,
-        row.dataset.exceptionDescription,
-      ];
-      return (
-        requiredDetails.every((value) => String(value || "").trim()) &&
-        Number.isFinite(amount) &&
-        amount > 0
-      );
-    }
-    const quantity = Number(row.dataset.afterSalesQuantity);
-    return Number.isFinite(quantity) && quantity > 0;
+    const itemId = one(".actual-input", row)?.dataset.itemId || "";
+    const actions = productActionsForItem(itemId);
+    return actions.length > 0 && actions.every(isProductAfterSalesActionComplete);
+  }
+
+  function isProductAfterSalesActionComplete(action) {
+    const quantity = Number(action?.afterSalesQuantity);
+    return Boolean(
+      action &&
+      action.itemId &&
+      Object.hasOwn(afterSalesTypes, action.type) &&
+      action.reason.trim() &&
+      action.reason.length <= 100 &&
+      Number.isFinite(quantity) &&
+      quantity > 0,
+    );
   }
 
   function readSalesActualFeature() {
@@ -2039,134 +2398,235 @@
     );
   }
 
-  function renderAfterSalesWorkbenchRow(sourceRow, index) {
+  function renderAfterSalesWorkbenchRow(action, index, sourceRow = null) {
+    sourceRow = sourceRow || findOrderLineByItemId(action?.itemId || "");
     if (!sourceRow?.matches("[data-order-line]")) return "";
     const input = one(".actual-input", sourceRow);
     const itemId = input?.dataset.itemId || "";
     const productName = sourceRow.dataset.orderProductName || "--";
     const unit = sourceRow.dataset.unit || "";
-    const outbound = Number(sourceRow.dataset.outbound);
-    const actual = Number(input?.value);
     const difference = rowDifference(sourceRow);
-    const selected = sourceRow.dataset.afterSalesSelected === "true";
-    const type = selected ? sourceRow.dataset.afterSalesType || "" : "";
-    const reason = selected ? sourceRow.dataset.afterSalesReason || "" : "";
-    const exceptionReason = selected ? sourceRow.dataset.exceptionReason || "" : "";
-    const responsibleDepartment = selected
-      ? sourceRow.dataset.responsibleDepartment || ""
-      : "";
-    const followUpDepartment = selected
-      ? sourceRow.dataset.followUpDepartment || ""
-      : "";
-    const handlingMethod = selected ? sourceRow.dataset.handlingMethod || "" : "";
-    const exceptionAmount = selected ? sourceRow.dataset.exceptionAmount || "" : "";
-    const exceptionDescription = selected
-      ? sourceRow.dataset.exceptionDescription || ""
-      : "";
-    const afterSalesQuantity = selected
-      ? sourceRow.dataset.afterSalesQuantity || ""
-      : Number.isFinite(difference) && difference !== 0
-        ? String(Math.abs(difference))
-        : "";
-    const readonly = document.body.dataset.readonly === "true";
-    const typeControl = readonly
-      ? `<span class="after-sales-type-text">${escapeHTML(afterSalesTypes[type]?.label || "--")}</span>`
+    const type = action?.type || "";
+    const reason = action?.reason || "";
+    const afterSalesQuantity = action?.afterSalesQuantity || "";
+    const pageReadonly = document.body.dataset.readonly === "true";
+    const actionReadonly = pageReadonly && (!supportsAfterSalesContinuation() || action?.locked);
+    const typeControl = actionReadonly
+      ? `<span class="after-sales-type-text">${escapeHTML(afterSalesTypes[type]?.label || "--")}</span>${action?.locked ? '<em class="after-sales-history-tag">已提交</em>' : ""}`
       : `<select class="after-sales-select" aria-label="${escapeHTML(productName)}售后类型">${renderAfterSalesOptions(type)}</select>`;
-    const reasonControl = readonly
+    const reasonControl = actionReadonly
       ? `<span class="after-sales-reason-text">${escapeHTML(reason || "--")}</span>`
       : `<input class="after-sales-reason-input" list="afterSalesReasonOptions" value="${escapeHTML(reason)}" placeholder="选择或输入" maxlength="100" autocomplete="off" aria-label="${escapeHTML(productName)}售后原因">`;
-    const actionCell = readonly
-      ? ""
-      : `<td><button class="link danger" type="button" data-remove-after-sales-item aria-label="移除${escapeHTML(productName)}">移除</button></td>`;
-    return `<tr data-after-sales-item="${escapeHTML(itemId)}" data-after-sales-type="${escapeHTML(type)}" data-unit="${escapeHTML(unit)}" data-current-diff="${Number.isFinite(difference) ? difference : ""}">
+    const showOperationCell = !pageReadonly || supportsAfterSalesContinuation();
+    const actionCell = showOperationCell
+      ? `<td class="after-sales-action-operation">${actionReadonly ? "" : `<button class="link danger" type="button" data-remove-after-sales-item aria-label="移除${escapeHTML(productName)}当前售后类型">移除</button>`}</td>`
+      : "";
+    return `<tr data-after-sales-item="${escapeHTML(itemId)}" data-action-id="${escapeHTML(action?.id || createProductAfterSalesActionId())}" data-after-sales-type="${escapeHTML(type)}" data-action-reason="${escapeHTML(reason)}" data-action-quantity="${escapeHTML(afterSalesQuantity)}" data-action-origin="${escapeHTML(action?.origin || "current")}" data-action-locked="${action?.locked ? "true" : "false"}" data-action-submitted-at="${escapeHTML(action?.submittedAt || "")}" data-action-sync-status="${escapeHTML(action?.syncStatus || "pending")}" data-return-inbound-id="${escapeHTML(action?.returnInboundId || "")}" data-unit="${escapeHTML(unit)}" data-current-diff="${Number.isFinite(difference) ? difference : ""}">
       <td data-after-sales-index>${index + 1}</td>
-      <td><strong>${escapeHTML(productName)}</strong></td>
-      <td class="right">${formatNumber(outbound)} ${escapeHTML(unit)}</td>
-      <td class="right">${formatNumber(actual)} ${escapeHTML(unit)}</td>
-      <td class="right"><span class="variance ${difference > 0 ? "short" : difference < 0 ? "over" : "equal"}">${formatNumber(difference)} ${escapeHTML(unit)}</span></td>
       <td>${typeControl}</td>
       <td>${reasonControl}</td>
       <td data-after-sales-value>${renderAfterSalesValue({
         type,
-        difference,
-        unit,
-        exceptionReason,
-        responsibleDepartment,
-        followUpDepartment,
-        handlingMethod,
-        exceptionAmount,
-        exceptionDescription,
-        afterSalesQuantity,
-        returnInboundId: sourceRow.dataset.returnInboundId || "",
-      })}</td>
+         unit,
+         afterSalesQuantity,
+         returnInboundId: action?.returnInboundId || "",
+         readonly: actionReadonly,
+       })}</td>
       ${actionCell}
     </tr>`;
+  }
+
+  function groupProductAfterSalesActions(actions) {
+    const groups = new Map();
+    actions.forEach((action) => {
+      if (!action?.itemId) return;
+      if (!groups.has(action.itemId)) groups.set(action.itemId, []);
+      groups.get(action.itemId).push(action);
+    });
+    return [...groups.entries()].map(([itemId, groupActions]) => ({
+      itemId,
+      actions: groupActions,
+    }));
+  }
+
+  function renderAfterSalesProductGroup(group, groupIndex) {
+    const sourceRow = findOrderLineByItemId(group.itemId);
+    if (!sourceRow?.matches("[data-order-line]")) return "";
+    const input = one(".actual-input", sourceRow);
+    const productName = sourceRow.dataset.orderProductName || "--";
+    const recognizedName = sourceRow.dataset.recognizedName || "";
+    const unit = sourceRow.dataset.unit || "";
+    const outbound = Number(sourceRow.dataset.outbound);
+    const actualRaw = input?.value.trim() || "";
+    const actual = actualRaw === "" ? Number.NaN : Number(actualRaw);
+    const difference = rowDifference(sourceRow);
+    const readonly = document.body.dataset.readonly === "true";
+    const continuation = supportsAfterSalesContinuation();
+    const canAppend = !readonly || continuation;
+    const hasLockedActions = group.actions.some((action) => action.locked);
+    const complete = group.actions.every(isProductAfterSalesActionComplete);
+    const actionRows = group.actions
+      .map((action, index) => renderAfterSalesWorkbenchRow(action, index, sourceRow))
+      .join("");
+    const controls = canAppend
+      ? `<button class="btn text" type="button" data-add-after-sales-action data-item-id="${escapeHTML(group.itemId)}">＋ 添加售后类型</button>${hasLockedActions ? "" : `<button class="link danger" type="button" data-remove-after-sales-product data-item-id="${escapeHTML(group.itemId)}">移除商品</button>`}`
+      : "";
+    return `<article class="after-sales-product-group" data-after-sales-product-group="${escapeHTML(group.itemId)}" data-group-complete="${complete}" data-group-collapsed="false" data-group-index="${groupIndex}">
+      <header class="after-sales-product-group-head">
+        <button class="after-sales-group-toggle" type="button" data-toggle-after-sales-group aria-expanded="true" aria-label="收起${escapeHTML(productName)}售后处理">⌄</button>
+        <div class="after-sales-product-identity"><strong>${escapeHTML(productName)}</strong><span>${escapeHTML(recognizedName && recognizedName !== productName ? recognizedName : group.itemId)}</span></div>
+        <div class="after-sales-product-facts"><span>下单 <b>${formatNumber(outbound)} ${escapeHTML(unit)}</b></span><span>签收 <b>${formatNumber(actual)} ${escapeHTML(unit)}</b></span><span>差异 <b class="variance ${difference > 0 ? "short" : difference < 0 ? "over" : "equal"}">${formatNumber(difference)} ${escapeHTML(unit)}</b></span><span>处理 <b>${group.actions.length}</b></span></div>
+        <div class="after-sales-product-group-actions">${controls}</div>
+      </header>
+      <div class="after-sales-product-group-body">
+        <div class="table-wrap after-sales-action-table-wrap"><table class="after-sales-action-table"><thead><tr><th>序号</th><th>售后类型</th><th>售后原因</th><th>售后处理</th>${canAppend ? '<th class="after-sales-action-operation">操作</th>' : ""}</tr></thead><tbody>${actionRows}</tbody></table></div>
+      </div>
+    </article>`;
+  }
+
+  function setReceiptWorkspace(workspace = "products", renderWorkbench = true) {
+    const activeWorkspace = workspace === "after-sales" ? "after-sales" : "products";
+    all("[data-receipt-workspace-tab]").forEach((button) => {
+      const active = button.dataset.receiptWorkspaceTab === activeWorkspace;
+      button.classList.toggle("active", active);
+      button.setAttribute("aria-selected", String(active));
+    });
+    all("[data-receipt-workspace-panel]").forEach((panel) => {
+      panel.hidden = panel.dataset.receiptWorkspacePanel !== activeWorkspace;
+    });
+    if (activeWorkspace === "after-sales" && renderWorkbench) {
+      renderAfterSalesWorkbench();
+    }
+  }
+
+  function applyAfterSalesGroupView() {
+    const keyword = one("[data-after-sales-group-search]")?.value.trim().toLowerCase() || "";
+    const filter = one("[data-after-sales-group-filter].active")?.dataset.afterSalesGroupFilter || "all";
+    all("[data-after-sales-product-group]").forEach((group) => {
+      const sourceRow = findOrderLineByItemId(group.dataset.afterSalesProductGroup || "");
+      const text = `${sourceRow?.dataset.orderProductName || ""} ${sourceRow?.dataset.recognizedName || ""} ${group.dataset.afterSalesProductGroup || ""}`.toLowerCase();
+      const complete = group.dataset.groupComplete === "true";
+      const matchesFilter = filter === "all" || (filter === "complete" && complete) || (filter === "incomplete" && !complete);
+      group.hidden = Boolean(keyword && !text.includes(keyword)) || !matchesFilter;
+    });
+  }
+
+  function snapshotAfterSalesWorkbenchDraft() {
+    const body = one("[data-after-sales-body]");
+    if (!body) return;
+    productAfterSalesDraftActions = all("[data-after-sales-item]", body).map((row) =>
+      normalizeProductAfterSalesAction(readAfterSalesWorkbenchRow(row)),
+    );
+    if (!supportsAfterSalesContinuation()) {
+      taskNonProductExceptions = readTaskNonProductExceptions();
+    }
+  }
+
+  function refreshAfterSalesProductGroupState(group) {
+    if (!group?.matches("[data-after-sales-product-group]")) return;
+    const actions = all("[data-after-sales-item]", group).map((row) =>
+      normalizeProductAfterSalesAction(readAfterSalesWorkbenchRow(row)),
+    );
+    group.dataset.groupComplete = String(
+      actions.length > 0 && actions.every(isProductAfterSalesActionComplete),
+    );
+    const count = one(".after-sales-product-facts span:last-child b", group);
+    if (count) count.textContent = String(actions.length);
+    applyAfterSalesGroupView();
   }
 
   function updateAfterSalesWorkbenchState() {
     const body = one("[data-after-sales-body]");
     const rows = body ? all("[data-after-sales-item]", body) : [];
-    const count = one("[data-after-sales-count]");
+    const groups = body ? all("[data-after-sales-product-group]", body) : [];
+    const exceptionRows = all("[data-non-product-exception-item]");
+    const count = one("[data-product-after-sales-count]") || one("[data-after-sales-count]");
+    const nonProductCount = one("[data-non-product-count]");
     const empty = one("[data-after-sales-empty]");
+    const groupCount = one("[data-after-sales-product-group-count]");
+    const groupTools = one("[data-after-sales-group-tools]");
+    const tabCount = one("[data-after-sales-tab-count]");
+    const nonProductEmpty = one("[data-non-product-exception-empty]");
     if (count) count.textContent = String(rows.length);
+    if (groupCount) groupCount.textContent = String(groups.length);
+    if (groupTools) groupTools.hidden = groups.length === 0;
+    if (tabCount) {
+      const total = rows.length + exceptionRows.length;
+      tabCount.textContent = String(total);
+      tabCount.hidden = total === 0;
+      const enterButton = one("[data-enter-after-sales]");
+      if (enterButton) {
+      const label = supportsAfterSalesContinuation()
+        ? "继续售后"
+        : document.body.dataset.readonly === "true"
+          ? "查看售后处理"
+          : "售后处理";
+        enterButton.innerHTML = total
+          ? `${label}<em data-after-sales-total>${total}</em>`
+          : label;
+      }
+    }
+    if (nonProductCount) nonProductCount.textContent = String(exceptionRows.length);
     if (empty) empty.hidden = rows.length > 0;
+    if (nonProductEmpty) nonProductEmpty.hidden = exceptionRows.length > 0;
     rows.forEach((row, index) => {
       const target = one("[data-after-sales-index]", row);
-      if (target) target.textContent = String(index + 1);
+      const group = row.closest("[data-after-sales-product-group]");
+      const groupRows = group ? all("[data-after-sales-item]", group) : rows;
+      if (target) target.textContent = String(groupRows.indexOf(row) + 1);
     });
+    exceptionRows.forEach((row, index) => {
+      const target = one(".non-product-exception-item-head strong", row);
+      if (target) target.textContent = `异常 ${index + 1}`;
+    });
+    applyAfterSalesGroupView();
   }
 
-  function renderAfterSalesWorkbench({ initialize = false } = {}) {
+  function renderAfterSalesWorkbench() {
     const body = one("[data-after-sales-body]");
     if (!body) return;
-    const savedRows = receiptAfterSalesRows();
-    const rows =
-      document.body.dataset.readonly === "true" || savedRows.length
-        ? savedRows
-        : initialize
-          ? receiptDifferenceRows()
-          : [];
-    body.innerHTML = rows
-      .map((row, index) => renderAfterSalesWorkbenchRow(row, index))
+    ensureProductAfterSalesActionsLoaded();
+    if (!Array.isArray(productAfterSalesDraftActions)) {
+      productAfterSalesDraftActions = productAfterSalesActions.map((action) => ({ ...action }));
+    }
+    body.innerHTML = groupProductAfterSalesActions(productAfterSalesDraftActions)
+      .map((group, index) => renderAfterSalesProductGroup(group, index))
       .join("");
     const readonly = document.body.dataset.readonly === "true";
-    one("[data-cancel-after-sales]")?.toggleAttribute(
+    one("[data-add-after-sales-product]")?.toggleAttribute(
       "hidden",
-      readonly || receiptMode !== "aftersales",
+      readonly && !supportsAfterSalesContinuation(),
     );
-    one("[data-add-after-sales-product]")?.toggleAttribute("hidden", readonly);
+    one("[data-add-non-product-exception]")?.toggleAttribute("hidden", readonly);
     one("[data-save-after-sales]")?.toggleAttribute("hidden", readonly);
+    renderTaskNonProductExceptions();
     updateAfterSalesWorkbenchState();
   }
 
   function readAfterSalesWorkbenchRow(row) {
     const type = one(".after-sales-select", row)?.value || row.dataset.afterSalesType || "";
     return {
+      id: row.dataset.actionId || createProductAfterSalesActionId(),
       itemId: row.dataset.afterSalesItem || "",
       type,
-      reason: one(".after-sales-reason-input", row)?.value.trim() || "",
-      exceptionReason:
-        one(".non-product-exception-reason-input", row)?.value.trim() || "",
-      responsibleDepartment:
-        one(".non-product-responsible-department-input", row)?.value.trim() || "",
-      followUpDepartment:
-        one(".non-product-follow-up-department-input", row)?.value.trim() || "",
-      handlingMethod:
-        one(".non-product-handling-method-select", row)?.value || "",
-      exceptionAmount: one(".exception-amount-input", row)?.value.trim() || "",
-      exceptionDescription:
-        one(".non-product-exception-description-input", row)?.value.trim() || "",
-      afterSalesQuantity: one(".after-sales-quantity-input", row)?.value.trim() || "",
+      reason: one(".after-sales-reason-input", row)?.value.trim() || row.dataset.actionReason || "",
+      afterSalesQuantity: one(".after-sales-quantity-input", row)?.value.trim() || row.dataset.actionQuantity || "",
+      returnInboundId: row.dataset.returnInboundId || "",
+      syncStatus: row.dataset.actionSyncStatus || "pending",
+      origin: row.dataset.actionOrigin || "current",
+      locked: row.dataset.actionLocked === "true",
+      submittedAt: row.dataset.actionSubmittedAt || "",
     };
   }
 
-  function validateAfterSalesWorkbench() {
+  function validateAfterSalesWorkbench(requireFollowUp = false) {
     const rows = all("[data-after-sales-body] [data-after-sales-item]");
-    if (!rows.length) {
-      showToast("请至少新增一个售后商品，或取消售后处理");
+    const editableRows = rows.filter((row) => row.dataset.actionLocked !== "true");
+    if (requireFollowUp && editableRows.length === 0) {
+      showToast("请先新增后续售后处理");
       return false;
     }
-    for (const row of rows) {
+    for (const row of editableRows) {
       const select = one(".after-sales-select", row);
       const reason = one(".after-sales-reason-input", row);
       select?.classList.remove("invalid");
@@ -2184,326 +2644,127 @@
         showToast(reasonValue.length > 100 ? "售后原因最多 100 个字符" : "请选择或输入售后原因");
         return false;
       }
-      if (select.value === "non_product_exception") {
-        const requiredFields = [
-          [".non-product-exception-reason-input", "请填写异常原因"],
-          [".non-product-responsible-department-input", "请填写责任部门"],
-          [".non-product-follow-up-department-input", "请填写跟进部门"],
-          [".non-product-handling-method-select", "请选择处理方式"],
-        ];
-        for (const [selector, message] of requiredFields) {
-          const field = one(selector, row);
-          field?.classList.remove("invalid");
-          if (!field?.value.trim()) {
-            field?.classList.add("invalid");
-            field?.focus();
-            showToast(message);
-            return false;
-          }
-        }
-        const amount = one(".exception-amount-input", row);
-        const raw = amount?.value.trim() || "";
-        if (!/^\d+(?:\.\d{1,2})?$/.test(raw) || Number(raw) <= 0) {
-          amount?.classList.add("invalid");
-          amount?.focus();
-          showToast("请填写大于 0 的金额变动");
-          return false;
-        }
-        const description = one(".non-product-exception-description-input", row);
-        if (!description?.value.trim()) {
-          description?.classList.add("invalid");
-          description?.focus();
-          showToast("请填写描述");
-          return false;
-        }
-      } else {
-        const quantity = one(".after-sales-quantity-input", row);
-        const raw = quantity?.value.trim() || "";
-        if (!/^\d+(?:\.\d{1,2})?$/.test(raw) || Number(raw) <= 0) {
-          quantity?.classList.add("invalid");
-          quantity?.focus();
-          showToast(`请填写大于 0 的${afterSalesTypes[select.value]?.fieldLabel || "处理数量"}`);
-          return false;
-        }
+      const quantity = one(".after-sales-quantity-input", row);
+      const raw = quantity?.value.trim() || "";
+      if (!/^\d+(?:\.\d{1,2})?$/.test(raw) || Number(raw) <= 0) {
+        quantity?.classList.add("invalid");
+        quantity?.focus();
+        showToast(`请填写大于 0 的${afterSalesTypes[select.value]?.fieldLabel || "处理数量"}`);
+        return false;
       }
     }
-    return true;
+    return supportsAfterSalesContinuation() || validateTaskNonProductExceptions();
   }
 
   function validateInlineAfterSales() {
-    const rows = receiptAfterSalesRows();
-    if (!rows.length) {
-      showToast("请至少将一个商品加入售后集合");
+    ensureProductAfterSalesActionsLoaded();
+    for (const action of productAfterSalesActions) {
+      if (!isProductAfterSalesActionComplete(action)) {
+        openAfterSalesWorkbench();
+        const target = one(`[data-action-id="${CSS.escape(action.id)}"]`);
+        target?.scrollIntoView({ behavior: "smooth", block: "center" });
+        showToast("请完善商品售后信息");
+        return false;
+      }
+    }
+    if (!taskNonProductExceptions.every(isNonProductExceptionComplete)) {
+      openAfterSalesWorkbench();
+      showToast("请完善非商品异常信息");
       return false;
     }
-    for (const row of rows) {
-      syncInlineAfterSalesInputs(row);
-      const select = one(".after-sales-select", row);
-      const reason = one(".after-sales-reason-input", row);
-      select?.classList.remove("invalid");
-      reason?.classList.remove("invalid");
-      if (!select?.value) {
-        select?.classList.add("invalid");
-        select?.focus();
-        showToast("请选择售后类型");
-        return false;
-      }
-      const reasonValue = reason?.value.trim() || "";
-      if (!reasonValue || reasonValue.length > 100) {
-        reason?.classList.add("invalid");
-        reason?.focus();
-        showToast(
-          reasonValue.length > 100
-            ? "售后原因最多 100 个字符"
-            : "请选择或输入售后原因",
-        );
-        return false;
-      }
-      if (select.value === "non_product_exception") {
-        const requiredFields = [
-          [".non-product-exception-reason-input", "请填写异常原因"],
-          [".non-product-responsible-department-input", "请填写责任部门"],
-          [".non-product-follow-up-department-input", "请填写跟进部门"],
-          [".non-product-handling-method-select", "请选择处理方式"],
-          [".non-product-exception-description-input", "请填写描述"],
-        ];
-        for (const [selector, message] of requiredFields) {
-          const field = one(selector, row);
-          field?.classList.remove("invalid");
-          if (!field?.value.trim()) {
-            field?.classList.add("invalid");
-            field?.focus();
-            showToast(message);
-            return false;
-          }
-        }
-        const amount = one(".exception-amount-input", row);
-        const raw = amount?.value.trim() || "";
-        if (!/^\d+(?:\.\d{1,2})?$/.test(raw) || Number(raw) <= 0) {
-          amount?.classList.add("invalid");
-          amount?.focus();
-          showToast("请填写大于 0 的金额变动");
-          return false;
-        }
-      } else {
-        const quantity = one(".after-sales-quantity-input", row);
-        const raw = quantity?.value.trim() || "";
-        if (!/^\d+(?:\.\d{1,2})?$/.test(raw) || Number(raw) <= 0) {
-          quantity?.classList.add("invalid");
-          quantity?.focus();
-          showToast(
-            `请填写大于 0 的${afterSalesTypes[select.value]?.fieldLabel || "处理数量"}`,
-          );
-          return false;
-        }
-      }
-      persistAfterSalesRow(row);
-    }
     return true;
   }
 
-  function applyAfterSalesWorkbench() {
-    if (!validateAfterSalesWorkbench()) return false;
-    const staged = new Map(
-      all("[data-after-sales-body] [data-after-sales-item]").map((row) => {
-        const value = readAfterSalesWorkbenchRow(row);
-        return [value.itemId, value];
-      }),
+  function applyAfterSalesWorkbench({ requireFollowUp = false } = {}) {
+    if (!validateAfterSalesWorkbench(requireFollowUp)) return false;
+    productAfterSalesActions = all(
+      "[data-after-sales-body] [data-after-sales-item]",
+    ).map((row) => normalizeProductAfterSalesAction(readAfterSalesWorkbenchRow(row)));
+    if (!supportsAfterSalesContinuation()) {
+      taskNonProductExceptions = readTaskNonProductExceptions();
+    }
+    syncProductActionIndicators();
+    persistProductAfterSalesActions();
+    if (!supportsAfterSalesContinuation()) {
+      persistTaskNonProductExceptions();
+    }
+    setAfterSalesDecision(
+      productAfterSalesActions.length || taskNonProductExceptions.length
+        ? "has_actions"
+        : "undecided",
     );
-    all("[data-order-line]").forEach((row) => {
-      const itemId = one(".actual-input", row)?.dataset.itemId || "";
-      const value = staged.get(itemId);
-      if (value) {
-        row.dataset.afterSalesSelected = "true";
-        row.dataset.afterSalesQuantityManual = value.type === "non_product_exception" ? "false" : "true";
-        syncAfterSalesRow(row, {
-          type: value.type,
-          reason: value.reason,
-          exceptionReason: value.exceptionReason,
-          responsibleDepartment: value.responsibleDepartment,
-          followUpDepartment: value.followUpDepartment,
-          handlingMethod: value.handlingMethod,
-          exceptionAmount: value.exceptionAmount,
-          exceptionDescription: value.exceptionDescription,
-          afterSalesQuantity: value.afterSalesQuantity,
-        });
-      } else {
-        row.dataset.afterSalesSelected = "false";
-        row.dataset.afterSalesType = "";
-        row.dataset.afterSalesReason = "";
-        row.dataset.exceptionReason = "";
-        row.dataset.responsibleDepartment = "";
-        row.dataset.followUpDepartment = "";
-        row.dataset.handlingMethod = "";
-        row.dataset.exceptionAmount = "";
-        row.dataset.exceptionDescription = "";
-        row.dataset.afterSalesQuantity = "";
-        row.dataset.afterSalesQuantityManual = "false";
-        row.dataset.abnormalCount = "";
-        row.dataset.returnCount = "";
-        row.dataset.returnInboundId = "";
-      }
-      persistAfterSalesRow(row);
-    });
-    setReceiptMode("aftersales");
-    return true;
-  }
-
-  function openAfterSalesWorkbench() {
-    if (
-      document.body.dataset.readonly !== "true" &&
-      !validateReceiptBasics()
-    ) {
-      return;
-    }
-    renderAfterSalesWorkbench({
-      initialize:
-        receiptMode !== "aftersales" || !receiptAfterSalesRows().length,
-    });
-    openModal("afterSalesWorkbenchModal");
-  }
-
-  function handleReceiptModeAction() {
-    const nextMode = receiptMode === "aftersales" ? "normal" : "aftersales";
-    setReceiptMode(nextMode, { initialize: nextMode === "aftersales" });
-    setTaskState("待处理");
-    showToast(
-      nextMode === "aftersales"
-        ? "已切换为售后单处理，原售后草稿已恢复"
-        : "已切换为正常签收，售后草稿已保留",
-    );
-  }
-
-  function receiptModeStorageKey() {
-    return `${storagePrefix}:${currentReceiptId() || "receipt-demo"}:${document.body.dataset.orderId || "unassociated"}:mode`;
-  }
-
-  function persistReceiptMode() {
-    if (document.body.dataset.readonly === "true") return;
-    try {
-      localStorage.setItem(receiptModeStorageKey(), receiptMode);
-    } catch {
-      // The prototype remains usable when browser storage is unavailable.
-    }
-  }
-
-  function afterSalesSeedStorageKey() {
-    return `${storagePrefix}:${currentReceiptId() || "receipt-demo"}:${document.body.dataset.orderId || "unassociated"}:after-sales-seeded`;
-  }
-
-  function ensureDefaultAfterSalesSelection() {
-    if (
-      receiptMode !== "aftersales" ||
-      document.body.dataset.readonly === "true" ||
-      !document.body.dataset.orderId
-    ) {
-      return;
-    }
-    const seedKey = afterSalesSeedStorageKey();
-    let seeded = document.body.dataset.afterSalesSeedKey === seedKey;
-    try {
-      seeded = seeded || localStorage.getItem(seedKey) === "true";
-    } catch {
-      // The page-level marker still prevents repeated seeding in this session.
-    }
-    if (seeded) return;
-    const rows = all("[data-order-line]");
-    const hasSavedSelection = rows.some(
-      (row) => row.dataset.afterSalesSelected === "true",
-    );
-    if (!hasSavedSelection) {
-      receiptDifferenceRows().forEach((row) => {
-        row.dataset.afterSalesSelected = "true";
-        persistAfterSalesRow(row);
-      });
-    }
-    document.body.dataset.afterSalesSeedKey = seedKey;
-    try {
-      localStorage.setItem(seedKey, "true");
-    } catch {
-      // The prototype remains usable when browser storage is unavailable.
-    }
-  }
-
-  function setReceiptMode(mode, { initialize = false, persist = true } = {}) {
-    receiptMode = mode === "aftersales" ? "aftersales" : "normal";
-    document.body.dataset.receiptMode =
-      receiptMode === "aftersales" ? "after-sales" : "normal";
-    if (initialize) ensureDefaultAfterSalesSelection();
-    if (persist) persistReceiptMode();
-    refreshInlineAfterSalesRows();
     updateReceiptSummary();
+    applyLargeOrderView();
+    productAfterSalesDraftActions = null;
+    return true;
   }
 
-  function initializeReceiptMode() {
-    let initialMode = "aftersales";
-    if (document.body.dataset.readonly === "true") {
-      initialMode = all("[data-order-line]").some(
-        (row) => row.dataset.afterSalesSelected === "true",
-      )
-        ? "aftersales"
-        : "normal";
-    } else {
-      try {
-        initialMode = localStorage.getItem(receiptModeStorageKey()) || "aftersales";
-      } catch {
-        initialMode = "aftersales";
-      }
+  function openAfterSalesWorkbench(seedActions = null) {
+    if (!document.body.dataset.orderId) {
+      showToast("请先选择销售订单");
+      return;
     }
-    setReceiptMode(initialMode, {
-      initialize: initialMode === "aftersales",
-      persist: false,
-    });
+    ensureProductAfterSalesActionsLoaded();
+    if (
+      !Array.isArray(seedActions) &&
+      one('[data-receipt-workspace-tab="after-sales"].active')
+    ) {
+      snapshotAfterSalesWorkbenchDraft();
+    }
+    productAfterSalesDraftActions = (Array.isArray(seedActions)
+      ? seedActions
+      : Array.isArray(productAfterSalesDraftActions)
+        ? productAfterSalesDraftActions
+        : productAfterSalesActions
+    ).map((action) => ({ ...action }));
+    renderAfterSalesWorkbench();
+    setReceiptWorkspace("after-sales");
   }
 
-  function clearAfterSalesDraft() {
-    const receiptId = currentReceiptId() || "receipt-demo";
-    all("[data-order-line]").forEach((row) => {
-      const itemId = one(".actual-input", row)?.dataset.itemId || "";
-      row.dataset.afterSalesSelected = "false";
-      row.dataset.afterSalesType = "";
-      row.dataset.afterSalesReason = "";
-      row.dataset.exceptionReason = "";
-      row.dataset.responsibleDepartment = "";
-      row.dataset.followUpDepartment = "";
-      row.dataset.handlingMethod = "";
-      row.dataset.exceptionAmount = "";
-      row.dataset.exceptionDescription = "";
-      row.dataset.afterSalesQuantity = "";
-      row.dataset.afterSalesQuantityManual = "false";
-      row.dataset.abnormalCount = "";
-      row.dataset.returnCount = "";
-      row.dataset.returnInboundId = "";
-      if (itemId) {
-        try {
-          localStorage.removeItem(afterSalesStorageKey(receiptId, itemId));
-        } catch {
-          // The prototype remains usable when browser storage is unavailable.
-        }
-      }
-    });
-    setReceiptMode("normal");
+  function initializeAfterSalesData() {
+    ensureTaskNonProductExceptionsLoaded();
+    ensureProductAfterSalesActionsLoaded();
+    if (document.body.dataset.readonly === "true") {
+      afterSalesDecision = productAfterSalesActions.length || taskNonProductExceptions.length
+        ? "has_actions"
+        : "confirmed_none";
+    }
+    renderAfterSalesWorkbench();
+    updateReceiptSummary();
   }
 
   function renderAfterSalesProductOptions() {
     const target = one("[data-after-sales-product-options]");
     if (!target) return;
     const empty = one("[data-after-sales-product-empty]");
-    const stagedIds = new Set(
-      all("[data-after-sales-body] [data-after-sales-item]").map(
-        (row) => row.dataset.afterSalesItem,
-      ),
-    );
+    const keyword = one("[data-after-sales-product-search]")?.value.trim().toLowerCase() || "";
+    const filter =
+      one("[data-after-sales-product-filter].active")?.dataset.afterSalesProductFilter ||
+      "all";
     const availableRows = all("[data-order-line]").filter((row) => {
       const itemId = one(".actual-input", row)?.dataset.itemId || "";
-      return itemId && !stagedIds.has(itemId);
+      const existingItemIds = new Set(
+        all("[data-after-sales-product-group]").map(
+          (group) => group.dataset.afterSalesProductGroup || "",
+        ),
+      );
+      const text = `${row.dataset.orderProductName || ""} ${row.dataset.recognizedName || ""} ${itemId}`.toLowerCase();
+      const difference = rowDifference(row);
+      const matchesFilter =
+        filter === "all" ||
+        (filter === "difference" && Number.isFinite(difference) && difference !== 0) ||
+        (filter === "unrecognized" && rowIsUnrecognized(row));
+      return itemId && !existingItemIds.has(itemId) && (!keyword || text.includes(keyword)) && matchesFilter;
     });
     target.innerHTML = availableRows
       .map((row) => {
         const itemId = one(".actual-input", row)?.dataset.itemId || "";
         const difference = rowDifference(row);
         const unit = escapeHTML(row.dataset.unit || "");
-        return `<tr><td><input type="checkbox" value="${escapeHTML(itemId)}" aria-label="选择${escapeHTML(row.dataset.orderProductName || "当前商品")}"></td><td><strong>${escapeHTML(row.dataset.orderProductName || "--")}</strong></td><td class="right">${formatNumber(Number(row.dataset.outbound))} ${unit}</td><td class="right">${formatNumber(Number(one(".actual-input", row)?.value))} ${unit}</td><td class="right"><span class="variance ${difference > 0 ? "short" : difference < 0 ? "over" : "equal"}">${formatNumber(difference)} ${unit}</span></td></tr>`;
+        const rawActual = one(".actual-input", row)?.value.trim() || "";
+        const actual = rawActual === "" ? Number.NaN : Number(rawActual);
+        const checked = afterSalesPickerSelection.has(itemId) ? " checked" : "";
+        return `<tr><td><input type="checkbox" value="${escapeHTML(itemId)}" aria-label="选择${escapeHTML(row.dataset.orderProductName || "当前商品")}"${checked}></td><td><strong>${escapeHTML(row.dataset.orderProductName || "--")}</strong></td><td class="right">${formatNumber(Number(row.dataset.outbound))} ${unit}</td><td class="right">${formatNumber(actual)} ${unit}</td><td class="right"><span class="variance ${difference > 0 ? "short" : difference < 0 ? "over" : "equal"}">${formatNumber(difference)} ${unit}</span></td></tr>`;
       })
       .join("");
     if (empty) empty.hidden = availableRows.length > 0;
@@ -2511,18 +2772,34 @@
       "hidden",
       availableRows.length === 0,
     );
+    const selectedCount = one("[data-after-sales-product-selected-count]");
+    if (selectedCount) selectedCount.textContent = String(afterSalesPickerSelection.size);
   }
 
   function openAfterSalesProductSelector() {
+    snapshotAfterSalesWorkbenchDraft();
+    afterSalesPickerSelection.clear();
+    const search = one("[data-after-sales-product-search]");
+    if (search) search.value = "";
+    all("[data-after-sales-product-filter]").forEach((button) =>
+      button.classList.toggle(
+        "active",
+        button.dataset.afterSalesProductFilter === "all",
+      ),
+    );
     renderAfterSalesProductOptions();
-    openModal("afterSalesProductModal");
+    const picker = one("[data-after-sales-product-picker]");
+    if (picker) picker.hidden = false;
+    one("[data-after-sales-product-search]")?.focus();
   }
 
   function removeAfterSalesRow(row) {
     if (!row?.matches("[data-after-sales-item]")) return;
+    const group = row.closest("[data-after-sales-product-group]");
     row.remove();
+    if (group && !one("[data-after-sales-item]", group)) group.remove();
     updateAfterSalesWorkbenchState();
-    showToast("已从售后单移除，原订单商品和签收数保持不变");
+    showToast("已移除售后动作");
   }
 
   function setTaskState(state) {
@@ -2612,10 +2889,284 @@
     }
     if (difference > 0) row.classList.add("row-short");
     if (difference < 0) row.classList.add("row-over");
-    syncAfterSalesRow(row);
-    refreshInlineAfterSalesRow(row);
     updateReceiptSummary();
     return true;
+  }
+
+  function rowIsUnrecognized(row) {
+    return !(row?.dataset.recognizedName || "").trim();
+  }
+
+  function rowNeedsReview(row) {
+    if (!row) return false;
+    const input = one(".actual-input", row);
+    const raw = input?.value.trim() || "";
+    const invalid = raw === "" || !/^\d+(?:\.\d{0,2})?$/.test(raw) || Number(raw) < 0;
+    return (
+      invalid ||
+      ((rowIsUnrecognized(row) || row.dataset.reviewRequired === "true") &&
+        row.dataset.reviewed !== "true")
+    );
+  }
+
+  function rowMatchesLargeOrderFilter(row, filter) {
+    const difference = rowDifference(row);
+    if (filter === "pending") return rowNeedsReview(row);
+    if (filter === "difference") return Number.isFinite(difference) && difference !== 0;
+    if (filter === "unrecognized") return rowIsUnrecognized(row);
+    if (filter === "modified") return row.dataset.modified === "true";
+    if (filter === "after-sales") {
+      const itemId = one(".actual-input", row)?.dataset.itemId || "";
+      return productActionsForItem(itemId).length > 0;
+    }
+    return true;
+  }
+
+  function updateLargeOrderSelection() {
+    const rows = all("[data-order-line]");
+    rows.forEach((row) => {
+      const itemId = one(".actual-input", row)?.dataset.itemId || "";
+      const selected = largeOrderState.selected.has(itemId);
+      row.classList.toggle("batch-selected", selected);
+      row.setAttribute("aria-selected", String(selected));
+    });
+    const count = one("[data-selected-count]");
+    if (count) count.textContent = String(largeOrderState.selected.size);
+    const tools = one("[data-batch-tools]");
+    if (tools) tools.hidden = !largeOrderState.batchMode;
+    const undo = one("[data-batch-undo]");
+    if (undo) undo.disabled = !largeOrderState.undo;
+    const toggle = one("[data-batch-toggle]");
+    if (toggle) {
+      toggle.classList.toggle("active", largeOrderState.batchMode);
+      toggle.setAttribute("aria-pressed", String(largeOrderState.batchMode));
+    }
+  }
+
+  function toggleLargeOrderRowSelection(row) {
+    const itemId = one(".actual-input", row)?.dataset.itemId || "";
+    if (!itemId) return;
+    if (largeOrderState.selected.has(itemId)) largeOrderState.selected.delete(itemId);
+    else largeOrderState.selected.add(itemId);
+    updateLargeOrderSelection();
+  }
+
+  function updateLargeOrderIssueControls() {
+    const issues = all("[data-order-line]").filter(rowNeedsReview);
+    const disabled = issues.length === 0;
+    const previous = one("[data-prev-issue]");
+    const next = one("[data-next-issue]");
+    if (previous) previous.disabled = disabled;
+    if (next) next.disabled = disabled;
+    all("[data-product-filter]").forEach((button) => {
+      const filter = button.dataset.productFilter || "all";
+      button.classList.toggle("active", filter === largeOrderState.filter);
+      const count = all("[data-order-line]").filter((row) =>
+        rowMatchesLargeOrderFilter(row, filter),
+      ).length;
+      button.title = `${button.textContent.trim()} ${count}`;
+    });
+  }
+
+  function applyLargeOrderView() {
+    const rows = all("[data-order-line]");
+    const tools = one("[data-large-order-tools]");
+    const large = rows.length >= 30;
+    if (tools) tools.hidden = !large;
+    if (!rows.length) return;
+    ensureProductAfterSalesActionsLoaded();
+    const keyword = largeOrderState.search.trim().toLowerCase();
+    rows.forEach((row) => {
+      const itemId = one(".actual-input", row)?.dataset.itemId || "";
+      const remark = one(".detail-remark-input", row)?.value || "";
+      const text = `${row.dataset.orderProductName || ""} ${row.dataset.recognizedName || ""} ${itemId} ${remark}`.toLowerCase();
+      const visible =
+        (!keyword || text.includes(keyword)) &&
+        rowMatchesLargeOrderFilter(row, largeOrderState.filter);
+      row.hidden = !visible;
+    });
+    if (large) {
+      const body = one("[data-quantity-body]");
+      const sorted = [...rows].sort((left, right) => {
+        if (largeOrderState.sort === "issue") {
+          const issueDelta = Number(rowNeedsReview(right)) - Number(rowNeedsReview(left));
+          if (issueDelta) return issueDelta;
+          const diffDelta = Math.abs(rowDifference(right) || 0) - Math.abs(rowDifference(left) || 0);
+          if (diffDelta) return diffDelta;
+        }
+        return Number(left.dataset.originalIndex || 0) - Number(right.dataset.originalIndex || 0);
+      });
+      sorted.forEach((row) => body?.appendChild(row));
+    }
+    updateLargeOrderIssueControls();
+    updateLargeOrderSelection();
+  }
+
+  function revealProductIssue(row, focusTarget = null) {
+    if (!row) return;
+    largeOrderState.search = "";
+    largeOrderState.filter = "all";
+    const search = one("[data-product-search]");
+    if (search) search.value = "";
+    applyLargeOrderView();
+    row.scrollIntoView({ behavior: "smooth", block: "center" });
+    row.classList.remove("issue-located");
+    requestAnimationFrame(() => row.classList.add("issue-located"));
+    window.setTimeout(() => row.classList.remove("issue-located"), 1000);
+    focusTarget?.focus();
+  }
+
+  function navigateLargeOrderIssue(direction) {
+    const issues = all("[data-order-line]").filter(rowNeedsReview);
+    if (!issues.length) {
+      showToast("暂无待核对商品");
+      return;
+    }
+    largeOrderState.issueCursor =
+      (largeOrderState.issueCursor + direction + issues.length) % issues.length;
+    const row = issues[largeOrderState.issueCursor];
+    revealProductIssue(row, one(".actual-input", row));
+  }
+
+  function captureLargeOrderUndo() {
+    largeOrderState.undo = {
+      actions: productAfterSalesActions.map((item) => ({ ...item })),
+      rows: all("[data-order-line]").map((row) => ({
+        itemId: one(".actual-input", row)?.dataset.itemId || "",
+        remark: one(".detail-remark-input", row)?.value || "",
+        reviewed: row.dataset.reviewed || "false",
+        modified: row.dataset.modified || "false",
+      })),
+    };
+  }
+
+  function restoreLargeOrderUndo() {
+    const snapshot = largeOrderState.undo;
+    if (!snapshot) return;
+    productAfterSalesActions = snapshot.actions.map((item) => normalizeProductAfterSalesAction(item));
+    snapshot.rows.forEach((item) => {
+      const row = findOrderLineByItemId(item.itemId);
+      if (!row) return;
+      const remark = one(".detail-remark-input", row);
+      if (remark) remark.value = item.remark;
+      row.dataset.reviewed = item.reviewed;
+      row.dataset.modified = item.modified;
+      persistRowReviewState(row);
+      persistDetailRemark(row);
+    });
+    largeOrderState.undo = null;
+    syncProductActionIndicators();
+    persistProductAfterSalesActions();
+    updateReceiptSummary();
+    applyLargeOrderView();
+    showToast("已撤销");
+  }
+
+  function applyBatchRemark(value) {
+    const remark = String(value || "").trim();
+    if (!remark) {
+      showToast("请填写备注");
+      return false;
+    }
+    captureLargeOrderUndo();
+    largeOrderState.selected.forEach((itemId) => {
+      const row = findOrderLineByItemId(itemId);
+      const input = one(".detail-remark-input", row);
+      if (input) input.value = remark;
+      if (row) {
+        row.dataset.modified = "true";
+        persistDetailRemark(row);
+      }
+    });
+    markReceiptProductsModified();
+    setAfterSalesDecision("undecided");
+    applyLargeOrderView();
+    showToast(`已更新 ${largeOrderState.selected.size} 个商品`);
+    return true;
+  }
+
+  function bindLargeOrderTools() {
+    const rows = all("[data-order-line]");
+    if (!rows.length || document.body.dataset.largeOrderBound === "true") return;
+    document.body.dataset.largeOrderBound = "true";
+    one("[data-product-search]")?.addEventListener("input", (event) => {
+      largeOrderState.search = event.target.value;
+      applyLargeOrderView();
+    });
+    all("[data-product-filter]").forEach((button) => {
+      button.addEventListener("click", () => {
+        largeOrderState.filter = button.dataset.productFilter || "all";
+        applyLargeOrderView();
+      });
+    });
+    one("[data-product-sort]")?.addEventListener("change", (event) => {
+      largeOrderState.sort = event.target.value === "order" ? "order" : "issue";
+      applyLargeOrderView();
+    });
+    one("[data-prev-issue]")?.addEventListener("click", () => navigateLargeOrderIssue(-1));
+    one("[data-next-issue]")?.addEventListener("click", () => navigateLargeOrderIssue(1));
+    one("[data-batch-toggle]")?.addEventListener("click", () => {
+      largeOrderState.batchMode = !largeOrderState.batchMode;
+      if (!largeOrderState.batchMode) largeOrderState.selected.clear();
+      updateLargeOrderSelection();
+    });
+    one("[data-select-filtered]")?.addEventListener("click", () => {
+      const visibleRows = all("[data-order-line]").filter((row) => !row.hidden);
+      const visibleIds = visibleRows
+        .map((row) => one(".actual-input", row)?.dataset.itemId || "")
+        .filter(Boolean);
+      const allSelected = visibleIds.length > 0 && visibleIds.every((id) => largeOrderState.selected.has(id));
+      visibleIds.forEach((id) => {
+        if (allSelected) largeOrderState.selected.delete(id);
+        else largeOrderState.selected.add(id);
+      });
+      updateLargeOrderSelection();
+    });
+    one("[data-batch-after-sales]")?.addEventListener("click", () => {
+      if (!largeOrderState.selected.size) return showToast("请先选择商品");
+      captureLargeOrderUndo();
+      const draftActions = productAfterSalesActions.map((action) => ({ ...action }));
+      const existingItemIds = new Set(draftActions.map((action) => action.itemId));
+      largeOrderState.selected.forEach((itemId) => {
+        if (!existingItemIds.has(itemId)) {
+          draftActions.push(createDraftProductAfterSalesAction(itemId));
+          existingItemIds.add(itemId);
+        }
+      });
+      openAfterSalesWorkbench(draftActions);
+    });
+    one("[data-batch-remark]")?.addEventListener("click", () => {
+      if (!largeOrderState.selected.size) return showToast("请先选择商品");
+      const modal = one("[data-batch-remark-modal]");
+      const input = one("[data-batch-remark-input]");
+      if (input) input.value = "";
+      if (modal) openModal(modal.id || "batchRemarkModal");
+    });
+    one("[data-confirm-batch-remark]")?.addEventListener("click", () => {
+      if (!applyBatchRemark(one("[data-batch-remark-input]")?.value || "")) return;
+      closeModal(one("[data-batch-remark-modal]"));
+    });
+    one("[data-batch-reviewed]")?.addEventListener("click", () => {
+      if (!largeOrderState.selected.size) return showToast("请先选择商品");
+      captureLargeOrderUndo();
+      largeOrderState.selected.forEach((itemId) => {
+        const row = findOrderLineByItemId(itemId);
+        if (row) {
+          row.dataset.reviewed = "true";
+          persistRowReviewState(row);
+        }
+      });
+      applyLargeOrderView();
+      showToast(`已核对 ${largeOrderState.selected.size} 个商品`);
+    });
+    one("[data-batch-undo]")?.addEventListener("click", restoreLargeOrderUndo);
+    one("[data-quantity-body]")?.addEventListener("input", (event) => {
+      const remark = event.target.closest(".detail-remark-input");
+      if (!remark) return;
+      const row = remark.closest("[data-order-line]");
+      if (row) row.dataset.modified = "true";
+      applyLargeOrderView();
+    });
   }
 
   function rowSaveElement(input) {
@@ -2644,94 +3195,54 @@
     return `${storagePrefix}:${receiptId}:${orderId}:${itemId}`;
   }
 
-  function afterSalesStorageKey(receiptId, itemId) {
-    return `${quantityStorageKey(receiptId, itemId)}:after-sales`;
+  function reviewedStorageKey(receiptId, itemId) {
+    return `${quantityStorageKey(receiptId, itemId)}:reviewed-v1`;
   }
 
-  function persistAfterSalesRow(row) {
-    if (!row?.matches("[data-order-line]")) return;
-    const itemId = one(".actual-input", row)?.dataset.itemId;
+  function remarkStorageKey(receiptId, itemId) {
+    return `${quantityStorageKey(receiptId, itemId)}:remark-v1`;
+  }
+
+  function persistRowReviewState(row) {
+    const itemId = one(".actual-input", row)?.dataset.itemId || "";
     if (!itemId) return;
-    const receiptId = document.body.dataset.receiptId || "receipt-demo";
-    const payload = {
-      selected: row.dataset.afterSalesSelected === "true",
-      type: row.dataset.afterSalesType || "",
-      reason:
-        one(".after-sales-reason-input", row)?.value.trim() ??
-        row.dataset.afterSalesReason ??
-        "",
-      exceptionReason:
-        one(".non-product-exception-reason-input", row)?.value.trim() ??
-        row.dataset.exceptionReason ??
-        "",
-      responsibleDepartment:
-        one(".non-product-responsible-department-input", row)?.value.trim() ??
-        row.dataset.responsibleDepartment ??
-        "",
-      followUpDepartment:
-        one(".non-product-follow-up-department-input", row)?.value.trim() ??
-        row.dataset.followUpDepartment ??
-        "",
-      handlingMethod:
-        one(".non-product-handling-method-select", row)?.value ??
-        row.dataset.handlingMethod ??
-        "",
-      exceptionAmount:
-        one(".exception-amount-input", row)?.value ??
-        row.dataset.exceptionAmount ??
-        "",
-      exceptionDescription:
-        one(".non-product-exception-description-input", row)?.value.trim() ??
-        row.dataset.exceptionDescription ??
-        "",
-      afterSalesQuantity:
-        one(".after-sales-quantity-input", row)?.value ??
-        row.dataset.afterSalesQuantity ??
-        "",
-      quantityManual: row.dataset.afterSalesQuantityManual === "true",
-    };
     try {
-      const key = afterSalesStorageKey(receiptId, itemId);
-      if (!payload.selected && !payload.type && !payload.reason) {
-        localStorage.removeItem(key);
-      } else {
-        localStorage.setItem(key, JSON.stringify(payload));
-      }
+      localStorage.setItem(
+        reviewedStorageKey(currentReceiptId() || "receipt-demo", itemId),
+        row.dataset.reviewed === "true" ? "true" : "false",
+      );
     } catch {
       // The prototype remains usable when browser storage is unavailable.
     }
   }
 
-  function restoreAfterSalesRow(row) {
-    if (!row?.matches("[data-order-line]") || row.dataset.afterSalesRestored === "true") {
-      return;
-    }
-    row.dataset.afterSalesRestored = "true";
-    const itemId = one(".actual-input", row)?.dataset.itemId;
-    if (!itemId) return;
-    const receiptId = document.body.dataset.receiptId || "receipt-demo";
+  function persistDetailRemark(row) {
+    const itemId = one(".actual-input", row)?.dataset.itemId || "";
+    const remark = one(".detail-remark-input", row);
+    if (!itemId || !remark) return;
     try {
-      const stored = localStorage.getItem(afterSalesStorageKey(receiptId, itemId));
-      if (!stored) return;
-      const payload = JSON.parse(stored);
-      row.dataset.afterSalesSelected = payload.selected ? "true" : "false";
-      row.dataset.afterSalesQuantityManual = payload.quantityManual
-        ? "true"
-        : "false";
-      syncAfterSalesRow(row, {
-        type: payload.type || "",
-        reason: payload.reason || "",
-        exceptionReason: payload.exceptionReason || "",
-        responsibleDepartment: payload.responsibleDepartment || "",
-        followUpDepartment: payload.followUpDepartment || "",
-        handlingMethod: payload.handlingMethod || "",
-        exceptionAmount: payload.exceptionAmount || "",
-        exceptionDescription: payload.exceptionDescription || "",
-        afterSalesQuantity: payload.afterSalesQuantity || "",
-      });
+      localStorage.setItem(
+        remarkStorageKey(currentReceiptId() || "receipt-demo", itemId),
+        remark.value,
+      );
     } catch {
-      // Ignore unavailable or damaged local storage in this static prototype.
+      // The prototype remains usable when browser storage is unavailable.
     }
+  }
+
+  function afterSalesStorageKey(receiptId, itemId) {
+    return `${quantityStorageKey(receiptId, itemId)}:product-after-sales-v3`;
+  }
+
+  function persistAfterSalesRow(row) {
+    if (!row?.matches("[data-order-line]")) return;
+    persistProductAfterSalesActions();
+  }
+
+  function restoreAfterSalesRow(row) {
+    if (!row?.matches("[data-order-line]")) return;
+    ensureProductAfterSalesActionsLoaded();
+    syncProductActionIndicators();
   }
 
   function bindAfterSalesEditing() {
@@ -2742,19 +3253,6 @@
     document.body.addEventListener("change", (event) => {
       const select = event.target.closest(".after-sales-select");
       if (select) {
-        const orderRow = select.closest("[data-order-line]");
-        if (orderRow) {
-          select.classList.remove("invalid");
-          orderRow.dataset.afterSalesSelected = "true";
-          orderRow.dataset.afterSalesQuantityManual = "false";
-          syncAfterSalesRow(orderRow, {
-            type: select.value,
-            resetQuantity: true,
-          });
-          refreshInlineAfterSalesRow(orderRow);
-          persistAfterSalesRow(orderRow);
-          return;
-        }
         const workbenchRow = select.closest("[data-after-sales-item]");
         if (!workbenchRow) return;
         select.classList.remove("invalid");
@@ -2763,111 +3261,240 @@
         if (valueCell) {
           valueCell.innerHTML = renderAfterSalesValue({
             type: select.value,
-            difference: Number(workbenchRow.dataset.currentDiff),
             unit: workbenchRow.dataset.unit || "",
           });
         }
+        refreshAfterSalesProductGroupState(
+          workbenchRow.closest("[data-after-sales-product-group]"),
+        );
         return;
       }
-      const orderRow = event.target.closest("[data-order-line]");
-      if (orderRow && event.target.matches(".non-product-handling-method-select")) {
-        syncInlineAfterSalesInputs(orderRow);
-        persistAfterSalesRow(orderRow);
+      const pickerCheckbox = event.target.closest(
+        '[data-after-sales-product-options] input[type="checkbox"]',
+      );
+      if (pickerCheckbox) {
+        if (pickerCheckbox.checked) afterSalesPickerSelection.add(pickerCheckbox.value);
+        else afterSalesPickerSelection.delete(pickerCheckbox.value);
+        const selectedCount = one("[data-after-sales-product-selected-count]");
+        if (selectedCount) selectedCount.textContent = String(afterSalesPickerSelection.size);
+        return;
+      }
+      const handlingMethod = event.target.closest(".non-product-handling-method-select");
+      if (handlingMethod) {
+        const item = handlingMethod.closest("[data-non-product-exception-item]");
+        const direction = one(".non-product-amount-direction-select", item);
+        const amount = one(".exception-amount-input", item);
+        const status = one(".non-product-processing-status-select", item);
+        if (["补送", "无需处理"].includes(handlingMethod.value) && direction && !Number(amount?.value)) {
+          direction.value = "none";
+        }
+        if (handlingMethod.value === "无需处理" && status) status.value = "无需处理";
       }
     });
 
     document.body.addEventListener("input", (event) => {
       event.target.classList.remove("invalid");
-      const row = event.target.closest("[data-order-line]");
-      if (
-        !row ||
-        !event.target.matches(
-          ".after-sales-reason-input, .non-product-exception-reason-input, .non-product-responsible-department-input, .non-product-follow-up-department-input, .exception-amount-input, .non-product-exception-description-input, .after-sales-quantity-input",
-        )
-      ) {
+      if (event.target.closest("[data-after-sales-product-search]")) {
+        renderAfterSalesProductOptions();
         return;
       }
-      if (event.target.matches(".after-sales-quantity-input")) {
-        row.dataset.afterSalesQuantityManual = "true";
+      if (event.target.closest("[data-after-sales-group-search]")) {
+        applyAfterSalesGroupView();
+        return;
       }
-      syncInlineAfterSalesInputs(row);
-      persistAfterSalesRow(row);
+      const actionRow = event.target.closest("[data-after-sales-item]");
+      if (actionRow) {
+        refreshAfterSalesProductGroupState(
+          actionRow.closest("[data-after-sales-product-group]"),
+        );
+      }
+    });
+
+    all("[data-receipt-workspace-tab]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const nextWorkspace = button.dataset.receiptWorkspaceTab;
+        if (
+          nextWorkspace === "products" &&
+          one('[data-receipt-workspace-tab="after-sales"].active')
+        ) {
+          snapshotAfterSalesWorkbenchDraft();
+        }
+        setReceiptWorkspace(nextWorkspace);
+      });
     });
 
     all("[data-enter-after-sales]").forEach((button) => {
       button.addEventListener("click", openAfterSalesWorkbench);
     });
 
-    all("[data-receipt-mode-action]").forEach((button) => {
-      button.addEventListener("click", handleReceiptModeAction);
-    });
-
-    all("[data-cancel-after-sales]").forEach((button) => {
-      button.addEventListener("click", () => {
-        openModal("cancelAfterSalesModal");
-      });
-    });
-
-    one("[data-confirm-cancel-after-sales]")?.addEventListener("click", () => {
-      clearAfterSalesDraft();
-      closeModal("cancelAfterSalesModal");
-      closeModal("afterSalesWorkbenchModal");
-      setTaskState("待处理");
-      showToast("已切换为正常签收，签收数已保留");
-    });
-
     one("[data-save-after-sales]")?.addEventListener("click", () => {
       if (!applyAfterSalesWorkbench()) return;
-      closeModal("afterSalesWorkbenchModal");
       setTaskState("待处理");
+      setReceiptWorkspace("products");
       showToast("售后处理已保存");
+    });
+
+    one("[data-submit-followup-after-sales]")?.addEventListener("click", () => {
+      if (!applyAfterSalesWorkbench({ requireFollowUp: true })) return;
+      const submittedAt = new Date().toLocaleString("zh-CN", { hour12: false });
+      const followUpActions = productAfterSalesActions.filter(
+        (action) => action.origin === "followup" && !action.locked,
+      );
+      const returnActions = followUpActions.filter(
+        (action) => action.type === "product_return",
+      );
+      const generatedReturnId = returnActions.length
+        ? `THRK-20260825-${String(Date.now()).slice(-4)}`
+        : "";
+      followUpActions.forEach((action) => {
+        action.locked = true;
+        action.submittedAt = submittedAt;
+        action.syncStatus = "success";
+        if (action.type === "product_return") action.returnInboundId = generatedReturnId;
+      });
+      persistProductAfterSalesActions();
+      productAfterSalesDraftActions = null;
+      renderAfterSalesWorkbench();
+      updateReceiptSummary();
+      showToast("后续售后已提交");
     });
 
     all("[data-add-after-sales-product]").forEach((button) => {
       button.addEventListener("click", openAfterSalesProductSelector);
     });
 
+    all("[data-add-non-product-exception]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const target = one("[data-non-product-exception-list]");
+        if (!target) return;
+        const item = normalizeNonProductException();
+        const index = all("[data-non-product-exception-item]", target).length;
+        target.insertAdjacentHTML(
+          "beforeend",
+          renderTaskNonProductExceptionItem(item, index),
+        );
+        updateAfterSalesWorkbenchState();
+      });
+    });
+
     one("[data-confirm-add-after-sales-products]")?.addEventListener("click", () => {
-      const selectedIds = all(
-        '[data-after-sales-product-options] input[type="checkbox"]:checked',
-      ).map((input) => input.value);
+      const selectedIds = [...afterSalesPickerSelection];
       if (!selectedIds.length) {
-        showToast("请选择需要加入售后单的商品");
+        showToast("请选择需要售后处理的商品");
         return;
       }
-      const body = one("[data-after-sales-body]");
-      const startIndex = body ? all("[data-after-sales-item]", body).length : 0;
-      if (body) {
-        body.insertAdjacentHTML(
-          "beforeend",
-          selectedIds
-            .map((itemId, index) =>
-              renderAfterSalesWorkbenchRow(findOrderLineByItemId(itemId), startIndex + index),
-            )
-            .join(""),
-        );
-      }
-      updateAfterSalesWorkbenchState();
-      closeModal("afterSalesProductModal");
-      showToast(`已新增 ${selectedIds.length} 个售后商品`);
+      snapshotAfterSalesWorkbenchDraft();
+      const existing = new Set(
+        (productAfterSalesDraftActions || []).map((action) => action.itemId),
+      );
+      selectedIds.forEach((itemId) => {
+        if (!existing.has(itemId)) {
+          productAfterSalesDraftActions.push(
+            createDraftProductAfterSalesAction(itemId),
+          );
+        }
+      });
+      renderAfterSalesWorkbench();
+      const picker = one("[data-after-sales-product-picker]");
+      if (picker) picker.hidden = true;
+      afterSalesPickerSelection.clear();
+      showToast(`已添加 ${selectedIds.length} 个售后商品`);
+    });
+
+    one("[data-cancel-add-after-sales-products]")?.addEventListener("click", () => {
+      const picker = one("[data-after-sales-product-picker]");
+      if (picker) picker.hidden = true;
+      afterSalesPickerSelection.clear();
     });
 
     document.body.addEventListener("click", (event) => {
-      const toggle = event.target.closest("[data-toggle-after-sales-row]");
-      if (toggle) {
-        const row = toggle.closest("[data-order-line]");
-        if (!row) return;
-        if (row.dataset.afterSalesSelected === "true") {
-          resetAfterSalesRow(row);
-          showToast("已移出售后集合，签收数据保持不变");
-        } else {
-          row.dataset.afterSalesSelected = "true";
-          syncAfterSalesRow(row, { resetQuantity: true });
-          showToast("已加入售后集合，请完善售后字段");
-        }
-        refreshInlineAfterSalesRow(row);
-        persistAfterSalesRow(row);
-        updateReceiptSummary();
+      const exceptionToggle = event.target.closest("[data-non-product-exception-toggle]");
+      if (exceptionToggle) {
+        const item = exceptionToggle.closest("[data-non-product-exception-item]");
+        if (!item) return;
+        const collapsed = item.dataset.collapsed !== "true";
+        item.dataset.collapsed = String(collapsed);
+        exceptionToggle.textContent = collapsed ? "展开" : "收起";
+        return;
+      }
+      const pickerFilter = event.target.closest("[data-after-sales-product-filter]");
+      if (pickerFilter) {
+        all("[data-after-sales-product-filter]").forEach((button) =>
+          button.classList.toggle("active", button === pickerFilter),
+        );
+        renderAfterSalesProductOptions();
+        return;
+      }
+      const groupFilter = event.target.closest("[data-after-sales-group-filter]");
+      if (groupFilter) {
+        all("[data-after-sales-group-filter]").forEach((button) =>
+          button.classList.toggle("active", button === groupFilter),
+        );
+        applyAfterSalesGroupView();
+        return;
+      }
+      const groupToggle = event.target.closest("[data-toggle-after-sales-group]");
+      if (groupToggle) {
+        const group = groupToggle.closest("[data-after-sales-product-group]");
+        if (!group) return;
+        const collapsed = group.dataset.groupCollapsed !== "true";
+        group.dataset.groupCollapsed = String(collapsed);
+        groupToggle.setAttribute("aria-expanded", String(!collapsed));
+        groupToggle.textContent = collapsed ? "›" : "⌄";
+        return;
+      }
+      const toggleAllGroups = event.target.closest("[data-toggle-all-after-sales-groups]");
+      if (toggleAllGroups) {
+        const visibleGroups = all("[data-after-sales-product-group]").filter(
+          (group) => !group.hidden,
+        );
+        const shouldCollapse = visibleGroups.some(
+          (group) => group.dataset.groupCollapsed !== "true",
+        );
+        visibleGroups.forEach((group) => {
+          group.dataset.groupCollapsed = String(shouldCollapse);
+          const toggle = one("[data-toggle-after-sales-group]", group);
+          if (toggle) {
+            toggle.setAttribute("aria-expanded", String(!shouldCollapse));
+            toggle.textContent = shouldCollapse ? "›" : "⌄";
+          }
+        });
+        toggleAllGroups.textContent = shouldCollapse ? "全部展开" : "全部收起";
+        return;
+      }
+      const addAction = event.target.closest("[data-add-after-sales-action]");
+      if (addAction) {
+        snapshotAfterSalesWorkbenchDraft();
+        const action = createDraftProductAfterSalesAction(
+          addAction.dataset.itemId || "",
+        );
+        productAfterSalesDraftActions.push(action);
+        renderAfterSalesWorkbench();
+        const target = one(`[data-action-id="${CSS.escape(action.id)}"] .after-sales-select`);
+        target?.focus();
+        return;
+      }
+      const removeProduct = event.target.closest("[data-remove-after-sales-product]");
+      if (removeProduct) {
+        removeProduct.closest("[data-after-sales-product-group]")?.remove();
+        updateAfterSalesWorkbenchState();
+        showToast("已移除售后商品");
+        return;
+      }
+      const removeException = event.target.closest(
+        "[data-remove-non-product-exception]",
+      );
+      if (removeException) {
+        removeException.closest("[data-non-product-exception-item]")?.remove();
+        updateAfterSalesWorkbenchState();
+        return;
+      }
+      const reconfirm = event.target.closest("[data-confirm-non-product-rebind]");
+      if (reconfirm) {
+        const item = reconfirm.closest("[data-non-product-exception-item]");
+        if (item) item.dataset.needsReconfirm = "false";
+        reconfirm.remove();
+        showToast("已重新确认");
         return;
       }
       const remove = event.target.closest(
@@ -2904,7 +3531,10 @@
       } catch {
         // The prototype remains usable when browser storage is unavailable.
       }
-      persistAfterSalesRow(input.closest("[data-order-line]"));
+      const row = input.closest("[data-order-line]");
+      persistRowReviewState(row);
+      persistDetailRemark(row);
+      persistAfterSalesRow(row);
       const now = new Date().toLocaleTimeString("zh-CN", {
         hour12: false,
         hour: "2-digit",
@@ -2956,6 +3586,8 @@
       if (input.dataset.quantityBound === "true") return;
       input.dataset.quantityBound = "true";
       let restored = false;
+      const row = input.closest("[data-order-line]");
+      const remark = one(".detail-remark-input", row);
       if (input.dataset.preserveCurrent !== "true") {
         try {
           const stored = localStorage.getItem(
@@ -2966,13 +3598,32 @@
             input.dataset.failedOnce = "true";
             restored = true;
           }
+          const storedRemark = localStorage.getItem(
+            remarkStorageKey(receiptId, input.dataset.itemId),
+          );
+          if (storedRemark !== null && remark) remark.value = storedRemark;
         } catch {
           // Ignore unavailable or damaged local storage in this static prototype.
         }
       }
-      updateQuantityRow(input);
+      const restoredValid = updateQuantityRow(input);
+      if (restored && restoredValid && row) {
+        row.dataset.reviewed = "true";
+        persistRowReviewState(row);
+      }
       if (restored) markRowState(input, "saved", "已保存（本地演示）");
-      input.addEventListener("input", () => scheduleSave(input));
+      input.addEventListener("input", () => {
+        const row = input.closest("[data-order-line]");
+        if (row) {
+          row.dataset.modified = "true";
+          row.dataset.reviewed = updateQuantityRow(input) ? "true" : "false";
+        }
+        if (!productAfterSalesActions.length && !taskNonProductExceptions.length) {
+          setAfterSalesDecision("undecided");
+        }
+        scheduleSave(input);
+        applyLargeOrderView();
+      });
       input.addEventListener("blur", () => {
         const key = input.dataset.itemId;
         if (saveTimers.has(key)) {
@@ -2983,6 +3634,13 @@
       input.addEventListener("keydown", (event) => {
         if (event.key === "Enter") input.blur();
       });
+      if (remark && remark.dataset.remarkBound !== "true") {
+        remark.dataset.remarkBound = "true";
+        remark.addEventListener("input", () => {
+          if (row) row.dataset.modified = "true";
+          persistDetailRemark(row);
+        });
+      }
     });
 
     bindRetryButtons();
@@ -2990,6 +3648,10 @@
 
     all("[data-quantity-row]").forEach((row) => {
       row.addEventListener("click", (event) => {
+        if (largeOrderState.batchMode && !event.target.closest("input, button, a, select, textarea")) {
+          toggleLargeOrderRowSelection(row);
+          return;
+        }
         if (event.target.closest("input, button, a")) return;
         all(".recognition-box").forEach((box) =>
           box.classList.remove("active"),
@@ -3015,6 +3677,19 @@
   function bindManualSave() {
     all("[data-save-now]").forEach((button) => {
       button.addEventListener("click", () => {
+        if (one("[data-after-sales-body]") && Array.isArray(productAfterSalesDraftActions)) {
+          snapshotAfterSalesWorkbenchDraft();
+          productAfterSalesActions = productAfterSalesDraftActions.map((action) => ({ ...action }));
+          persistProductAfterSalesActions();
+          persistTaskNonProductExceptions();
+          setAfterSalesDecision(
+            productAfterSalesActions.length || taskNonProductExceptions.length
+              ? "has_actions"
+              : "undecided",
+          );
+          syncProductActionIndicators();
+          updateReceiptSummary();
+        }
         const inputs = all(".actual-input").filter(
           (input) => input.value.trim() !== "",
         );
@@ -3024,7 +3699,11 @@
           return;
         }
         inputs.forEach((input) => scheduleSave(input, true));
-        rows.forEach(persistAfterSalesRow);
+        rows.forEach((row) => {
+          persistRowReviewState(row);
+          persistDetailRemark(row);
+          persistAfterSalesRow(row);
+        });
         showToast("正在保存审核草稿");
       });
     });
@@ -3034,50 +3713,29 @@
     const rows = [];
     const abnormalTotals = new Map();
     const returnTotals = new Map();
-    let exceptionAmount = 0;
-    receiptAfterSalesRows().forEach((row) => {
+    ensureProductAfterSalesActionsLoaded();
+    productAfterSalesActions.forEach((action) => {
+      const row = findOrderLineByItemId(action.itemId);
+      if (!row) return;
       const difference = rowDifference(row);
-      const type = row.dataset.afterSalesType || "";
-      const reason =
-        one(".after-sales-reason-input", row)?.value.trim() ||
-        row.dataset.afterSalesReason ||
-        "";
-      const amount = Number(
-        one(".exception-amount-input", row)?.value ?? row.dataset.exceptionAmount,
-      );
-      const afterSalesQuantity = Number(
-        one(".after-sales-quantity-input", row)?.value ??
-          row.dataset.afterSalesQuantity,
-      );
+      const type = action.type || "";
+      const reason = action.reason || "";
+      const afterSalesQuantity = Number(action.afterSalesQuantity);
+      const receivedRaw = one(".actual-input", row)?.value.trim() || "";
       const item = {
-        itemId: one(".actual-input", row)?.dataset.itemId || "",
+        actionId: action.id,
+        itemId: action.itemId,
         productName: row.dataset.orderProductName || "",
         orderedQuantity: Number(row.dataset.outbound),
-        receivedQuantity: Number(one(".actual-input", row)?.value),
+        receivedQuantity: receivedRaw === "" ? null : Number(receivedRaw),
         difference,
         unit: row.dataset.unit || "",
         type,
         reason,
-        exceptionReason:
-          type === "non_product_exception" ? row.dataset.exceptionReason || "" : "",
-        responsibleDepartment:
-          type === "non_product_exception"
-            ? row.dataset.responsibleDepartment || ""
-            : "",
-        followUpDepartment:
-          type === "non_product_exception"
-            ? row.dataset.followUpDepartment || ""
-            : "",
-        handlingMethod:
-          type === "non_product_exception" ? row.dataset.handlingMethod || "" : "",
-        exceptionAmount:
-          type === "non_product_exception" && Number.isFinite(amount)
-            ? roundMoney(amount)
-            : 0,
-        exceptionDescription:
-          type === "non_product_exception"
-            ? row.dataset.exceptionDescription || ""
-            : "",
+        remark: one(".detail-remark-input", row)?.value.trim() || "",
+        afterSalesQuantity,
+        syncStatus: action.syncStatus || "pending",
+        returnInboundId: action.returnInboundId || "",
         abnormalCount:
           type === "product_exception" && Number.isFinite(afterSalesQuantity)
             ? afterSalesQuantity
@@ -3088,9 +3746,35 @@
             : 0,
       };
       rows.push(item);
-      exceptionAmount += item.exceptionAmount;
       addUnitTotal(abnormalTotals, item.unit, item.abnormalCount);
       addUnitTotal(returnTotals, item.unit, item.returnCount);
+    });
+    const nonProductExceptions = taskNonProductExceptions.map((item) => ({
+      ...item,
+      exceptionAmount: item.exceptionAmount === "" ? 0 : roundMoney(Number(item.exceptionAmount)),
+      signedExceptionAmount:
+        item.amountDirection === "deduct"
+          ? -roundMoney(Number(item.exceptionAmount || 0))
+          : item.amountDirection === "increase"
+            ? roundMoney(Number(item.exceptionAmount || 0))
+            : 0,
+    }));
+    const signedExceptionAmount = nonProductExceptions.reduce(
+      (sum, item) =>
+        sum + (Number.isFinite(item.signedExceptionAmount) ? item.signedExceptionAmount : 0),
+      0,
+    );
+    const receiptRows = all("[data-order-line]").map((row) => {
+      const receivedRaw = one(".actual-input", row)?.value.trim() || "";
+      return {
+        itemId: one(".actual-input", row)?.dataset.itemId || "",
+        productName: row.dataset.orderProductName || "",
+        orderedQuantity: Number(row.dataset.outbound),
+        receivedQuantity: receivedRaw === "" ? null : Number(receivedRaw),
+        difference: rowDifference(row),
+        unit: row.dataset.unit || "",
+        remark: one(".detail-remark-input", row)?.value.trim() || "",
+      };
     });
     return {
       receiptId: document.body.dataset.receiptId || "",
@@ -3100,19 +3784,21 @@
           ? "人工选择"
           : "AI 默认",
       rows,
-      exceptionAmount: roundMoney(exceptionAmount),
+      afterSalesActions: rows.map((item) => ({ ...item })),
+      receiptRows,
+      exceptionAmount: roundMoney(signedExceptionAmount),
+      signedExceptionAmount: roundMoney(signedExceptionAmount),
+      nonProductExceptions,
       abnormalTotals,
       returnTotals,
-      nonProductCount: rows.filter(
-        (item) => item.type === "non_product_exception",
-      ).length,
+      nonProductCount: nonProductExceptions.length,
       productExceptionCount: rows.filter(
         (item) => item.type === "product_exception",
       ).length,
       productReturnCount: rows.filter(
         (item) => item.type === "product_return",
       ).length,
-      receiptMode,
+      afterSalesDecision,
     };
   }
 
@@ -3126,8 +3812,17 @@
       (input) => !updateQuantityRow(input),
     );
     if (invalidInput) {
-      invalidInput.focus();
-      showToast("请检查签收数");
+      revealProductIssue(invalidInput.closest("[data-order-line]"), invalidInput);
+      showToast(invalidInput.value.trim() === "" ? "请填写签收数" : "请检查签收数");
+      return false;
+    }
+    const pendingReviewRow = all("[data-order-line]").find(rowNeedsReview);
+    if (pendingReviewRow) {
+      revealProductIssue(
+        pendingReviewRow,
+        one(".actual-input", pendingReviewRow),
+      );
+      showToast("请完成商品核对");
       return false;
     }
     return true;
@@ -3135,44 +3830,40 @@
 
   function validateReceiptSubmission() {
     if (!validateReceiptBasics()) return null;
-    if (receiptMode === "aftersales" && !validateInlineAfterSales()) {
+    ensureTaskNonProductExceptionsLoaded();
+    if (Array.isArray(productAfterSalesDraftActions) && !applyAfterSalesWorkbench()) {
+      setReceiptWorkspace("after-sales", false);
       return null;
     }
-    return receiptMode === "aftersales"
-      ? collectAfterSalesPayload()
-      : {
-          receiptId: document.body.dataset.receiptId || "",
-          orderId: document.body.dataset.orderId || "",
-          associationSource:
-            document.body.dataset.orderAssociationSource === "manual"
-              ? "人工选择"
-              : "AI 默认",
-          rows: [],
-          exceptionAmount: 0,
-          abnormalTotals: new Map(),
-          returnTotals: new Map(),
-          nonProductCount: 0,
-          productExceptionCount: 0,
-          productReturnCount: 0,
-          receiptMode: "normal",
-        };
+    if (!validateInlineAfterSales()) return null;
+    return collectAfterSalesPayload();
   }
 
   function prepareReceiptSubmission(payload) {
-    const receivedRows = all("[data-order-line]").map((row) => ({
-      itemId: one(".actual-input", row)?.dataset.itemId || "",
-      productName: row.dataset.orderProductName || "",
-      receivedQuantity: Number(one(".actual-input", row)?.value),
-      unit: row.dataset.unit || "",
-    }));
+    const receivedRows = (payload.receiptRows || []).map((row) => ({ ...row }));
+    const noAfterSales =
+      payload.rows.length === 0 && payload.nonProductExceptions.length === 0;
+    const hasRisk =
+      receiptDifferenceRows().length > 0 ||
+      all("[data-order-line]").some(rowIsUnrecognized) ||
+      all("[data-order-line]").some((row) => row.dataset.modified === "true");
     pendingSubmitPayload = {
       ...payload,
       receivedRows,
       differenceCount: receiptDifferenceRows().length,
-      normalReceipt: payload.receiptMode !== "aftersales",
+      normalReceipt: noAfterSales,
+      afterSalesDecision: noAfterSales ? afterSalesDecision : "has_actions",
+      requiresNoAfterSalesConfirmation:
+        noAfterSales && (hasRisk || afterSalesDecision !== "confirmed_none"),
       salesActualEnabled: readSalesActualFeature(),
     };
     renderSubmitSummary(pendingSubmitPayload);
+    const confirm = one("[data-confirm-submit-action]");
+    if (confirm) {
+      confirm.textContent = pendingSubmitPayload.requiresNoAfterSalesConfirmation
+        ? "确认无售后并提交"
+        : "确认提交";
+    }
     openModal("submitConfirmModal");
   }
 
@@ -3184,17 +3875,17 @@
       ? '<p class="sales-actual-notice on"><strong>销售实收已开启</strong><span>确认后将签收数写入销售订单出库数。</span></p>'
       : '<p class="sales-actual-notice off"><strong>销售实收未开启</strong><span>本次不修改出库数，回单仍可正常完成。</span></p>';
     const afterSalesSummary = payload.normalReceipt
-      ? `<div class="normal-receipt-summary"><strong>正常签收</strong><span>${payload.differenceCount ? `当前存在 ${payload.differenceCount} 个差异商品，本次不生成售后单。` : "所有商品签收数与下单数一致，无需售后处理。"}</span></div>`
+      ? `<div class="normal-receipt-summary"><strong>${payload.requiresNoAfterSalesConfirmation ? "确认无售后" : "无售后处理"}</strong></div>`
       : `<div class="submit-summary-grid">
           <span><b>非商品异常</b><strong>${payload.nonProductCount} 项 · ${formatMoney(payload.exceptionAmount)}</strong></span>
           <span><b>商品异常</b><strong>${payload.productExceptionCount} 项 · ${formatUnitTotals(payload.abnormalTotals)}</strong></span>
           <span><b>商品退货</b><strong>${payload.productReturnCount} 项 · ${formatUnitTotals(payload.returnTotals)}</strong></span>
         </div>
-        <p class="submit-reason-notice">售后原因：${reasons.map(escapeHTML).join("、")}</p>
+        ${reasons.length ? `<p class="submit-reason-notice">售后原因：${reasons.map(escapeHTML).join("、")}</p>` : ""}
         ${payload.productReturnCount ? '<p class="submit-return-notice">提交后将在观麦生成退货入库单。</p>' : ""}`;
     target.innerHTML = `
       <div class="submit-summary-order">销售订单 <strong>${escapeHTML(payload.orderId)}</strong><em>${escapeHTML(payload.associationSource)}</em><span class="prototype-badge">原型演示</span></div>
-      <div class="receipt-submit-facts"><span>${payload.normalReceipt ? "正常签收" : "售后单"}</span><span>${payload.normalReceipt ? `商品 ${payload.receivedRows.length} 项` : `售后商品 ${payload.rows.length} 项`}</span><span>差异 ${payload.differenceCount} 项</span></div>
+      <div class="receipt-submit-facts"><span>销售回单</span><span>${payload.normalReceipt ? "无售后处理" : `售后处理 ${payload.rows.length + payload.nonProductCount} 项`}</span><span>差异 ${payload.differenceCount} 项</span></div>
       ${salesActualNotice}
       ${afterSalesSummary}`;
   }
@@ -3209,31 +3900,44 @@
     button.disabled = true;
     button.textContent = "同步中…";
     all(".actual-input").forEach((input) => scheduleSave(input, true));
-    if (!payload.normalReceipt) receiptAfterSalesRows().forEach(persistAfterSalesRow);
+    setAfterSalesDecision(payload.normalReceipt ? "confirmed_none" : "has_actions");
+    persistProductAfterSalesActions();
+    persistTaskNonProductExceptions();
 
     window.setTimeout(() => {
-      const returnRows = receiptAfterSalesRows().filter(
-        (row) => row.dataset.afterSalesType === "product_return",
+      const returnActions = productAfterSalesActions.filter(
+        (action) => action.type === "product_return",
       );
-      const existingReturnId = returnRows
-        .map((row) => row.dataset.returnInboundId)
+      const existingReturnId = returnActions
+        .map((action) => action.returnInboundId)
         .find(Boolean);
-      const generatedReturnId = returnRows.length
+      const generatedReturnId = returnActions.length
         ? existingReturnId ||
           `THRK-20260804-${String(payload.receiptId.slice(-3) || "001").padStart(4, "0")}`
         : "";
-      returnRows.forEach((row) => {
-        row.dataset.returnInboundId = generatedReturnId;
+      returnActions.forEach((action) => {
+        action.returnInboundId = generatedReturnId;
+        action.syncStatus = "success";
       });
       const generatedIds = generatedReturnId ? [generatedReturnId] : [];
 
+      productAfterSalesActions.forEach((action) => {
+        if (action.syncStatus !== "success") action.syncStatus = "success";
+      });
+      persistProductAfterSalesActions();
       setTaskState("已完成");
       document.body.dataset.readonly = "true";
-      returnRows.forEach((row) => syncAfterSalesRow(row, {
-        type: "product_return",
-        returnInboundId: row.dataset.returnInboundId,
-      }));
+      const submittedBy = one("[data-submitted-by]");
+      const submittedAt = one("[data-submitted-at]");
+      const syncResult = one("[data-sync-result]");
+      if (submittedBy) submittedBy.textContent = "系统管理员";
+      if (submittedAt) submittedAt.textContent = new Date().toLocaleString("zh-CN", { hour12: false });
+      if (syncResult) syncResult.textContent = "已同步";
+      taskNonProductExceptionsLoadedKey = `${currentReceiptId() || "receipt-demo"}:true`;
+      productAfterSalesActionsLoadedKey = `${currentReceiptId() || "receipt-demo"}:${document.body.dataset.orderId || ""}:true:${supportsAfterSalesContinuation()}`;
+      syncProductActionIndicators();
       applyDetailReadOnlyMode();
+      updateReceiptSummary();
       button.disabled = false;
       button.textContent = "确认提交";
       closeModal("submitConfirmModal");
@@ -3241,7 +3945,7 @@
       if (result) {
         result.innerHTML = `
           <div class="submit-result-success">原型演示：已模拟同步观麦</div>
-          <dl><div><dt>销售订单</dt><dd>${escapeHTML(payload.orderId)}</dd></div><div><dt>单据类型</dt><dd>${payload.normalReceipt ? "正常签收" : "售后单"}</dd></div><div><dt>下单数</dt><dd>保持不变</dd></div><div><dt>出库数</dt><dd>${payload.salesActualEnabled ? "已按签收数更新" : "未更新（销售实收未开启）"}</dd></div><div><dt>处理结果</dt><dd>${payload.normalReceipt ? "已按正常签收提交，不生成售后字段" : `已处理 ${payload.rows.length} 项售后`}</dd></div>${generatedIds.length ? `<div><dt>退货入库单</dt><dd>${generatedIds.map(escapeHTML).join("、")}</dd></div>` : ""}</dl>`;
+          <dl><div><dt>销售订单</dt><dd>${escapeHTML(payload.orderId)}</dd></div><div><dt>单据类型</dt><dd>销售回单</dd></div><div><dt>下单数</dt><dd>保持不变</dd></div><div><dt>出库数</dt><dd>${payload.salesActualEnabled ? "已按签收数更新" : "未更新（销售实收未开启）"}</dd></div><div><dt>处理结果</dt><dd>${payload.normalReceipt ? "回单已完成" : `已处理 ${payload.rows.length + payload.nonProductCount} 项售后`}</dd></div>${generatedIds.length ? `<div><dt>退货入库单</dt><dd>${generatedIds.map(escapeHTML).join("、")}</dd></div>` : ""}</dl>`;
       }
       openModal("submitResultModal");
       showToast("原型演示完成，未产生真实观麦数据");
@@ -3484,7 +4188,7 @@
   }
 
   function isOrderAssociationLocked() {
-    return Boolean(document.body.dataset.orderId) && hasProductModifications();
+    return document.body.dataset.readonly === "true";
   }
 
   function markReceiptProductsModified() {
@@ -3522,6 +4226,9 @@
         )
       ) {
         markReceiptProductsModified();
+        if (!productAfterSalesActions.length && !taskNonProductExceptions.length) {
+          setAfterSalesDecision("undecided");
+        }
       }
     });
   }
@@ -3553,7 +4260,7 @@
       queryButton.disabled = associationLocked;
       queryButton.setAttribute("aria-disabled", String(associationLocked));
       queryButton.title = associationLocked
-        ? "商品条目已人工修改，不可更换关联订单"
+        ? "已完成回单不可更换订单"
         : orderId
           ? `当前关联 ${orderId}，点击查询并更换`
           : "查询并关联销售订单";
@@ -3650,12 +4357,19 @@
   function renderOrderLine(line, index, receiptItem = null) {
     const recognizedName =
       receiptItem?.recognizedName ?? (line.aiText ? line.name : "");
-    const actual =
-      receiptItem?.actual ?? (line.actual === "" ? "0" : String(line.actual));
+    const actual = String(receiptItem?.actual ?? line.actual ?? "");
     const remark = receiptItem?.remark ?? line.remark ?? "";
     const aiText = receiptItem?.aiText ?? line.aiText ?? "";
-    const difference = signedDifference(Number(line.outbound), Number(actual));
-    const rowClass = difference > 0 ? "row-short" : difference < 0 ? "row-over" : "";
+    const difference = actual.trim() === ""
+      ? Number.NaN
+      : signedDifference(Number(line.outbound), Number(actual));
+    const rowClass = !Number.isFinite(difference)
+      ? "row-error"
+      : difference > 0
+        ? "row-short"
+        : difference < 0
+          ? "row-over"
+          : "";
     const varianceClass =
       difference > 0 ? "short" : difference < 0 ? "over" : "equal";
     const demo = afterSalesDemoFor(line);
@@ -3664,62 +4378,28 @@
     let afterSalesType = hasPreservedType
       ? receiptItem.afterSalesType || ""
       : demo.type || "";
-    if (!Number.isFinite(difference)) {
+    if (!Number.isFinite(difference) || !Object.hasOwn(afterSalesTypes, afterSalesType)) {
       afterSalesType = "";
     }
     const afterSalesReason =
       afterSalesType
         ? receiptItem?.afterSalesReason ?? demo.reason ?? ""
         : "";
-    const exceptionAmount = hasPreservedType
-      ? receiptItem.exceptionAmount || ""
-      : demo.exceptionAmount || "";
-    const nonProductDetail = (field) =>
-      hasPreservedType ? receiptItem?.[field] || "" : demo[field] || "";
-    const exceptionReason = nonProductDetail("exceptionReason");
-    const responsibleDepartment = nonProductDetail("responsibleDepartment");
-    const followUpDepartment = nonProductDetail("followUpDepartment");
-    const handlingMethod = nonProductDetail("handlingMethod");
-    const exceptionDescription = nonProductDetail("exceptionDescription");
     const returnInboundId =
       receiptItem?.returnInboundId || demo.returnInboundId || "";
-    const quantity = Number.isFinite(difference) ? Math.abs(difference) : "";
     const afterSalesSelected =
       receiptItem?.afterSalesSelected === true || Boolean(afterSalesType);
     const afterSalesQuantity =
-      receiptItem?.afterSalesQuantity ??
-      (afterSalesType === "product_exception" || afterSalesType === "product_return"
-        ? String(quantity)
-        : "");
-    const afterSalesControls = renderInlineAfterSalesCells({
-      productName: line.name,
-      selected: afterSalesSelected,
-      type: afterSalesType,
-      reason: afterSalesReason,
-      difference,
-      unit: line.unit,
-      exceptionReason,
-      responsibleDepartment,
-      followUpDepartment,
-      handlingMethod,
-      exceptionAmount,
-      exceptionDescription,
-      afterSalesQuantity,
-      returnInboundId,
-    });
+      receiptItem?.afterSalesQuantity ?? demo.afterSalesQuantity ?? "";
     return `
-      <tr class="${rowClass}" data-product-row data-quantity-row data-order-line data-order-product-name="${escapeHTML(line.name)}" data-recognized-name="${escapeHTML(recognizedName)}" data-ai-text="${escapeHTML(aiText)}" data-outbound="${line.outbound}" data-unit="${escapeHTML(line.unit)}" data-current-diff="${difference}" data-after-sales-selected="${afterSalesSelected}" data-after-sales-type="${afterSalesType}" data-after-sales-reason="${escapeHTML(afterSalesReason)}" data-exception-reason="${escapeHTML(exceptionReason)}" data-responsible-department="${escapeHTML(responsibleDepartment)}" data-follow-up-department="${escapeHTML(followUpDepartment)}" data-handling-method="${escapeHTML(handlingMethod)}" data-exception-amount="${escapeHTML(exceptionAmount)}" data-exception-description="${escapeHTML(exceptionDescription)}" data-after-sales-quantity="${escapeHTML(afterSalesQuantity)}" data-after-sales-quantity-manual="false" data-abnormal-count="${afterSalesType === "product_exception" ? afterSalesQuantity : ""}" data-return-count="${afterSalesType === "product_return" ? afterSalesQuantity : ""}" data-return-inbound-id="${escapeHTML(returnInboundId)}">
+      <tr class="${rowClass}" data-product-row data-quantity-row data-order-line data-original-index="${index}" data-reviewed="${document.body.dataset.readonly === "true" || (Number.isFinite(difference) && Boolean(recognizedName)) ? "true" : "false"}" data-modified="false" data-order-product-name="${escapeHTML(line.name)}" data-recognized-name="${escapeHTML(recognizedName)}" data-ai-text="${escapeHTML(aiText)}" data-outbound="${line.outbound}" data-unit="${escapeHTML(line.unit)}" data-current-diff="${Number.isFinite(difference) ? difference : ""}" data-after-sales-selected="${afterSalesSelected}" data-after-sales-type="${afterSalesType}" data-after-sales-reason="${escapeHTML(afterSalesReason)}" data-after-sales-quantity="${escapeHTML(afterSalesQuantity)}" data-after-sales-quantity-manual="true" data-abnormal-count="${afterSalesType === "product_exception" ? afterSalesQuantity : ""}" data-return-count="${afterSalesType === "product_return" ? afterSalesQuantity : ""}" data-return-inbound-id="${escapeHTML(returnInboundId)}">
         <td data-row-index>${index + 1}</td>
         <td><strong>${escapeHTML(line.name)}</strong></td>
         <td data-recognized-product>${escapeHTML(recognizedName || "--")}</td>
         <td class="right"><strong>${formatNumber(line.outbound)} ${escapeHTML(line.unit)}</strong></td>
         <td><div class="quantity-input-wrap"><input class="quantity-input actual-input" inputmode="decimal" value="${escapeHTML(actual)}" placeholder="请填写" aria-label="${escapeHTML(line.name)}签收数" data-item-id="${escapeHTML(line.id)}"${receiptItem ? ' data-preserve-current="true"' : ""}><span class="unit-suffix">${escapeHTML(line.unit)}</span></div></td>
-        <td class="right"><span class="variance ${varianceClass}" data-variance>${formatNumber(difference)} ${escapeHTML(line.unit)}</span></td>
+        <td class="right"><span class="variance ${Number.isFinite(difference) ? varianceClass : ""}" data-variance>${Number.isFinite(difference) ? `${formatNumber(difference)} ${escapeHTML(line.unit)}` : "--"}</span></td>
         <td><input class="detail-remark-input" value="${escapeHTML(remark)}" placeholder="填写备注" aria-label="${escapeHTML(line.name)}备注"></td>
-        <td data-after-sales-column data-after-sales-type-cell>${afterSalesControls.typeControl}</td>
-        <td data-after-sales-column data-after-sales-reason-cell>${afterSalesControls.reasonControl}</td>
-        <td data-after-sales-column data-after-sales-value>${afterSalesControls.valueControl}</td>
-        <td data-after-sales-column data-after-sales-action-cell>${afterSalesControls.actionControl}</td>
       </tr>`;
   }
 
@@ -3727,7 +4407,7 @@
     const target = one("[data-quantity-body]");
     if (!target) return;
     if (!order) {
-      target.innerHTML = '<tr class="empty-row"><td colspan="11">请先关联销售订单</td></tr>';
+      target.innerHTML = '<tr class="empty-row"><td colspan="7">请先关联销售订单</td></tr>';
     } else {
       target.innerHTML = order.lines
         .map((line, index) => renderOrderLine(line, index))
@@ -3736,7 +4416,9 @@
     target.hidden = false;
     bindQuantityEditing();
     bindAfterSalesEditing();
-    initializeReceiptMode();
+    initializeAfterSalesData();
+    bindLargeOrderTools();
+    applyLargeOrderView();
     decorateSpecTargets(detailSpecTargets);
   }
 
@@ -3914,7 +4596,7 @@
 
     openButton.addEventListener("click", () => {
       if (isOrderAssociationLocked()) {
-        showToast("商品条目已人工修改，不可更换关联订单");
+        showToast("已完成回单不可更换订单");
         return;
       }
       const criteria = readCriteria();
@@ -3958,10 +4640,81 @@
           : "关联订单";
     });
 
+    const applySafeRebind = (nextOrder) => {
+      const oldOrderId = document.body.dataset.orderId || "";
+      confirm.disabled = true;
+      confirm.textContent = "正在关联…";
+      window.setTimeout(() => {
+        if (!bindOrderToCurrentReceipt(nextOrder.id, oldOrderId)) {
+          confirm.disabled = false;
+          confirm.textContent = "关联订单";
+          showToast("订单关联状态已变化，请重新选择");
+          return;
+        }
+        ensureTaskNonProductExceptionsLoaded();
+        taskNonProductExceptions = taskNonProductExceptions.map((item) => ({
+          ...item,
+          needsReconfirm: true,
+        }));
+        try {
+          localStorage.removeItem(productAfterSalesActionsStorageKey(oldOrderId));
+          localStorage.setItem(productAfterSalesActionsStorageKey(nextOrder.id), "[]");
+          localStorage.removeItem(productModificationStorageKey());
+        } catch {
+          // The prototype remains usable when browser storage is unavailable.
+        }
+        productAfterSalesActions = [];
+        productAfterSalesDraftActions = null;
+        productAfterSalesActionsLoadedKey = "";
+        afterSalesDecisionLoadedKey = "";
+        setAfterSalesDecision("undecided");
+        persistTaskNonProductExceptions();
+        document.body.dataset.productRowsModified = "false";
+        document.body.dataset.orderId = nextOrder.id;
+        document.body.dataset.orderUnassociated = "false";
+        document.body.dataset.orderAssociationSource = "manual";
+        largeOrderState.search = "";
+        largeOrderState.filter = "all";
+        largeOrderState.sort = "issue";
+        largeOrderState.selected.clear();
+        largeOrderState.undo = null;
+        renderQuantityRows(nextOrder);
+        updateOrderAssociationUI();
+        setTaskState("待处理");
+        closeModal("orderQueryModal");
+        closeModal(one("[data-rebind-confirm-modal]"));
+        confirm.disabled = false;
+        confirm.textContent = "关联订单";
+        pendingOrderId = "";
+        pendingRebindOrderId = "";
+        showToast(`已关联 ${nextOrder.id}`);
+      }, 450);
+    };
+
+    const requestSafeRebind = (nextOrder) => {
+      ensureProductAfterSalesActionsLoaded();
+      ensureTaskNonProductExceptionsLoaded();
+      const needsConfirmation =
+        hasProductModifications() ||
+        productAfterSalesActions.length > 0 ||
+        taskNonProductExceptions.length > 0;
+      if (!needsConfirmation) {
+        applySafeRebind(nextOrder);
+        return;
+      }
+      pendingRebindOrderId = nextOrder.id;
+      const impact = one("[data-rebind-impact-summary]");
+      if (impact) {
+        impact.innerHTML = `<strong>${escapeHTML(nextOrder.id)}</strong><span>清空商品售后 ${productAfterSalesActions.length} 项</span><span>保留非商品异常 ${taskNonProductExceptions.length} 项</span>`;
+      }
+      closeModal("orderQueryModal");
+      openModal(one("[data-rebind-confirm-modal]")?.id || "rebindConfirmModal");
+    };
+
     confirm.addEventListener("click", () => {
       if (isOrderAssociationLocked()) {
         closeModal("orderQueryModal");
-        showToast("商品条目已人工修改，不可更换关联订单");
+        showToast("已完成回单不可更换订单");
         return;
       }
       const nextOrder = receiptOrderCatalog[pendingOrderId];
@@ -3976,29 +4729,11 @@
         showToast(`当前已关联 ${nextOrder.id}`);
         return;
       }
-      confirm.disabled = true;
-      confirm.textContent = "正在关联…";
-      window.setTimeout(() => {
-        if (!bindOrderToCurrentReceipt(nextOrder.id, oldOrderId)) {
-          confirm.disabled = false;
-          confirm.textContent = "关联订单";
-          showToast("订单关联状态已变化，请重新选择");
-          return;
-        }
-        clearAfterSalesDraft();
-        document.body.dataset.orderId = nextOrder.id;
-        document.body.dataset.orderUnassociated = "false";
-        document.body.dataset.orderAssociationSource = "manual";
-        renderQuantityRows(nextOrder);
-        setReceiptMode("aftersales");
-        updateOrderAssociationUI();
-        setTaskState("待处理");
-        closeModal("orderQueryModal");
-        confirm.disabled = false;
-        confirm.textContent = "关联订单";
-        pendingOrderId = "";
-        showToast(`已关联 ${nextOrder.id}，商品列表已按该订单重新生成`);
-      }, 450);
+      requestSafeRebind(nextOrder);
+    });
+    one("[data-confirm-safe-rebind]")?.addEventListener("click", () => {
+      const nextOrder = receiptOrderCatalog[pendingRebindOrderId];
+      if (nextOrder) applySafeRebind(nextOrder);
     });
     updateOrderAssociationUI();
   }
@@ -4212,11 +4947,21 @@
   function applyDetailReadOnlyMode() {
     if (document.body.dataset.readonly !== "true") return;
 
-    all(".receipt-ai-panel input").forEach((input) => {
+    all(
+      ".receipt-ai-panel input:not([data-product-search]):not([data-after-sales-group-search])",
+    ).filter(
+      (input) =>
+        !supportsAfterSalesContinuation() ||
+        !input.closest('[data-receipt-workspace-panel="after-sales"]'),
+    ).forEach((input) => {
       input.readOnly = true;
       input.setAttribute("aria-readonly", "true");
     });
-    all(".receipt-ai-panel select").forEach((select) => {
+    all(".receipt-ai-panel select:not([data-product-sort])").filter(
+      (select) =>
+        !supportsAfterSalesContinuation() ||
+        !select.closest('[data-receipt-workspace-panel="after-sales"]'),
+    ).forEach((select) => {
       select.disabled = true;
       select.setAttribute("aria-disabled", "true");
     });
@@ -4225,6 +4970,7 @@
     ).forEach((control) => {
       control.disabled = true;
     });
+
   }
 
   function bindReceiptImageViewer() {
