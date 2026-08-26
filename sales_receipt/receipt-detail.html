@@ -142,10 +142,6 @@
             <label class="receive-time-field time-range-field"><span>收货时间</span><span class="datetime-range-control"><input type="datetime-local" value="2026-07-26T09:30" data-ai-receive-start aria-label="收货开始时间"><i>→</i><input type="datetime-local" value="2026-07-26T11:00" data-ai-receive-end aria-label="收货结束时间"></span></label>
             <label class="wide"><span>备注</span><input value="青椒有压坏，按商户实收数调整" data-detail-remark></label>
           </div>
-          <div class="receipt-workspace-tabs" role="tablist" aria-label="回单审核工作区">
-            <button class="active" type="button" role="tab" aria-selected="true" data-receipt-workspace-tab="products">商品核对</button>
-            <button type="button" role="tab" aria-selected="false" data-receipt-workspace-tab="after-sales">售后处理 <em data-after-sales-tab-count hidden>0</em></button>
-          </div>
           <div data-receipt-workspace-panel="products">
           <div class="large-order-tools" data-large-order-tools hidden>
             <label class="large-order-search"><span class="search-symbol">⌕</span><input type="search" placeholder="搜索商品、编码" aria-label="搜索回单商品" data-product-search></label>
@@ -266,7 +262,7 @@
             </table>
           </div>
           </div>
-          <div class="receipt-after-sales-panel" data-receipt-workspace-panel="after-sales" hidden>
+          <div class="receipt-after-sales-panel" data-inline-after-sales>
             <section class="after-sales-inline-workspace" data-after-sales-workbench>
               <section class="after-sales-section">
                 <div class="after-sales-workbench-head">
@@ -319,7 +315,7 @@
   <h3>1. 页面目标与状态边界</h3>
   <p>供操作员核对回单、确认观麦销售订单、修正签收数并按需登记售后处理。本页不修改销售订单下单数。</p>
   <h3>2. 页面结构</h3>
-  <ul><li>来源区保留回单图片、原始文件和群聊消息。</li><li>回单摘要展示群聊、下单员、创建时间和任务状态。</li><li>商品主表完全由当前关联销售订单生成，固定展示序号、订单商品、识别商品、下单数、签收数、差异数和备注 7 列。</li><li>商品核对与售后处理在同一审核区切换，售后不打开独立弹窗。</li></ul>
+  <ul><li>来源区保留回单图片、原始文件和群聊消息。</li><li>回单摘要展示群聊、下单员、创建时间和任务状态。</li><li>商品主表完全由当前关联销售订单生成，固定展示序号、订单商品、识别商品、下单数、签收数、差异数和备注 7 列。</li><li>售后处理常驻展示在商品核对上方，不打开独立弹窗。</li></ul>
   <h3>3. AI 识别字段</h3>
   <table><thead><tr><th>字段</th><th>来源</th><th>编辑性</th><th>查询作用</th></tr></thead><tbody>
     <tr><td>商户</td><td>AI 识别</td><td>待处理可编辑</td><td>辅助匹配订单归属商户。</td></tr>
@@ -341,11 +337,11 @@
     <tr><td>签收数</td><td>AI 识别或人工修正</td><td>允许 0 和小数；观麦开启销售实收时确认提交后写入出库数。</td></tr>
     <tr><td>差异数</td><td>系统计算</td><td>下单数－签收数，保留正负号。</td></tr>
   </tbody></table>
-  <p>商品是否进入售后由操作员自主选择，不受下单数、签收数或差异数限制；同一商品只展示一个分组，分组下允许登记多条售后动作。非商品异常归属当前回单任务，可新增多条；金额按增加、扣减或无影响记录，退款和补差价必须填写金额。</p>
+  <p>签收数与下单数不一致时，签收数输入框标红并展示提示图标，商品自动加入售后处理，默认类型为“商品异常—异常”；售后数量和原因仍由操作员确认。同一商品只展示一个分组，分组下允许登记多条售后动作。非商品异常归属当前回单任务，可新增多条；金额按增加、扣减或无影响记录，退款和补差价必须填写金额。</p>
   <h3>7. 保存、提交与异常恢复</h3>
   <ul><li>主表不提供订单商品新增、删除或改名入口；新增或移除商品售后不改变主表商品和签收数。</li><li>签收数空值表示待核对，只有明确输入 0 才表示零签收；存在待核对项时不得提交。</li><li>商品售后与非商品异常分别保存为当前回单任务的售后草稿；无售后内容时必须明确确认无需售后。</li><li>提交前全量校验，不受当前搜索或筛选影响；校验失败时定位首个问题。</li></ul>
   <h3>8. 验收标准</h3>
-  <ul><li>商品主表始终展示 7 列，不出现售后模式切换和售后字段列。</li><li>大单支持搜索、问题筛选、问题导航与批量处理，筛选不影响全量提交校验。</li><li>售后工作区按商品分组，支持搜索、完整性筛选、折叠及同商品多条动作；非商品异常支持新增多条。</li><li>销售实收开启时签收数写入出库数，关闭时不写；下单数始终不变。</li></ul>
+  <ul><li>商品主表始终展示 7 列，不出现售后模式切换和售后字段列。</li><li>售后处理展示在商品核对上方；签收数与下单数不一致时自动生成默认商品售后。</li><li>大单支持搜索、问题筛选、问题导航与批量处理，筛选不影响全量提交校验。</li><li>售后工作区按商品分组，支持搜索、折叠及同商品多条动作；非商品异常支持新增多条。</li><li>销售实收开启时签收数写入出库数，关闭时不写；下单数始终不变。</li></ul>
 </template>
 
   <div class="modal-backdrop" id="orderQueryModal">

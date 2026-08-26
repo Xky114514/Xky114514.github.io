@@ -305,7 +305,7 @@ for (const marker of ['renderReceiptOnlyRow', 'renderUnmatchedRow', 'activeRecei
 }
 
 const receiptDetailSurface = `${receiptDetailPage}\n${receiptCompletedPage}\n${receiptAppScript}`;
-for (const marker of ['data-enter-after-sales', 'data-receipt-workspace-tab="products"', 'data-receipt-workspace-tab="after-sales"', 'data-receipt-workspace-panel="after-sales"', 'data-add-after-sales-product', 'data-save-after-sales', 'data-remove-after-sales-item', 'data-add-after-sales-action', 'data-remove-after-sales-product', 'data-after-sales-product-group', 'data-after-sales-body', 'data-after-sales-product-options', 'data-confirm-add-after-sales-products', 'data-non-product-exception-list', 'data-non-product-exception-item', 'data-add-non-product-exception', 'data-remove-non-product-exception']) {
+for (const marker of ['data-enter-after-sales', 'data-inline-after-sales', 'data-add-after-sales-product', 'data-save-after-sales', 'data-remove-after-sales-item', 'data-add-after-sales-action', 'data-remove-after-sales-product', 'data-after-sales-product-group', 'data-after-sales-body', 'data-after-sales-product-options', 'data-confirm-add-after-sales-products', 'data-non-product-exception-list', 'data-non-product-exception-item', 'data-add-non-product-exception', 'data-remove-non-product-exception']) {
   if (!receiptDetailSurface.includes(marker)) interactionMarkers.push(`sales_receipt/receipt-detail.html -> 页内售后工作区缺少 ${marker}`);
 }
 for (const marker of ['data-after-sales-product-group-count', 'data-product-after-sales-count', 'data-non-product-count', 'data-after-sales-group-filter=']) {
@@ -321,6 +321,12 @@ for (const marker of ['function supportsAfterSalesContinuation(', 'function foll
 }
 for (const marker of ['function renderAfterSalesWorkbenchRow(', 'function groupProductAfterSalesActions(', 'function renderAfterSalesProductGroup(', 'function setReceiptWorkspace(', 'function applyAfterSalesGroupView(', 'function renderAfterSalesWorkbench(', 'function openAfterSalesWorkbench(', 'function applyAfterSalesWorkbench(', 'function validateAfterSalesWorkbench(', 'function renderAfterSalesProductOptions(', 'function removeAfterSalesRow(', 'function validateReceiptBasics(', 'function readSalesActualFeature(', 'function renderTaskNonProductExceptions(', 'function readTaskNonProductExceptions(', 'function validateTaskNonProductExceptions(', 'function persistTaskNonProductExceptions(']) {
   if (!receiptAppScript.includes(marker)) interactionMarkers.push(`sales_receipt/app.js -> 销售回单售后处理实现缺少 ${marker}`);
+}
+for (const marker of ['function ensureInlineReceiptWorkspace(', 'function createAutomaticProductAfterSalesAction(', 'function syncAutomaticAfterSalesForRows(', 'data-action-auto-generated', 'signed-quantity-mismatch', 'data-signed-quantity-warning', '系统已自动加入售后处理']) {
+  if (!receiptAppScript.includes(marker)) interactionMarkers.push(`sales_receipt/app.js -> 数量差异自动售后与签收数提示缺少 ${marker}`);
+}
+for (const marker of ['data-receipt-workspace-tab="products"', 'data-receipt-workspace-tab="after-sales"']) {
+  if (receiptDetailSurface.includes(marker)) interactionMarkers.push(`sales_receipt -> 售后处理已改为商品核对上方常驻区域，不应保留标签页 ${marker}`);
 }
 for (const marker of ['id="afterSalesWorkbenchModal"', 'id="afterSalesProductModal"']) {
   if (receiptDetailSurface.includes(marker)) interactionMarkers.push(`sales_receipt -> 售后处理应在审核页内完成，不应保留独立弹窗 ${marker}`);
@@ -456,12 +462,26 @@ if (!/\.get\(["']salesActual["']\)/.test(receiptAppScript) || !receiptAppScript.
 for (const marker of ['销售实收', '出库数', '销售回单', '异常金额', '异常数', '应退数', '下单数', '保持不变', '退货入库单']) {
   if (!receiptAppScript.includes(marker)) interactionMarkers.push(`sales_receipt/app.js -> 销售实收/售后字段映射路径缺少 ${marker}`);
 }
-const receiptBusinessDoc = rawFs.readFileSync(path.resolve(dir, '../sales_receipt/销售回单审核业务说明.md'), 'utf8');
+const receiptProductDoc = rawFs.readFileSync(path.resolve(dir, '../sales_receipt/销售回单审核与售后处理-B端产品规格.md'), 'utf8');
+const receiptOperationGuide = rawFs.readFileSync(path.resolve(dir, '../sales_receipt/销售回单操作说明.md'), 'utf8');
+const receiptBusinessIndex = rawFs.readFileSync(path.resolve(dir, '../sales_receipt/销售回单审核业务说明.md'), 'utf8');
 const receiptRequirementsPage = rawFs.readFileSync(path.resolve(dir, '../sales_receipt/requirements.html'), 'utf8');
-for (const [file, source] of [['销售回单审核业务说明.md', receiptBusinessDoc], ['requirements.html', receiptRequirementsPage]]) {
-  for (const marker of ['V2.5', '销售回单是', '七列', '页内', '分组', '未识别', '明确', '0', '待核对', '未判断', '已登记售后', '已确认无需售后', '商品异常—异常', '商品异常—退货', '同一商品', '多条', '非商品异常', '金额方向', '处理状态', '30 条', '批量', '全量', '安全改绑', '作废', '已完成', '整体同步结果', '完成页', '后续售后', '历史', '不根据', 'receiptRows', 'afterSalesActions', 'nonProductExceptions', 'afterSalesDecision']) {
-    if (!source.includes(marker)) interactionMarkers.push(`sales_receipt/${file} -> V2.5 回单审核说明缺少 ${marker}`);
+for (const marker of ['V2.7', '产品定位', '下单数', '出库数', '实收数', '差异数', '八列', '出库数－实收数', '退货总数不得大于实际商品出库数', '当前有效出库数大于 `0`', '单条异常数', '异常数按单条校验', '本次更新完成后的有效出库数', '本次提交整体不成功', '等待分拣', '分拣中', '配送中', '已签收', '按销售实收结算', '实收数同步更新出库数', '先款后货', '订单锁定', '销售出库单', '配送单', '可退数量', '累计退货', '商品异常—异常', '商品异常—退货', '非商品异常', '30 条', '批量', '作废', '已完成', '后续售后', 'receipt-review-products.png', 'receipt-after-sales-product-picker.png', 'receipt-completed-followup.png']) {
+  if (!receiptProductDoc.includes(marker)) interactionMarkers.push(`sales_receipt/销售回单审核与售后处理-B端产品规格.md -> V2.7 产品说明缺少 ${marker}`);
+}
+for (const marker of ['查询回单任务', '查看原始回单信息', '核对或更换销售订单', '核对商品、出库数与实收数', '出库数－实收数', '当前有效出库数', '出库数为 `0`', '异常数量校验', '本次更新完成后的有效出库数', '均不生效', '大量商品快速处理', '新增售后商品', '添加售后类型', '登记非商品异常', '保存与提交回单', '已完成回单继续售后', '作废待处理回单', '常见提示与处理方法', 'receipt-list.png', 'receipt-order-query.png', 'receipt-review-large-order.png', 'receipt-review-after-sales.png']) {
+  if (!receiptOperationGuide.includes(marker)) interactionMarkers.push(`sales_receipt/销售回单操作说明.md -> 操作说明缺少 ${marker}`);
+}
+for (const [file, source] of [['销售回单审核与售后处理-B端产品规格.md', receiptProductDoc], ['销售回单操作说明.md', receiptOperationGuide]]) {
+  for (const staleFormula of ['下单数－签收数', '下单数－实收数']) {
+    if (source.includes(staleFormula)) interactionMarkers.push(`sales_receipt/${file} -> 销售回单差异不得继续使用旧公式 ${staleFormula}`);
   }
+}
+for (const marker of ['销售回单产品说明', '销售回单操作说明']) {
+  if (!receiptBusinessIndex.includes(marker)) interactionMarkers.push(`sales_receipt/销售回单审核业务说明.md -> 文档索引缺少 ${marker}`);
+}
+for (const marker of ['V2.5', 'receiptRows', 'afterSalesActions', 'nonProductExceptions', 'afterSalesDecision']) {
+  if (!receiptRequirementsPage.includes(marker)) interactionMarkers.push(`sales_receipt/requirements.html -> 回单需求框架缺少 ${marker}`);
 }
 const receiptReferenceCss = rawFs.readFileSync(path.resolve(dir, '../sales_receipt/reference.css'), 'utf8');
 for (const marker of ['.nav-group', '.nav-flyout', '.nav-group:focus-within .nav-flyout', '.module-access-state']) {

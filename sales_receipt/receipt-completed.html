@@ -140,10 +140,6 @@
             <label class="receive-time-field time-range-field"><span>收货时间</span><span class="datetime-range-control"><input type="datetime-local" value="2026-07-26T08:30" readonly data-ai-receive-start aria-label="收货开始时间"><i>→</i><input type="datetime-local" value="2026-07-26T10:30" readonly data-ai-receive-end aria-label="收货结束时间"></span></label>
             <label class="wide"><span>备注</span><input value="青椒有压坏，按商户实收数调整" readonly data-detail-remark></label>
           </div>
-          <div class="receipt-workspace-tabs" role="tablist" aria-label="回单审核结果">
-            <button class="active" type="button" role="tab" aria-selected="true" data-receipt-workspace-tab="products">商品核对</button>
-            <button type="button" role="tab" aria-selected="false" data-receipt-workspace-tab="after-sales">售后处理 <em data-after-sales-tab-count hidden>0</em></button>
-          </div>
           <div data-receipt-workspace-panel="products">
           <div class="large-order-tools readonly" data-large-order-tools hidden>
             <label class="large-order-search"><span class="search-symbol">⌕</span><input type="search" placeholder="搜索商品、编码" aria-label="搜索回单商品" data-product-search></label>
@@ -247,7 +243,7 @@
             </table>
           </div>
           </div>
-          <div class="receipt-after-sales-panel" data-receipt-workspace-panel="after-sales" hidden>
+          <div class="receipt-after-sales-panel" data-inline-after-sales>
             <section class="after-sales-inline-workspace continuation" data-after-sales-workbench>
               <section class="after-sales-section">
                 <div class="after-sales-workbench-head"><div><strong>商品售后</strong></div><button class="btn" type="button" data-add-after-sales-product>＋ 新增售后商品</button></div>
@@ -300,13 +296,13 @@
     <tr><td>商户、订单号</td><td>提交成功时的回单快照</td><td>展示最终确认内容，不触发重新查询。</td></tr>
     <tr><td>下单时间、收货时间</td><td>提交成功时的回单快照</td><td>分别按具体开始与结束时间段展示。</td></tr>
     <tr><td>下单数</td><td>观麦销售订单快照</td><td>只读展示，售后提交未修改该值。</td></tr>
-    <tr><td>签收数</td><td>审核提交快照</td><td>展示最终人工确认值；销售实收开启时该值已写入销售订单出库数。</td></tr>
+    <tr><td>签收数</td><td>审核提交快照</td><td>展示最终人工确认值；与下单数不一致时输入框标红并显示提示图标。</td></tr>
     <tr><td>差异数</td><td>系统计算</td><td>下单数－签收数，保留正负号。</td></tr>
     <tr><td>售后快照</td><td>审核提交及观麦同步结果</td><td>在页内售后工作区展示类型、原因、非商品异常明细、异常数、应退数及退货入库单号。</td></tr>
     <tr><td>操作员</td><td>任务处理记录</td><td>展示最终提交人；自动提交显示“系统自动处理”。</td></tr>
   </tbody></table>
   <h3>4. 商品顺序与追溯</h3>
-  <ul><li>商品保持最终关联销售订单的商品顺序。</li><li>订单外或重复识别条目不进入主商品表。</li><li>AI 漏识别商品保留订单原位置，签收数展示提交值。</li><li>标题区只展示订单商品数和差异商品数。</li></ul>
+  <ul><li>售后处理常驻展示在商品核对上方，历史售后与后续新增动作在同一区域查看。</li><li>商品保持最终关联销售订单的商品顺序。</li><li>订单外或重复识别条目不进入主商品表。</li><li>AI 漏识别商品保留订单原位置，签收数展示提交值。</li><li>标题区只展示订单商品数和差异商品数。</li></ul>
   <h3>5. 异常与反馈</h3>
   <ul><li>详情加载失败时不展示可编辑控件，提示“回单详情加载失败，请重试”。</li><li>历史关联订单不可用或已停用时仍按提交快照回显，不允许重新选择。</li><li>后续售后提交只追加新动作，不覆盖原回单、历史动作或非商品异常。</li></ul>
   <h3>6. 验收标准</h3>
