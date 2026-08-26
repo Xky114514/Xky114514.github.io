@@ -1,0 +1,36 @@
+【公开页面】
+登录	/login	login.html
+商户注册	/register	register.html
+系统管理员登录	/admin/login	admin-login.html
+扫码登录回调	/admin/login/callback	admin-login-callback.html
+经营决策日报	/daily-report	daily-report.html
+嵌入入口	/embed	embed.html
+嵌入链路联调	/embed-test	embed-test.html
+
+【租户端】
+首页	/	home.html
+订单录入	/chat-simulator	chat-simulator.html
+订单审核	/tasks	tasks.html
+录单工作台	/order-board	order-board.html
+订单详情（Excel 多商品）	/tasks/[id]	task-detail.html
+订单详情（单商品）	/tasks/[id]	task-detail-single.html
+客户管理	/customers	customers.html
+群聊管理	/groups	groups.html
+群聊详情	/groups/[id]	group-detail.html
+客户分组	/customer-groups	customer-groups.html
+提示词	/prompts	prompts.html
+AI 记忆	/memory	memory.html
+统计	/stats	stats.html
+经营决策大屏	/decision-dashboard	decision-dashboard.html
+设置	/settings	settings.html
+回复设置	/settings/replies	settings-replies.html
+信道详情	/settings/channels/[channelId]	settings-channel-detail.html
+
+【平台管理端】
+管理入口（兼容）	/admin	admin.html
+租户管理	/admin/tenants	admin-tenants.html
+系统管理员	/admin/system-admins	admin-system-admins.html
+模版库	/admin/presets	admin-presets.html
+统计分析	/admin/stats	admin-stats.html
+案例详情	/admin/stats/case/[taskId]	admin-stats-case.html
+系统设置	/admin/system	admin-system.html

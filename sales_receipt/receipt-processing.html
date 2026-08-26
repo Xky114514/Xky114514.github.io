@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="销售回单应用前端交互原型">
+  <title>回单详情｜销售回单</title>
+  <link rel="stylesheet" href="./styles.css">
+  <link rel="stylesheet" href="./reference.css">
+</head>
+<body data-page="detail-processing" data-receipt-id="SR-20260727-018">
+  <div class="shell">
+    <aside class="sider">
+      <a class="brand" href="index.html" title="原型总览">AI</a>
+      <nav class="nav" aria-label="销售回单主导航">
+        <a class="nav-item " href="home.html" data-title="销售回单首页" aria-label="销售回单首页">
+          <span class="nav-symbol">⌂</span>
+        </a>
+
+        <a class="nav-item active" href="receipts.html" data-title="回单任务" aria-label="回单任务">
+          <span class="nav-symbol">▤</span>
+        </a>
+
+        <a class="nav-item " href="receipt-entry.html" data-title="回单录入" aria-label="回单录入">
+          <span class="nav-symbol">✎</span>
+        </a>
+
+        <a class="nav-item " href="merchants.html" data-title="商户管理" aria-label="商户管理">
+          <span class="nav-symbol">♙</span>
+        </a>
+
+        <a class="nav-item " href="groups.html" data-title="群聊管理" aria-label="群聊管理">
+          <span class="nav-symbol">♧</span>
+        </a>
+
+        <a class="nav-item " href="stats.html" data-title="数据统计" aria-label="数据统计">
+          <span class="nav-symbol">▥</span>
+        </a>
+
+        <a class="nav-item " href="settings.html" data-title="系统设置" aria-label="系统设置">
+          <span class="nav-symbol">✺</span>
+        </a>
+      </nav>
+      <div class="nav-spacer"></div>
+      <a class="nav-item" href="requirements.html" data-title="需求框架" aria-label="需求框架"><span class="nav-symbol">?</span></a>
+    </aside>
+    <main class="workspace">
+      <header class="topbar">
+        <div class="tenant"><strong>销售回单应用</strong><span>AI 回单测试站点</span></div>
+        <div class="top-actions">
+          <button class="btn text" type="button" data-spec-toggle>业务说明</button>
+          <span class="user-chip">系统管理员</span>
+          <button class="refresh-icon" type="button" data-toast="页面已刷新" aria-label="刷新页面">↻</button>
+        </div>
+      </header>
+      <div class="route-tabs">
+        <a class="route-tab" href="home.html" aria-label="首页">⌂</a>
+        <span class="route-tab active">回单详情　×</span>
+      </div>
+      <section class="content">
+        <div class="page detail-page">
+
+      <section class="card"><div class="detail-header"><div class="detail-title"><a class="btn icon" href="receipts.html">←</a><h1>回单详情 · SR-20260727-018</h1><span class="status processing" data-task-status><span class="status-dot"></span>识别中</span></div><button class="btn" type="button" data-refresh-processing>刷新进度</button></div></section>
+      <div class="detail-grid">
+        <section class="card source-card"><div class="source-toolbar"><strong>原始回单</strong><span class="tag blue">图片 1/1</span></div><div class="source-stage">
+    <div class="receipt-sheet">
+      <h2>销售送货单</h2>
+      <div class="receipt-meta">
+        <span>商户：华南鲜食店</span><span>单号：SO-20260725-1028</span>
+        <span>送货日期：2026-07-26</span><span>司机：陈师傅</span>
+      </div>
+      <table class="paper-table">
+        <thead><tr><th>商品</th><th>单位</th><th>送货数</th><th>实收数</th></tr></thead>
+        <tbody>
+          <tr><td>大白菜</td><td>斤</td><td>25</td><td class="paper-mark">22</td></tr>
+          <tr><td>青椒</td><td>斤</td><td>12</td><td class="paper-mark">字迹模糊</td></tr>
+          <tr><td>油麦菜</td><td>斤</td><td>18</td><td class="paper-mark">18.5</td></tr>
+        </tbody>
+      </table>
+      <div class="paper-note">备注：青椒有一筐压坏，请按实收数结算。</div>
+      <div class="signature">收货人：刘店长　07/26</div>
+      <span class="recognition-box box-1 active"></span>
+      <span class="recognition-box box-2 "></span>
+      <span class="recognition-box box-3 "></span>
+    </div>
+  </div></section>
+        <div>
+          <section class="card processing-card">
+            <div class="card-head"><strong>AI 识别进度</strong><span class="tag blue" data-processing-label>64% · 正在匹配销售订单</span></div>
+            <div class="card-body">
+              <div class="progress"><span data-processing-progress style="width:64%"></span></div>
+              <div class="step-list" style="margin-top:18px">
+                <div class="step done"><span class="step-index">✓</span><strong>接收回单材料</strong><span class="cell-sub">图片与群聊上下文已读取</span></div>
+                <div class="step done"><span class="step-index">✓</span><strong>识别商户和订单号</strong><span class="cell-sub">识别到商户：华南鲜食店</span></div>
+                <div class="step current"><span class="step-index">3</span><strong>匹配销售订单</strong><span class="cell-sub">正在可处理状态订单中按订单号和商品组合匹配</span></div>
+                <div class="step"><span class="step-index">4</span><strong>识别签收数并计算差异</strong><span class="cell-sub">等待订单商品数据</span></div>
+              </div>
+            </div>
+          </section>
+          <section class="alert">识别完成后可查看商品明细。</section>
+        </div>
+      </div>
+
+        </div>
+      </section>
+    </main>
+  </div>
+  <template id="pageSpec">
+  <h3>页面目标</h3>
+  <p>展示 AI 读取材料、识别商户、匹配订单和解析数量的进度。</p>
+  <h3>字段与业务含义</h3>
+  <ul><li>原始回单：任务创建时保存的材料。</li><li>识别步骤：接收材料、识别主体、匹配订单、识别数量。</li><li>识别进度：页面演示值，不作为业务状态。</li></ul>
+  <h3>交互与业务规则</h3>
+  <ul><li>识别中只允许查看和刷新，不允许编辑数量。</li><li>识别完成后进入待处理，由操作员确认签收数。</li><li>匹配或数量不完整时仍保持待处理，不新增识别失败状态。</li></ul>
+
+</template>
+
+
+  <div class="drawer-mask" id="drawerMask"></div>
+  <aside class="spec-drawer" id="specDrawer" aria-hidden="true" aria-label="业务说明">
+    <div class="spec-drawer-head">
+      <strong>当前页面业务说明</strong>
+      <button class="modal-close" type="button" data-spec-close aria-label="关闭业务说明">×</button>
+    </div>
+    <div class="spec-drawer-body" id="specDrawerBody"></div>
+  </aside>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="./app.js"></script>
+  <script src="../business-specs.js"></script>
+</body>
+</html>

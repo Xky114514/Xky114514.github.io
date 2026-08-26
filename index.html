@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>PRD 前端展示平台</title>
+  <title>AI录单平台</title>
   <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
@@ -16,12 +16,34 @@
     <main class="main">
       <header class="topbar">
         <div class="tenant">
-          <strong>前端 PRD 展示平台</strong>
-          <span id="moduleHint">系统总门户</span>
+          <strong>测试企业 1318</strong>
+          <details class="scene-switcher" id="sceneSwitcher">
+            <summary aria-label="切换当前场景">
+              <span class="scene-current-icon purchase" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 4h2l2 11h10l2-8H6M9 19h.01M17 19h.01"/></svg></span>
+              <span class="scene-summary-label">当前场景</span><strong id="moduleHint">采购录单</strong>
+            </summary>
+            <div class="scene-switch-menu" role="menu" aria-label="场景切换菜单">
+              <a class="scene-switch-option" href="./ai_order/home.html" role="menuitem">
+                <span class="scene-switch-icon sales" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 20V11M10 20V5M16 20v-7M3 20h18"/></svg></span>
+                <span class="scene-switch-copy"><strong>销售录单</strong><small>进入销售录单</small></span>
+              </a>
+              <a class="scene-switch-option current" href="#purchase-home" role="menuitem" aria-current="page">
+                <span class="scene-switch-icon purchase" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 4h2l2 11h10l2-8H6M9 19h.01M17 19h.01"/></svg></span>
+                <span class="scene-switch-copy"><strong>采购录单</strong><small>当前场景</small></span>
+              </a>
+            </div>
+          </details>
         </div>
         <div class="top-actions">
-          <span class="user-name">管理员 王明</span>
+          <a class="prd-home-link" href="#projects">← 返回 PRD 首页</a>
           <button class="text-btn muted">批注可编辑</button>
+          <details class="admin-menu">
+            <summary class="user-name">系统管理员</summary>
+            <div class="admin-menu-popover" role="menu" aria-label="系统管理员菜单">
+              <button type="button" data-route="tenant-members" role="menuitem">成员管理</button>
+              <button type="button" data-route="tenant-quota" role="menuitem">额度管理</button>
+            </div>
+          </details>
         </div>
       </header>
 
@@ -38,6 +60,7 @@
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <div id="modalRoot"></div>
 
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <script src="./app.js"></script>
 </body>
 </html>

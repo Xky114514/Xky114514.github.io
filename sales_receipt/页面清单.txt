@@ -1,0 +1,17 @@
+【需求与总览】
+需求框架	requirements.html	范围、字段、状态、页面地图和验收基线
+销售回单首页	home.html	任务指标、最近回单和快捷入口
+
+【回单处理】
+回单录入	receipt-entry.html	商户/群聊选择、文字和附件录入
+回单任务	receipts.html	三态筛选、查询和详情入口
+识别中详情	receipt-processing.html	AI 识别步骤和进度
+待处理详情	receipt-detail.html	订单关联、实时差异和修改即保存
+已完成详情	receipt-completed.html	已保存结果和再次修改
+
+【业务配置】
+商户管理	merchants.html	商户、群聊绑定和历史回单
+群聊管理	groups.html	群聊绑定、机器人和识别开关
+群聊详情	group-detail.html	群消息、生成任务和群设置
+数据统计	stats.html	完成率、差异率和人员效率
+系统设置	settings.html	机器人、通知、自动处理和权限

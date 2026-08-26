@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="销售回单应用前端交互原型">
+  <title>回单录入｜销售回单</title>
+  <link rel="stylesheet" href="./styles.css">
+  <link rel="stylesheet" href="./reference.css">
+</head>
+<body data-page="entry" >
+  <div class="shell">
+    <aside class="sider">
+      <a class="brand" href="index.html" title="原型总览">AI</a>
+      <nav class="nav" aria-label="销售回单主导航">
+        <a class="nav-item " href="home.html" data-title="销售回单首页" aria-label="销售回单首页">
+          <span class="nav-symbol">⌂</span>
+        </a>
+
+        <a class="nav-item " href="receipts.html" data-title="回单任务" aria-label="回单任务">
+          <span class="nav-symbol">▤</span>
+        </a>
+
+        <a class="nav-item active" href="receipt-entry.html" data-title="回单录入" aria-label="回单录入">
+          <span class="nav-symbol">✎</span>
+        </a>
+
+        <a class="nav-item " href="merchants.html" data-title="商户管理" aria-label="商户管理">
+          <span class="nav-symbol">♙</span>
+        </a>
+
+        <a class="nav-item " href="groups.html" data-title="群聊管理" aria-label="群聊管理">
+          <span class="nav-symbol">♧</span>
+        </a>
+
+        <a class="nav-item " href="stats.html" data-title="数据统计" aria-label="数据统计">
+          <span class="nav-symbol">▥</span>
+        </a>
+
+        <a class="nav-item " href="settings.html" data-title="系统设置" aria-label="系统设置">
+          <span class="nav-symbol">✺</span>
+        </a>
+      </nav>
+      <div class="nav-spacer"></div>
+      <a class="nav-item" href="requirements.html" data-title="需求框架" aria-label="需求框架"><span class="nav-symbol">?</span></a>
+    </aside>
+    <main class="workspace">
+      <header class="topbar">
+        <div class="tenant"><strong>销售回单应用</strong><span>AI 回单测试站点</span></div>
+        <div class="top-actions">
+          <button class="btn text" type="button" data-spec-toggle>业务说明</button>
+          <span class="user-chip">系统管理员</span>
+          <button class="refresh-icon" type="button" data-toast="页面已刷新" aria-label="刷新页面">↻</button>
+        </div>
+      </header>
+      <div class="route-tabs">
+        <a class="route-tab" href="home.html" aria-label="首页">⌂</a>
+        <span class="route-tab active">回单录入　×</span>
+      </div>
+      <section class="content">
+        <div class="page ">
+
+
+  <div class="page-head">
+    <div>
+      <h1>回单录入</h1>
+    </div>
+
+  </div>
+
+      <section class="entry-workspace" data-entry-page>
+        <aside class="entry-side">
+          <div class="entry-side-head"><strong>AI 回单</strong><button type="button" aria-label="菜单">≡</button></div>
+          <div class="segment">
+            <button class="active" type="button" data-source-mode="merchant">商户</button>
+            <button type="button" data-source-mode="group">群聊</button>
+          </div>
+          <label class="field entry-search"><span>搜索来源</span><input data-entry-search placeholder="商户名称、编码或群聊"></label>
+          <div class="entry-list">
+            <button class="entry-list-item" type="button" data-kind="merchant" data-name="华南鲜食店" data-search="华南鲜食店 M-10028"><strong>华南鲜食店</strong></button>
+            <button class="entry-list-item" type="button" data-kind="merchant" data-name="城东实验小学" data-search="城东实验小学 M-10063"><strong>城东实验小学</strong></button>
+            <button class="entry-list-item" type="button" data-kind="merchant" data-name="观麦大学" data-search="观麦大学 M-10071"><strong>观麦大学</strong></button>
+            <button class="entry-list-item hidden" type="button" data-kind="group" data-name="华南鲜食店收货群" data-search="华南鲜食店收货群 G-2081"><strong>华南鲜食店收货群</strong></button>
+            <button class="entry-list-item hidden" type="button" data-kind="group" data-name="城东实验小学配送群" data-search="城东实验小学配送群 G-2088"><strong>城东实验小学配送群</strong></button>
+            <button class="entry-list-item hidden" type="button" data-kind="group" data-name="观麦大学食堂回单群" data-search="观麦大学食堂回单群 G-2101"><strong>观麦大学食堂回单群</strong></button>
+          </div>
+        </aside>
+        <section class="entry-main">
+          <div class="entry-feed" data-entry-feed>
+            <div class="entry-empty">
+              <div><div class="entry-empty-icon">▤</div><h2>录入销售回单</h2><p>选择商户或群聊后发送回单材料</p></div>
+            </div>
+          </div>
+          <div class="entry-composer-wrap">
+            <div class="attachment-list" data-attachment-list></div>
+            <div class="composer">
+              <textarea data-entry-text placeholder="输入或粘贴回单文字，也可以拖入图片、PDF、Excel 文件…"></textarea>
+              <div class="composer-actions">
+                <div class="composer-left-actions">
+                  <input class="file-input" type="file" multiple accept=".png,.jpg,.jpeg,.pdf,.xlsx" data-file-input>
+                  <button class="btn" type="button" data-upload-trigger>＋ 上传附件</button>
+                  <label class="entry-customer-picker hidden">
+                    <select data-entry-customer aria-label="选择商户">
+                      <option>无叁</option>
+                      <option>观麦Matto-杨永成</option>
+                      <option>大面条</option>
+                      <option>风止意难平</option>
+                      <option>Wang。</option>
+                      <option>观麦系统sunny.yang</option>
+                      <option>LINCN</option>
+                      <option>刘潭文</option>
+                      <option>L</option>
+                    </select>
+                  </label>
+                </div>
+                <button class="btn primary" type="button" data-send-receipt>发送</button>
+              </div>
+            </div>
+          </div>
+        </section>
+      </section>
+
+        </div>
+      </section>
+    </main>
+  </div>
+  <template id="pageSpec">
+  <h3>页面目标</h3>
+  <p>模拟司机、商户或业务人员通过群聊或人工入口提交一张销售回单。</p>
+  <h3>字段与业务含义</h3>
+  <ul><li>商户：选择商户来源时由左侧列表确定；选择群聊来源时，在输入区底部显示商户下拉，用于指定群聊对应商户。</li><li>来源类型：商户或群聊，决定回单归属与候选订单范围。</li><li>回单文字：与附件至少填写一种。</li><li>附件：支持 JPG、PNG、PDF、Excel；多个附件属于同一张回单。</li><li>发送人和发送时间：由来源消息自动生成。</li></ul>
+  <h3>交互与业务规则</h3>
+  <ul><li>商户模式不显示商户下拉；群聊模式显示紧凑商户下拉。</li><li>群聊模式下未选择群聊或对应商户时禁止发送。</li><li>空文字且无附件时禁止发送。</li><li>发送成功后只创建一张识别中任务，避免重复点击生成多张任务。</li><li>AI 识别结束后，需人工处理的数据进入待处理；识别中任务不进入回单任务列表。</li></ul>
+  <h3>异常与恢复</h3><p>不支持的文件类型被忽略并提示；本原型只模拟文件接收，不向外部系统上传。</p>
+</template>
+
+
+  <div class="drawer-mask" id="drawerMask"></div>
+  <aside class="spec-drawer" id="specDrawer" aria-hidden="true" aria-label="业务说明">
+    <div class="spec-drawer-head">
+      <strong>当前页面业务说明</strong>
+      <button class="modal-close" type="button" data-spec-close aria-label="关闭业务说明">×</button>
+    </div>
+    <div class="spec-drawer-body" id="specDrawerBody"></div>
+  </aside>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="./app.js"></script>
+  <script src="../business-specs.js"></script>
+</body>
+</html>

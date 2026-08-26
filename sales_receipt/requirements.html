@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="销售回单应用前端交互原型">
+  <title>需求框架｜销售回单</title>
+  <link rel="stylesheet" href="./styles.css">
+  <link rel="stylesheet" href="./reference.css">
+</head>
+<body data-page="requirements">
+  <div class="shell">
+    <aside class="sider">
+      <a class="brand" href="index.html" title="原型总览">AI</a>
+      <nav class="nav" aria-label="销售回单主导航">
+        <a class="nav-item" href="home.html" data-title="销售回单首页" aria-label="销售回单首页"><span class="nav-symbol">⌂</span></a>
+        <a class="nav-item" href="receipts.html" data-title="回单任务" aria-label="回单任务"><span class="nav-symbol">▤</span></a>
+        <a class="nav-item" href="receipt-entry.html" data-title="回单录入" aria-label="回单录入"><span class="nav-symbol">✎</span></a>
+        <a class="nav-item" href="merchants.html" data-title="商户管理" aria-label="商户管理"><span class="nav-symbol">♙</span></a>
+        <a class="nav-item" href="groups.html" data-title="群聊管理" aria-label="群聊管理"><span class="nav-symbol">♧</span></a>
+        <a class="nav-item" href="stats.html" data-title="数据统计" aria-label="数据统计"><span class="nav-symbol">▥</span></a>
+        <a class="nav-item" href="settings.html" data-title="系统设置" aria-label="系统设置"><span class="nav-symbol">✺</span></a>
+      </nav>
+      <div class="nav-spacer"></div>
+      <a class="nav-item" href="requirements.html" data-title="需求框架" aria-label="需求框架"><span class="nav-symbol">?</span></a>
+    </aside>
+    <main class="workspace">
+      <header class="topbar">
+        <div class="tenant"><strong>销售回单应用</strong><span>AI 回单测试站点</span></div>
+        <div class="top-actions">
+          <button class="btn text" type="button" data-spec-toggle>业务说明</button>
+          <span class="user-chip">系统管理员</span>
+          <button class="refresh-icon" type="button" data-toast="页面已刷新" aria-label="刷新页面">↻</button>
+        </div>
+      </header>
+      <div class="route-tabs">
+        <a class="route-tab" href="home.html" aria-label="首页">⌂</a>
+        <span class="route-tab active">需求框架　×</span>
+      </div>
+      <section class="content">
+        <div class="page">
+          <div class="page-head">
+            <div><h1>销售回单应用需求框架</h1><p>V2.5 · 页内分组与追加售后处理模型</p></div>
+            <div class="page-actions"><a class="btn" href="index.html">返回原型总览</a><a class="btn primary" href="home.html">进入应用</a></div>
+          </div>
+
+          <div class="spec-grid">
+            <aside class="card spec-toc">
+              <div class="card-head"><strong>目录</strong></div>
+              <div class="card-body"><a href="#scope">目标与范围</a><a href="#main-table">签收核对</a><a href="#product-after-sales">售后处理</a><a href="#large-order">大量商品</a><a href="#submission">保存与提交</a><a href="#association">订单改绑</a><a href="#traceability">完成与作废</a><a href="#acceptance">验收基线</a></div>
+            </aside>
+            <article class="card spec-document">
+              <h1>销售回单应用</h1>
+              <p>销售回单是唯一主对象。签收核对、商品售后和非商品异常均在同一回单内完成，不创建或切换独立售后单据。</p>
+
+              <h2 id="scope">目标与范围</h2>
+              <ul>
+                <li>回单详情固定展示七列商品表，商品核对与售后处理在同一审核区切换。</li>
+                <li>未识别或未填写的签收数保持空值，不能转为明确的 0。</li>
+                <li>商品售后由审核员主动选择，同一商品可登记多条售后动作，数量不根据差异自动填写。</li>
+                <li>非商品异常属于回单任务，一张回单可维护多条，且不绑定商品。</li>
+                <li>商品较多时渐进增强搜索、筛选和批量操作，不改变主页面结构。</li>
+              </ul>
+
+              <h2 id="main-table">签收核对</h2>
+              <div class="table-wrap"><table><thead><tr><th>字段</th><th>规则</th></tr></thead><tbody>
+                <tr><td>序号、订单商品、识别商品</td><td>按当前关联销售订单生成，不支持新增、删除或改名</td></tr>
+                <tr><td>下单数</td><td>只读，任何处理均不修改</td></tr>
+                <tr><td>签收数</td><td>空值表示未确认；明确 0 表示零签收；有效数量最多两位小数</td></tr>
+                <tr><td>差异数</td><td>仅在签收数有效时计算，只作核对参考</td></tr>
+                <tr><td>备注</td><td>随回单草稿保存</td></tr>
+              </tbody></table></div>
+              <p>签收数为空、商品未匹配、字段校验失败或同步冲突均属于待核对项，存在待核对项时不得提交。</p>
+
+              <h2 id="product-after-sales">售后处理</h2>
+              <ul>
+                <li>售后判断分为未判断、已登记售后、已确认无需售后；未判断状态不能提交。</li>
+                <li>售后工作区按商品分组，商品信息只展示一次；商品异常—异常、商品异常—退货作为分组下的独立动作保存。</li>
+                <li>同一商品允许存在多条动作，可在商品分组内继续添加售后类型。</li>
+                <li>回单提交后仍可在原页面追加商品售后；历史动作只读，新动作独立提交并形成新的历史记录。</li>
+                <li>选品、编辑和查看均在当前审核页完成，不打开独立售后弹窗。</li>
+                <li>修改签收数只更新差异，不改变售后动作和已填数量。</li>
+                <li>删除最后一条售后数据后恢复未判断，不自动认定为无需售后。</li>
+                <li>非商品异常包含金额方向和处理状态；金额按处理方式执行条件必填。</li>
+              </ul>
+
+              <h2 id="large-order">大量商品</h2>
+              <div class="table-wrap"><table><thead><tr><th>商品数</th><th>策略</th></tr></thead><tbody>
+                <tr><td>少于 30 条</td><td>保持当前简洁表格</td></tr>
+                <tr><td>30 条及以上</td><td>启用搜索、筛选、排序、问题导航、批量操作和固定表头</td></tr>
+              </tbody></table></div>
+              <p>售后商品分组支持搜索和折叠；批量操作只作用于明确选择范围，支持撤销；禁止批量补零、按差异生成售后数量及跨单位批量填数量。</p>
+
+              <h2 id="submission">保存与提交</h2>
+              <ol>
+                <li>草稿按商品行 ID 和动作 ID 保存，筛选和排序不改变业务数据。</li>
+                <li>提交校验覆盖全量商品、待核对项、售后判断、商品售后动作和 <code>nonProductExceptions</code>。</li>
+                <li>被筛选隐藏的数据同样参与校验；失败时定位第一条问题。</li>
+                <li>提交载荷分为签收商品 <code>receiptRows</code>、商品售后动作 <code>afterSalesActions</code>（<code>rows</code> 为兼容别名）、任务级异常 <code>nonProductExceptions</code> 和售后判断 <code>afterSalesDecision</code>。</li>
+                <li>确认完成后展示销售回单及整体同步结果。</li>
+              </ol>
+
+              <h2 id="association">订单改绑</h2>
+              <ul>
+                <li>待处理回单允许安全改绑；确认前展示商品重建、售后清理和异常重确认等影响。</li>
+                <li>取消确认不改变数据；改绑后非商品异常保留并标记待重新确认。</li>
+                <li>未关联订单时不能进行售后处理或确认提交。</li>
+              </ul>
+
+              <h2 id="traceability">完成与作废</h2>
+              <p>已完成页保持关联订单、签收事实、非商品异常及历史售后只读，同时允许在原售后工作区追加商品售后。后续提交不得覆盖原回单和历史动作；非商品异常仍只读。待处理回单填写原因后作废，已完成回单不可作废。</p>
+
+              <h2 id="acceptance">验收基线</h2>
+              <ol>
+                <li>空签收数不转为 0，并阻止最终提交。</li>
+                <li>同一商品只展示一个售后分组，分组内支持多条动作，新增数量保持空值。</li>
+                <li>售后处理全程位于审核页内，商品核对和售后处理切换不丢失草稿。</li>
+                <li>非商品异常支持金额方向、条件校验和处理状态。</li>
+                <li>30 条及以上出现搜索、筛选、排序、问题导航和批量工具。</li>
+                <li>搜索、筛选、排序和滚动不丢失填写值、选择及错误状态。</li>
+                <li>全量校验能定位被筛选隐藏的问题项。</li>
+                <li>安全改绑保留非商品异常并要求重新确认；待处理回单可填写原因作废。</li>
+                <li>已完成页的原回单与历史售后保持只读；同一商品可追加后续售后，提交后锁定并在刷新后保留。</li>
+              </ol>
+            </article>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+  <template id="pageSpec">
+    <h3>页面目标</h3>
+    <p>展示销售回单当前业务基线。</p>
+    <h3>交互规则</h3>
+    <ul><li>本页只读。</li><li>点击目录定位对应章节。</li></ul>
+  </template>
+  <div class="drawer-mask" id="drawerMask"></div>
+  <aside class="spec-drawer" id="specDrawer" aria-hidden="true" aria-label="业务说明">
+    <div class="spec-drawer-head"><strong>当前页面业务说明</strong><button class="modal-close" type="button" data-spec-close aria-label="关闭业务说明">×</button></div>
+    <div class="spec-drawer-body" id="specDrawerBody"></div>
+  </aside>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="./app.js"></script>
+  <script src="../business-specs.js"></script>
+</body>
+</html>
