@@ -4,6 +4,71 @@
   const fillRows = (id, rows) => { const node = document.getElementById(id); if (node) node.innerHTML = rows.map(cells => `<tr>${cells.map(cell => `<td>${cell}</td>`).join('')}</tr>`).join(''); };
   const tag = (text, color = '') => `<span class="tag ${color}">${text}</span>`;
   const toggle = on => `<span class="toggle${on ? ' on' : ''}"></span>`;
+  const helpTip = (text, label = '查看字段说明') => `<span class="field-help" tabindex="0" role="button" data-help="${String(text).replace(/&/g,'&amp;').replace(/"/g,'&quot;')}" aria-label="${label}">?</span>`;
+  const tableFieldHelp = {
+    '优先级':'使用颜色圆点区分异常处理紧急度：红色为高、橙色为中、蓝色为低。',
+    '当前值':'触发异常时采集到的实时或当前周期数据。',
+    '当前状态':'触发异常时系统检测到的实际状态。',
+    '参考值':'用于判断是否异常的阈值、历史值或期望状态。',
+    '异常说明':'说明本行为什么进入异常列表以及建议关注的业务影响。',
+    '错误摘要':'最近一次系统或配置异常返回的关键信息。',
+    '异常时间':'该异常最近一次满足触发条件的时间。',
+    '录单版本':'租户当前启用的录单流程版本。',
+    'Station':'外部业务系统中的站点标识，用于数据归属与同步。',
+    'Group':'租户在对接平台中的业务分组标识。',
+    '信道类型':'租户接收订单消息所使用的接入方式。',
+    '通知群':'接收异常、任务及运营提醒的群聊。',
+    '总额度':'租户当前生效的可用额度总量。',
+    '已用':'当前额度周期内已经消耗的额度。',
+    '剩余':'总额度扣除已使用额度后的可用余额。',
+    '使用率':'已使用额度占总额度的比例。',
+    '已收':'合同金额中已确认到账的金额。',
+    '未收':'合同金额中尚未确认到账的应收金额。',
+    '退款':'当前合同关联的累计退款金额。',
+    '提交任务数':'已成功提交的任务数；单元格下方同时展示任务总数。',
+    '提交比例':'成功提交任务数占全部任务数的比例。',
+    '提交商品数':'识别结果中的有效商品行数与原始商品行总数。',
+    '商品识别率':'正确识别的商品行数占全部商品行数的比例。',
+    '数量识别率':'正确识别数量的商品行数占全部商品行数的比例。',
+    '备注识别率':'正确识别备注的商品行数占全部商品行数的比例。',
+    '图片订单数':'当前统计周期内，以图片作为主要原始内容的订单数。',
+    '图片占比':'图片订单数占全部提交订单数的比例，支持点击表头排序。',
+    '原因标签':'系统或人工为问题案例确认的标准原因，可多选。',
+    '归因状态':'区分待归因、归因中、已归因与归因失败。',
+    '归因来源':'显示当前有效归因来自 AI 还是人工复核。',
+    'AI置信度':'AI 对当前原因判断的可信程度；人工归因不展示该值。',
+    '判断依据':'AI 或人工确认原因标签时使用的关键证据摘要。',
+    '问题案例数':'商品识别率低于设定阈值的问题案例数，按案例去重。',
+    '主要原因':'该租户问题案例中出现次数最多的原因标签。',
+    '平均识别率':'当前筛选范围内问题案例的商品平均识别率。',
+    '总 Token 数 (M)':'Prompt 与 Completion Token 之和，以百万为单位。',
+    'Prompt Tokens (M)':'发送给模型的输入 Token 数，以百万为单位。',
+    'Completion Tokens (M)':'模型生成内容使用的输出 Token 数，以百万为单位。',
+    '每行 Token':'总 Token 数除以成功提交的商品行数。',
+    '平均语音时长':'成功发起识别的语音平均时长。',
+    'temperature':'控制模型输出随机性；数值越低，结果通常越稳定。',
+    'max_tokens':'单次模型生成允许使用的最大输出 Token 数。',
+    '思考强度':'控制模型推理投入程度，具体能力取决于所选模型。',
+    '实际生效':'综合租户、群级、系统默认及环境变量后最终使用的配置。',
+    '凭证':'供应商访问凭证的脱敏摘要及区域信息。',
+    '引擎/资源':'语音识别供应商实际调用的引擎或资源标识。',
+    'API Key':'Bridge 调用平台服务时使用的访问密钥，页面仅显示脱敏值。',
+    '环境':'区分生产、测试等 Bridge 运行环境。',
+    '自动绑定':'启用后，新发现的来源群聊会自动绑定到当前 Bridge。',
+    '来源信道':'允许通过当前 Bridge 接入的上游信道。',
+    '群聊数量':'当前 Bridge 已关联的群聊总数。',
+    '过期时间':'API Key 或 Bridge 授权失效的时间。',
+    '展示排序':'数值越小，在原因标签选择器中的展示位置越靠前。',
+    '适用类型':'限定标签可用于文本、图片、文件或全部内容类型。',
+    '启用状态':'停用后不再用于新案例归因，但历史案例仍保留。',
+    '近 30 天案例':'最近 30 天内使用该原因标签的案例数量。',
+    '主要内容':'该原因在当前租户中最集中的订单内容类型。',
+    '近期情况':'结合发生频率、时间和内容给出的近期问题概述。'
+  };
+  $$('.data-table th').forEach(header => {
+    const key = header.textContent.replace(/[⇅↓↑]/g,'').trim();
+    if (tableFieldHelp[key] && !header.querySelector('.field-help')) header.insertAdjacentHTML('beforeend', helpTip(tableFieldHelp[key], `查看${key}说明`));
+  });
 
   const quotaNames = ['yyysl01','hzcg','郑州市好鲜升食品配送有限公司','cbfc56','jinwang','gmstest141'];
   fillRows('quotaRows', quotaNames.map(name => [
@@ -23,15 +88,23 @@
     ['江苏聚宝生态农业发展有限公司','充值',tag('全额收款','green'),'¥50000.00','¥50000.00','¥0.00','¥0.00','2026-07-29','吴开河','0','<a>编辑</a><a class="danger">删除</a>']
   ]);
 
-  const priority = level => `<span class="priority ${level === '高' ? 'high' : level === '中' ? 'medium' : 'low'}"><i></i>${level}</span>`;
-  const actionLinks = actions => actions.map(([label, action = 'tenant-drill']) => `<button class="table-action" data-action="${action}">${label}</button>`).join('');
+  const priority = level => `<span class="priority ${level === '高' ? 'high' : level === '中' ? 'medium' : 'low'}" aria-label="${level}优先级" title="${level}优先级"><i></i></span>`;
+  const dashboardActionMap = {
+    '转正式':'convert-tenant', '调整额度':'adjust-quota', '调整试用期':'extend-trial', '查看合同':'view-contract',
+    '查看案例':'view-cases', '查看群聊':'view-groups', '进入信道设置':'channel-config', '查看错误':'view-sync-error',
+    '重新同步':'retry-sync', '立即同步':'retry-sync', '修改通知配置':'notification-config', '编辑租户配置':'tenant-config'
+  };
+  const actionLinks = (actions, tenant, alertType) => actions.map(([label]) => {
+    if (label === '查看租户' || label === '租户分析') return `<button class="table-action" data-action="tenant-drill" data-tenant="${tenant}">${label}</button>`;
+    return `<button class="table-action" data-action="dashboard-operation" data-operation="${dashboardActionMap[label] || 'quick-action'}" data-label="${label}" data-tenant="${tenant}" data-alert-type="${alertType}">${label}</button>`;
+  }).join('');
   const alertSummary = (id, values) => {
     const node = document.getElementById(id);
     if (node) node.innerHTML = values.map(([label, value, level]) => `<div class="alert-stat ${level}"><span>${label}</span><b>${value}</b><small>条异常</small></div>`).join('');
   };
   const alertRows = rows => rows.map(row => [
     priority(row[0]), `<button class="link-button tenant-drill" data-action="tenant-drill" data-tenant="${row[1]}">${row[1]}</button>`, tag(row[2], row[0] === '高' ? 'red' : row[0] === '中' ? 'orange' : 'blue'),
-    `<b>${row[3]}</b>`, row[4], row[5], row[6], `<span>${row[7]}</span>`, actionLinks(row[8])
+    `<b>${row[3]}</b>`, row[4], row[5], row[6], `<span>${row[7]}</span>`, actionLinks(row[8], row[1], row[2])
   ]);
 
   alertSummary('trialSummary', [['试用未使用','2','high'],['试用额度耗尽','1','high'],['试用即将到期','3','medium'],['试用已经到期','2','high']]);
@@ -208,22 +281,57 @@
 
   const reasonFilter = `<div class="toolbar-dates"><button class="active">今日</button><button>本周</button><button>本月</button><button>自定义</button></div><span class="toolbar-label">时间粒度 <button class="select">日⌄</button></span><span class="toolbar-label">内容类型 <button class="select">全部⌄</button></span><span class="toolbar-label">文件类型 <button class="select">全部⌄</button></span><span class="toolbar-label">租户类型 <button class="select">全部⌄</button></span><span class="toolbar-label">指定租户 <button class="select wide">全部租户⌄</button></span><span class="toolbar-label">原因标签 <button class="select">全部⌄</button></span><span class="toolbar-label">归因状态 <button class="select">全部⌄</button></span><span class="toolbar-label">订阅状态 <button class="select">全部⌄</button></span><span class="toolbar-label">上线阶段 <button class="select">全部⌄</button></span><span class="toolbar-label">CSM <button class="select">全部⌄</button></span><button class="btn" data-action="toast">批量归因历史</button>`;
   ['salesReasonFilter','purchaseReasonFilter'].forEach(id => { const node = document.getElementById(id); if (node) node.innerHTML = reasonFilter; });
-  const reasonMetrics = (id, values) => { const node = document.getElementById(id); if (node) node.innerHTML = values.map(([label,value,sub]) => `<div class="reason-metric"><span>${label}</span><b>${value}</b><small>${sub}</small></div>`).join(''); };
-  reasonMetrics('salesReasonMetrics', [['问题案例数','286','商品识别率 <70%（去重）'],['已归因案例数','231','80.8%'],['待归因案例数','55','19.2%'],['原因种类','12','系统有效标签'],['原因出现总次数','354','多标签分别计数'],['平均商品识别率','61.8%','问题案例范围']]);
-  reasonMetrics('purchaseReasonMetrics', [['问题案例数','38','商品识别率 <70%（去重）'],['已归因案例数','29','76.3%'],['待归因案例数','9','23.7%'],['原因种类','8','系统有效标签'],['原因出现总次数','47','多标签分别计数'],['平均商品识别率','54.2%','问题案例范围']]);
-
-  const barChart = (id, rows) => { const node = document.getElementById(id); if (node) node.innerHTML = rows.map(([label,value,total]) => `<div class="bar-row"><span>${label}</span><div><i style="width:${value}%"></i></div><b>${total}</b><small>${value}%</small></div>`).join(''); };
-  barChart('salesReasonBars', [['图片模糊',78,96],['商品别名未匹配',62,76],['手写覆盖',49,61],['表头结构复杂',38,47],['单位表达不规范',29,36]]);
-  barChart('purchaseReasonBars', [['数量手写',82,14],['图片模糊',65,11],['表格合并单元格',41,7],['商品别名未匹配',29,5],['其他',18,3]]);
-
-  const trendSvg = (values, color = '#1677ff', suffix = '次') => {
-    const points = values.map((value, index) => `${28 + index * 58},${112 - value}`).join(' ');
-    return `<svg viewBox="0 0 390 145" role="img" aria-label="趋势图"><line x1="28" y1="112" x2="378" y2="112" class="axis"/><line x1="28" y1="18" x2="28" y2="112" class="axis"/><polyline points="${points}" fill="none" stroke="${color}" stroke-width="3"/><g class="trend-points">${values.map((value,index) => `<circle cx="${28 + index * 58}" cy="${112 - value}" r="4" fill="${color}"/><text x="${28 + index * 58}" y="132">${index + 1}日</text><title>${value}${suffix}</title>`).join('')}</g></svg>`;
+  const reasonMetricHelp = {
+    '问题案例数':'商品识别率低于 70% 的案例数，按案例去重。',
+    '已归因案例数':'已经由 AI 或人工确认至少一个有效原因标签的案例数。',
+    '待归因案例数':'尚未确认有效原因标签的案例数。',
+    '原因种类':'当前启用且在筛选范围内出现过的系统原因标签数。',
+    '原因出现总次数':'一条案例包含多个原因标签时，每个标签分别计数。',
+    '平均商品识别率':'仅统计当前筛选范围内的问题案例。'
   };
-  $('#salesReasonTrend').innerHTML = trendSvg([38,52,47,71,65,58,76]);
-  $('#salesRecognitionTrend').innerHTML = trendSvg([55,58,60,57,64,68,62], '#52c41a', '%');
-  $('#purchaseReasonTrend').innerHTML = trendSvg([18,25,20,34,27,42,38], '#722ed1');
-  $('#purchaseRecognitionTrend').innerHTML = trendSvg([42,48,45,51,56,58,54], '#52c41a', '%');
+  const reasonMetrics = (id, values) => { const node = document.getElementById(id); if (node) node.innerHTML = values.map(([label,value,sub]) => `<div class="reason-metric"><span class="reason-metric-label">${label}${helpTip(reasonMetricHelp[label], `查看${label}说明`)}</span><b>${value}</b>${sub ? `<small>${sub}</small>` : ''}</div>`).join(''); };
+  reasonMetrics('salesReasonMetrics', [['问题案例数','286',''],['已归因案例数','231','80.8%'],['待归因案例数','55','19.2%'],['原因种类','12',''],['原因出现总次数','354',''],['平均商品识别率','61.8%','']]);
+  reasonMetrics('purchaseReasonMetrics', [['问题案例数','38',''],['已归因案例数','29','76.3%'],['待归因案例数','9','23.7%'],['原因种类','8',''],['原因出现总次数','47',''],['平均商品识别率','54.2%','']]);
+
+  const barChart = (id, rows, group = '') => {
+    const node = document.getElementById(id);
+    if (!node) return;
+    node.innerHTML = rows.map(([label,value,total]) => {
+      const inner = `<span class="bar-label">${label}</span><div class="bar-track"><i style="width:${value}%"></i></div><b>${total}</b><small>${value}%</small>${group ? '<em>›</em>' : ''}`;
+      return group
+        ? `<button class="bar-row reason-bar" data-action="reason-drill" data-reason-group="${group}" data-reason="${label}" data-total="${total}" aria-label="查看${label}对应租户情况">${inner}</button>`
+        : `<div class="bar-row">${inner}</div>`;
+    }).join('');
+  };
+  barChart('salesReasonBars', [['图片模糊',78,96],['商品别名未匹配',62,76],['手写覆盖',49,61],['表头结构复杂',38,47],['单位表达不规范',29,36]], 'sales');
+  barChart('purchaseReasonBars', [['数量手写',82,14],['图片模糊',65,11],['表格合并单元格',41,7],['商品别名未匹配',29,5],['其他',18,3]], 'purchase');
+
+  const trendDates = ['08/29','08/30','08/31','09/01','09/02','09/03','09/04'];
+  const smoothTrendChart = (id, values, { color = '#1677ff', suffix = '次', min: fixedMin, max: fixedMax, target = null } = {}) => {
+    const plotWidth = 1000, plotHeight = 180;
+    let min = fixedMin ?? Math.max(0, Math.floor((Math.min(...values) - 8) / 10) * 10);
+    let max = fixedMax ?? Math.ceil((Math.max(...values) + 8) / 10) * 10;
+    if (max - min < 20) max = min + 20;
+    const y = value => plotHeight - ((value - min) / (max - min)) * plotHeight;
+    const points = values.map((value,index) => ({ x:index * plotWidth / (values.length - 1), y:y(value), value }));
+    const linePath = points.reduce((path,point,index) => {
+      if (!index) return `M ${point.x} ${point.y}`;
+      const previous = points[index - 1];
+      const middle = (previous.x + point.x) / 2;
+      return `${path} C ${middle} ${previous.y}, ${middle} ${point.y}, ${point.x} ${point.y}`;
+    }, '');
+    const gradientId = `${id}-gradient`;
+    const yLabels = Array.from({length:5}, (_,index) => max - ((max - min) / 4) * index);
+    const grids = yLabels.map((_,index) => `<line x1="0" y1="${index * plotHeight / 4}" x2="${plotWidth}" y2="${index * plotHeight / 4}" class="chart-grid-line"/>`).join('');
+    const targetLine = target != null && target >= min && target <= max
+      ? `<line x1="0" y1="${y(target)}" x2="${plotWidth}" y2="${y(target)}" class="target-line"/>`
+      : '';
+    const dots = points.map((point,index) => `<button class="chart-dot" style="--dot-x:${index * 100 / (values.length - 1)}%;--dot-y:${point.y * 100 / plotHeight}%;--dot-color:${color}" data-tip="${trendDates[index]}　${point.value}${suffix}" aria-label="${trendDates[index]} ${point.value}${suffix}"></button>`).join('');
+    const targetLabel = targetLine ? `<span class="chart-reference" style="top:${y(target) * 100 / plotHeight}%">目标 ${target}${suffix}</span>` : '';
+    return `<div class="responsive-trend"><div class="chart-y-axis">${yLabels.map(value => `<span>${Math.round(value)}${suffix === '%' ? '%' : ''}</span>`).join('')}</div><div class="chart-main"><div class="chart-plot">${targetLabel}<svg viewBox="0 0 ${plotWidth} ${plotHeight}" preserveAspectRatio="none" role="img" aria-label="近七日趋势图"><defs><linearGradient id="${gradientId}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${color}" stop-opacity=".28"/><stop offset="1" stop-color="${color}" stop-opacity=".025"/></linearGradient></defs>${grids}${targetLine}<path d="${linePath} L ${plotWidth} ${plotHeight} L 0 ${plotHeight} Z" fill="url(#${gradientId})"/><path d="${linePath}" fill="none" stroke="${color}" stroke-width="5" vector-effect="non-scaling-stroke" stroke-linecap="round"/></svg>${dots}</div><div class="chart-x-axis">${trendDates.map(date => `<span>${date}</span>`).join('')}</div></div></div>`;
+  };
+  $('#salesReasonTrend').innerHTML = smoothTrendChart('sales-reason', [38,52,47,71,65,58,76], { color:'#3d87f5', min:20, max:80 });
+  $('#purchaseReasonTrend').innerHTML = smoothTrendChart('purchase-reason', [18,25,20,34,27,42,38], { color:'#6f5ce7', min:10, max:50 });
 
   fillRows('salesReasonTenantRows', [
     ['1','<button class="link-button" data-action="tenant-drill" data-tenant="四川箫丰林商贸有限公司">四川箫丰林商贸有限公司</button>','42',tag('图片模糊','purple'),'77.1%','58.7%','<button class="table-action" data-action="tenant-drill" data-tenant="四川箫丰林商贸有限公司">下钻分析</button>'],
@@ -247,8 +355,69 @@
     clearTimeout(showToast.timer);
     showToast.timer = setTimeout(() => node.classList.remove('show'), 2200);
   }
+  const globalHelpTooltip = $('#globalHelpTooltip');
+  let activeHelpTarget = null;
+  function showHelpTooltip(target) {
+    if (!target?.dataset.help) return;
+    activeHelpTarget = target;
+    globalHelpTooltip.textContent = target.dataset.help;
+    globalHelpTooltip.hidden = false;
+    const rect = target.getBoundingClientRect();
+    const tipRect = globalHelpTooltip.getBoundingClientRect();
+    let top = rect.bottom + 9;
+    const placeAbove = top + tipRect.height > window.innerHeight - 10;
+    if (placeAbove) top = rect.top - tipRect.height - 9;
+    globalHelpTooltip.classList.toggle('above', placeAbove);
+    const left = Math.max(10, Math.min(window.innerWidth - tipRect.width - 10, rect.left + rect.width / 2 - tipRect.width / 2));
+    globalHelpTooltip.style.top = `${top}px`;
+    globalHelpTooltip.style.left = `${left}px`;
+    globalHelpTooltip.style.setProperty('--help-arrow-left', `${Math.max(9, Math.min(tipRect.width - 9, rect.left + rect.width / 2 - left))}px`);
+  }
+  function hideHelpTooltip() {
+    activeHelpTarget = null;
+    globalHelpTooltip.hidden = true;
+  }
+  document.addEventListener('mouseover', event => {
+    const target = event.target.closest('.field-help');
+    if (target) showHelpTooltip(target);
+  });
+  document.addEventListener('mouseout', event => {
+    const target = event.target.closest('.field-help');
+    if (target && !target.contains(event.relatedTarget)) hideHelpTooltip();
+  });
+  document.addEventListener('focusin', event => {
+    const target = event.target.closest('.field-help');
+    if (target) showHelpTooltip(target);
+  });
+  document.addEventListener('focusout', event => {
+    if (event.target.closest('.field-help')) hideHelpTooltip();
+  });
+  document.addEventListener('click', event => {
+    const target = event.target.closest('.field-help');
+    if (!target) return;
+    event.preventDefault();
+    event.stopPropagation();
+    if (activeHelpTarget === target && !globalHelpTooltip.hidden) hideHelpTooltip();
+    else showHelpTooltip(target);
+  }, true);
+  document.addEventListener('keydown', event => {
+    const target = event.target.closest('.field-help');
+    if (target && (event.key === 'Enter' || event.key === ' ')) {
+      event.preventDefault();
+      if (activeHelpTarget === target && !globalHelpTooltip.hidden) hideHelpTooltip();
+      else showHelpTooltip(target);
+    } else if (event.key === 'Escape' && !globalHelpTooltip.hidden) hideHelpTooltip();
+  });
+  window.addEventListener('resize', hideHelpTooltip);
+  $('.workspace').addEventListener('scroll', hideHelpTooltip, true);
   function openDrawer(drawer) {
     $('#drawerMask').hidden = false;
+    $$('.detail-drawer').forEach(item => {
+      if (item !== drawer) {
+        item.classList.remove('open');
+        item.setAttribute('aria-hidden', 'true');
+      }
+    });
     drawer.classList.add('open');
     drawer.setAttribute('aria-hidden', 'false');
   }
@@ -278,6 +447,147 @@
     fillRows('tenantCaseRows', (cases.length ? cases : caseData.sales.slice(0,2)).map(item => [item.time, `<button class="type-tag" data-action="preview" data-case-id="${item.id}">${item.type}</button>`, rate(item.product), labelTags(item.labels), tag(item.status, item.state === 'done' ? 'green' : 'blue')]));
     openDrawer($('#tenantDrawer'));
   }
+
+  const reasonTenantData = {
+    sales: {
+      '图片模糊': [
+        ['四川箫丰林商贸有限公司',42,'图片订单 81%',58.7,'晚间拍照偏暗，近 3 日持续高发'],
+        ['深圳市湘鲜鲜农业科技有限公司',31,'图片订单 92%',60.4,'手写单据清晰度波动，今日新增 8 例'],
+        ['贵州省绿色农产品',23,'图片订单 88%',55.2,'首次试用批次集中出现低分辨率图片']
+      ],
+      '商品别名未匹配': [
+        ['深圳市湘鲜鲜农业科技有限公司',28,'文本 / 图片',62.1,'本地简称集中在叶菜与冻品，待补充词库'],
+        ['灵武市德利鲜蔬菜配送',24,'文本订单 73%',64.8,'客户自定义品名较多，较昨日下降 3 例'],
+        ['重庆桉禾萍',18,'群聊文本',66.2,'新客户群使用地方别名，连续 2 日发生']
+      ],
+      '手写覆盖': [
+        ['深圳市湘鲜鲜农业科技有限公司',26,'图片订单 95%',59.6,'数量栏被二次涂改，晚间订单最集中'],
+        ['四川箫丰林商贸有限公司',21,'图片订单 77%',61.2,'手写内容覆盖印刷商品名'],
+        ['海南鲜配达',14,'图片订单 86%',57.9,'试用期模板不统一，今日新增 5 例']
+      ],
+      '表头结构复杂': [
+        ['灵武市德利鲜蔬菜配送',19,'Excel 文件',64.8,'多级合并表头导致列映射不稳定'],
+        ['江苏聚宝生态农业发展有限公司',16,'Excel 文件',61.5,'门店与日期采用双层分组表头'],
+        ['温州萝卜伯电子商务有限公司',12,'PDF / Excel',63.7,'跨页表头重复，近 7 日保持稳定']
+      ],
+      '单位表达不规范': [
+        ['重庆桉禾萍',14,'群聊文本',66.2,'斤、件、袋混写，缺少稳定换算关系'],
+        ['马咀优选生鲜供应链',12,'文本 / 图片',63.4,'数量与单位连写，今日较昨日增加'],
+        ['浙江菜妞',10,'Excel 文件',65.1,'单位列存在空值与简称']
+      ]
+    },
+    purchase: {
+      '数量手写': [
+        ['宁波市奉化锦屏绿苑配菜有限公司',7,'图片订单 100%',33.3,'数量栏手写且多次涂改，当前需优先跟进'],
+        ['赤峰嘉航蔬菜有限责任公司',4,'图片订单 100%',48.5,'小数点与单位连写，今日新增 2 例'],
+        ['广东华记蔬菜有限公司（净菜）',3,'图片订单',51.6,'首次采购模板，手写笔迹差异较大']
+      ],
+      '图片模糊': [
+        ['赤峰嘉航蔬菜有限责任公司',5,'图片订单 100%',58.3,'群内压缩图较多，早间订单最集中'],
+        ['宁波市奉化锦屏绿苑配菜有限公司',4,'图片订单 100%',46.7,'拍摄角度倾斜并伴随反光'],
+        ['广东华记蔬菜有限公司（净菜）',2,'图片订单',55.1,'试用阶段图片分辨率不稳定']
+      ],
+      '表格合并单元格': [
+        ['赤峰嘉航蔬菜有限责任公司',3,'Excel 文件',56.8,'门店数量列使用横向合并单元格'],
+        ['宁波市奉化锦屏绿苑配菜有限公司',2,'Excel 文件',49.2,'品类标题与商品行混合合并'],
+        ['广东华记蔬菜有限公司（净菜）',2,'Excel 文件',53.6,'跨区域采购模板尚未完成适配']
+      ],
+      '商品别名未匹配': [
+        ['赤峰嘉航蔬菜有限责任公司',2,'文本 / 图片',61.8,'供应商简称未进入商品别名库'],
+        ['宁波市奉化锦屏绿苑配菜有限公司',2,'图片订单',50.4,'地方品名与系统标准品名存在差异'],
+        ['广东华记蔬菜有限公司（净菜）',1,'Excel 文件',57.3,'净菜规格被写入商品名称']
+      ],
+      '其他': [
+        ['宁波市奉化锦屏绿苑配菜有限公司',1,'图片订单',52.3,'图片边缘裁切，部分商品行缺失'],
+        ['赤峰嘉航蔬菜有限责任公司',1,'Excel 文件',60.7,'文件内存在隐藏列与空白分页'],
+        ['广东华记蔬菜有限公司（净菜）',1,'文本订单',58.1,'原始信息不足，等待人工复核']
+      ]
+    }
+  };
+  function openReason(group, reason, total) {
+    const rows = reasonTenantData[group]?.[reason] || [];
+    const averageRate = rows.length ? rows.reduce((sum,row) => sum + row[3], 0) / rows.length : 0;
+    $('#reasonDrawerTitle').textContent = `${reason} · 对应租户情况`;
+    $('#reasonDrawerMeta').textContent = group === 'sales' ? '销售分析' : '采购分析';
+    $('#reasonDrawerKpis').innerHTML = metrics([
+      ['原因案例数',String(total || rows.reduce((sum,row) => sum + row[1], 0))],
+      ['重点租户',String(rows.length),'当前展示'],
+      ['平均识别率',`${averageRate.toFixed(1)}%`,'对应租户均值'],
+      ['最新发生','今天 10:46','持续监测中']
+    ]);
+    fillRows('reasonTenantRows', rows.map(row => [
+      `<button class="link-button" data-action="tenant-drill" data-tenant="${row[0]}">${row[0]}</button>`,
+      `<b>${row[1]}</b>`, row[2], rate(row[3]), `<span class="situation-text">${row[4]}</span>`,
+      `<button class="table-action" data-action="tenant-drill" data-tenant="${row[0]}">查看租户</button>`
+    ]));
+    $$('.reason-bar').forEach(button => button.classList.toggle('selected', button.dataset.reasonGroup === group && button.dataset.reason === reason));
+    openDrawer($('#reasonDrawer'));
+  }
+
+  const operationOverview = items => `<div class="operation-overview">${items.map(([label,value,tone = '']) => `<div><span>${label}</span><b class="${tone}">${value}</b></div>`).join('')}</div>`;
+  const operationField = (label, control, hint = '') => `<label class="operation-field"><span>${label}${hint ? helpTip(hint, `查看${label}说明`) : ''}</span>${control}</label>`;
+  function getDashboardOperation(operation, tenant, alertType, label) {
+    const common = `<div class="operation-context"><span>当前租户</span><b>${tenant}</b><em>${alertType}</em></div>`;
+    const trialState = alertType === '试用已经到期' ? ['已到期 2 天','red-text'] : alertType === '试用未使用' ? ['尚未产生有效订单','gold'] : ['剩余 3 小时','gold'];
+    const quotaEmpty = alertType.includes('耗尽');
+    const quotaValues = quotaEmpty ? ['100','100','0'] : ['10,000','9,991','9'];
+    if (operation === 'convert-tenant') return {
+      title:'转为正式租户', confirm:'确认转正式', success:`${tenant} 已提交转正式`,
+      html:`${common}${operationOverview([['当前阶段','试用中'],['试用情况',trialState[0],trialState[1]],['当前剩余额度',quotaEmpty ? '0' : '26',quotaEmpty ? 'red-text' : '']])}<section class="operation-section"><h3>正式租户配置</h3><div class="operation-form-grid">${operationField('生效日期','<input class="operation-input" type="date" value="2026-09-05">')}${operationField('合同方案','<select class="operation-input"><option>标准版 · 年度</option><option>标准版 · 月度</option><option>企业版 · 年度</option></select>')}${operationField('初始正式额度','<input class="operation-input" type="number" value="50000">','转正式后立即生效')}${operationField('负责人','<select class="operation-input"><option>付星星</option><option>林灿飞</option><option>肖紫薇</option></select>')}</div>${operationField('操作说明','<textarea class="operation-textarea" placeholder="填写转正式原因或客户确认信息">客户已确认正式使用，按标准方案开通</textarea>')}</section><div class="operation-notice">确认后将结束试用状态，并按照上述额度与生效日期创建正式租户配置。</div>`
+    };
+    if (operation === 'adjust-quota') return {
+      title:'调整租户额度', confirm:'确认调整', success:`${tenant} 的额度调整已提交`,
+      html:`${common}${operationOverview([['当前总额度',quotaValues[0]],['已使用',quotaValues[1]],['剩余额度',quotaValues[2],'red-text']])}<section class="operation-section"><h3>额度调整</h3><div class="operation-mode"><button class="active" data-action="operation-mode">增加额度</button><button data-action="operation-mode">扣减额度</button></div><div class="quick-values"><span>快捷选择</span><button data-action="operation-quick" data-value="1000">+1,000</button><button class="active" data-action="operation-quick" data-value="5000">+5,000</button><button data-action="operation-quick" data-value="10000">+10,000</button></div><div class="operation-form-grid">${operationField('调整数量','<input class="operation-input" id="quotaAdjustValue" type="number" value="5000">')}${operationField('生效时间','<select class="operation-input"><option>立即生效</option><option>次日 00:00 生效</option></select>')}</div>${operationField('调整原因','<textarea class="operation-textarea" placeholder="请输入额度调整原因">运营异常处理</textarea>')}</section><div class="operation-result-preview"><span>调整后总额度</span><b>${quotaEmpty ? '5,100' : '15,000'}</b><small>额度调整后立即恢复录单能力</small></div>`
+    };
+    if (operation === 'extend-trial') return {
+      title:'调整试用期', confirm:'保存试用期', success:`${tenant} 的试用期已更新`,
+      html:`${common}${operationOverview([['试用开始','2026-08-29'],['原到期时间','2026-09-05 18:00'],['当前状态','即将到期','gold']])}<section class="operation-section"><h3>新的试用周期</h3><div class="quick-values"><span>延长天数</span><button data-action="operation-trial-day" data-value="3">3 天</button><button class="active" data-action="operation-trial-day" data-value="7">7 天</button><button data-action="operation-trial-day" data-value="14">14 天</button><button data-action="operation-trial-day" data-value="30">30 天</button></div><div class="operation-form-grid">${operationField('延长天数','<input class="operation-input" id="trialDayValue" type="number" value="7">')}${operationField('新到期时间','<input class="operation-input" type="datetime-local" value="2026-09-12T18:00">')}</div>${operationField('调整原因','<textarea class="operation-textarea">客户仍在验证识别效果，延长试用观察周期</textarea>')}</section>`
+    };
+    if (operation === 'view-contract') return {
+      title:'合同与应收详情', confirm:'进入合同管理', success:'已进入合同管理',
+      html:`${common}${operationOverview([['合同状态','执行中'],['合同金额','¥8,000'],['待收金额','¥8,000','gold']])}<section class="operation-section"><div class="operation-section-head"><h3>最近合同</h3><span class="tag orange">存在应收</span></div><table class="mini-table"><tr><th>合同编号</th><th>有效期</th><th>回款状态</th></tr><tr><td>HT-2026-0822</td><td>2026-08-22 至 2027-08-21</td><td><span class="gold">未收款</span></td></tr></table></section><div class="operation-notice warning">合同已进入续费提醒周期，请在到期前完成回款确认。</div>`
+    };
+    if (operation === 'view-cases') return {
+      title:'关联问题案例', confirm:'进入案例分析', success:'已进入案例分析',
+      html:`${common}${operationOverview([['关联案例','6'],['待归因','2','gold'],['平均识别率','61.3%','red-text']])}<section class="operation-section"><h3>最近案例</h3><table class="mini-table"><tr><th>提交时间</th><th>内容类型</th><th>原因标签</th><th>识别率</th></tr><tr><td>09-04 10:31</td><td>图片</td><td>图片模糊</td><td class="red-text">56.8%</td></tr><tr><td>09-04 09:48</td><td>文件</td><td>表头结构复杂</td><td class="gold">68.2%</td></tr><tr><td>09-03 18:20</td><td>图片</td><td>待归因</td><td class="red-text">58.9%</td></tr></table></section>`
+    };
+    if (operation === 'view-groups') return {
+      title:'关联群聊情况', confirm:'进入群聊管理', success:'已打开群聊管理入口',
+      html:`${common}${operationOverview([['已绑定群聊','51'],['近 30 天在用','9'],['群使用率','17.6%','red-text']])}<section class="operation-section"><h3>低活跃群聊</h3><div class="group-status-list"><div><b>合家康智能接单 1 群</b><span>最近下单：8 天前</span><em class="tag orange">低活跃</em></div><div><b>采购对接 3 群</b><span>最近下单：12 天前</span><em class="tag red">长期未使用</em></div><div><b>测试录单群</b><span>最近下单：今天 09:42</span><em class="tag green">正常</em></div></div></section>`
+    };
+    if (operation === 'channel-config') return {
+      title:'信道配置', confirm:'进入信道管理', success:'已进入信道管理',
+      html:`${common}${operationOverview([['当前状态','离线','red-text'],['信道类型','Bridge'],['最后在线','18 小时前']])}<section class="operation-section"><h3>连接信息</h3><div class="operation-form-grid">${operationField('信道名称','<input class="operation-input" value="测试桥接1318">')}${operationField('来源平台','<select class="operation-input"><option>Agent 平台</option></select>')}${operationField('自动绑定','<select class="operation-input"><option>关闭</option><option>开启</option></select>')}${operationField('通知群','<select class="operation-input"><option>运营通知群</option></select>')}</div></section><div class="operation-notice warning">最近一次心跳连接失败，请检查 Bridge 服务与 API Key。</div>`
+    };
+    if (operation === 'view-sync-error') return {
+      title:'同步错误详情', confirm:'重新同步', success:`${tenant} 已重新提交同步任务`,
+      html:`${common}<div class="error-detail"><div><span>错误码</span><code>FIELD_VALIDATION_FAILED</code></div><h3>订单同步返回字段校验错误</h3><p>字段 <code>station_id</code> 与当前租户配置不一致，最近一次成功同步时间为 2026-09-03 22:14。</p><pre>station_id: expected T48275\nreceived: T48257\nsource: order_sync_worker</pre></div><section class="operation-section"><h3>处理建议</h3><ol class="operation-steps"><li>核对租户 Station 配置</li><li>确认上游平台授权仍然有效</li><li>修正后重新提交同步任务</li></ol></section>`
+    };
+    if (operation === 'retry-sync') return {
+      title:label || '重新同步', confirm:'开始同步', success:`${tenant} 已进入同步队列`,
+      html:`${common}${operationOverview([['上次同步','失败','red-text'],['失败时间','今天 10:44'],['待同步订单','18']])}<section class="operation-section"><h3>同步范围</h3><div class="operation-form-grid">${operationField('时间范围','<select class="operation-input"><option>从上次成功位置继续</option><option>重新同步今日数据</option><option>自定义范围</option></select>')}${operationField('冲突处理','<select class="operation-input"><option>跳过已成功订单</option><option>覆盖已有结果</option></select>')}</div></section><div class="operation-notice">提交后任务将在后台运行，可在本页查看最新同步状态。</div>`
+    };
+    if (operation === 'notification-config') return {
+      title:'修改通知配置', confirm:'保存配置', success:`${tenant} 的通知配置已保存`,
+      html:`${common}<section class="operation-section"><h3>异常通知</h3><div class="operation-form-grid">${operationField('通知群','<select class="operation-input"><option>请选择通知群</option><option>运营通知群</option><option>项目交付群</option></select>')}${operationField('通知方式','<select class="operation-input"><option>群消息 + 系统消息</option><option>仅系统消息</option></select>')}${operationField('通知频率','<select class="operation-input"><option>首次触发时通知</option><option>每 6 小时提醒</option></select>')}${operationField('接收负责人','<select class="operation-input"><option>实施-付星星</option><option>CSM-林灿飞</option></select>')}</div></section><div class="operation-notice warning">当前未配置有效通知群，异常提醒只能在系统内查看。</div>`
+    };
+    if (operation === 'tenant-config') return {
+      title:'编辑租户配置', confirm:'保存配置', success:`${tenant} 的对接配置已保存`,
+      html:`${common}<section class="operation-section"><h3>平台对接配置</h3><div class="operation-form-grid">${operationField('Station','<input class="operation-input" placeholder="请输入 Station">','必填，对接平台的站点标识')}${operationField('Group','<input class="operation-input" value="200991">')}${operationField('对接平台','<select class="operation-input"><option>观麦 SaaS</option><option>第三方 ERP</option></select>')}${operationField('同步状态','<select class="operation-input"><option>启用</option><option>停用</option></select>')}</div></section><div class="operation-notice warning">Station 缺失会导致订单同步和租户数据归属失败。</div>`
+    };
+    return { title:label || '快捷操作', confirm:'确认', success:'操作已提交', html:`${common}<div class="operation-empty">请确认是否执行“${label || '当前操作'}”。</div>` };
+  }
+  function openDashboardOperation(operation, tenant, alertType, label) {
+    const config = getDashboardOperation(operation, tenant, alertType, label);
+    $('#operationDrawerTitle').textContent = config.title;
+    $('#operationDrawerMeta').textContent = `${tenant} · 数据看板快捷操作`;
+    $('#operationDrawerBody').innerHTML = config.html;
+    const confirm = $('#operationConfirm');
+    confirm.textContent = config.confirm;
+    confirm.dataset.operation = operation;
+    confirm.dataset.success = config.success;
+    openDrawer($('#operationDrawer'));
+  }
   function renderTagPicker() {
     const query = ($('#tagSearch').value || '').trim();
     $('#tagPicker').innerHTML = presetTags.filter(label => !query || label.includes(query)).map(label => `<button class="tag-choice${draftTags.includes(label) ? ' selected' : ''}" data-pick-tag="${label}">${label}<span>${draftTags.includes(label) ? '✓' : '+'}</span></button>`).join('');
@@ -305,18 +615,10 @@
       activateTabs(container, button.dataset.target);
       const group = container.dataset.tabs;
       if (group === 'tenant') location.hash = `tenants/${button.dataset.target}`;
-      else if (group === 'dashboard') location.hash = `tenants/dashboard/${button.dataset.target}`;
+      else if (group === 'dashboard') location.hash = `dashboard/${button.dataset.target}`;
       else if (group === 'system') location.hash = `system/${button.dataset.target}`;
       else if (group === 'sales-analysis') location.hash = `stats/sales/${button.dataset.target}`;
       else if (group === 'purchase-analysis') location.hash = `stats/purchase/${button.dataset.target}`;
-    }));
-  });
-
-  $$('.case-section-tabs').forEach(container => {
-    $$('[data-case-target]', container).forEach(button => button.addEventListener('click', () => {
-      const root = container.closest('.analysis-panel');
-      $$('[data-case-target]', container).forEach(item => item.classList.toggle('active', item === button));
-      $$('.case-section-panel', root).forEach(panel => panel.classList.toggle('active', panel.dataset.casePanel === button.dataset.caseTarget));
     }));
   });
 
@@ -353,6 +655,21 @@
       if (action === 'preview') openPreview(button.dataset.caseId);
       else if (action === 'tag-edit') openTagEditor(button.dataset.caseId);
       else if (action === 'tenant-drill') openTenant(button.dataset.tenant || button.closest('tr')?.querySelector('.tenant-drill')?.dataset.tenant || '租户分析');
+      else if (action === 'reason-drill') openReason(button.dataset.reasonGroup, button.dataset.reason, Number(button.dataset.total));
+      else if (action === 'dashboard-operation') openDashboardOperation(button.dataset.operation, button.dataset.tenant, button.dataset.alertType, button.dataset.label);
+      else if (action === 'operation-mode') {
+        $$('button', button.parentElement).forEach(item => item.classList.toggle('active', item === button));
+      } else if (action === 'operation-quick') {
+        $$('button', button.parentElement).forEach(item => item.classList.toggle('active', item === button));
+        const input = $('#quotaAdjustValue');
+        if (input) input.value = button.dataset.value;
+        const preview = $('.operation-result-preview b');
+        if (preview) preview.textContent = (10000 + Number(button.dataset.value)).toLocaleString('zh-CN');
+      } else if (action === 'operation-trial-day') {
+        $$('button', button.parentElement).forEach(item => item.classList.toggle('active', item === button));
+        const input = $('#trialDayValue');
+        if (input) input.value = button.dataset.value;
+      }
       else if (action === 'rerun') {
         const item = findCase(button.dataset.caseId);
         if (item && item.source !== '人工') { item.status = '归因中'; item.state = 'running'; item.basis = '已重新提交异步归因任务'; renderCases(item.id.startsWith('S-') ? 'sales' : 'purchase'); showToast('已重新提交归因任务'); }
@@ -392,6 +709,25 @@
     closeDrawers();
     showToast('人工归因结果已保存，后续 AI 不会覆盖');
   });
+  $('#operationConfirm').addEventListener('click', event => {
+    const operation = event.currentTarget.dataset.operation;
+    const success = event.currentTarget.dataset.success || '操作已提交';
+    closeDrawers();
+    if (operation === 'view-contract') {
+      showPage('tenants');
+      activateTabs($('[data-tabs="tenant"]'), 'contracts');
+      location.hash = 'tenants/contracts';
+    } else if (operation === 'view-cases') {
+      showPage('stats', 'sales');
+      activateTabs($('[data-tabs="sales-analysis"]'), 'sales-cases');
+      location.hash = 'stats/sales/sales-cases';
+    } else if (operation === 'channel-config') {
+      showPage('system');
+      activateTabs($('.system-tabs'), 'channels');
+      location.hash = 'system/channels';
+    }
+    showToast(success);
+  });
 
   const statsLabels = { sales: '销售分析', purchase: '采购分析', contract: '合同统计', token: 'Token 用量', asr: '语音识别用量' };
   function showPage(page, statsView = 'sales') {
@@ -420,7 +756,11 @@
 
   function syncFromHash() {
     const parts = location.hash.slice(1).split('/');
-    if (parts[0] === 'stats') {
+    if (parts[0] === 'dashboard' || (parts[0] === 'tenants' && parts[1] === 'dashboard')) {
+      showPage('dashboard');
+      const dashboardPanel = parts[0] === 'dashboard' ? parts[1] : parts[2];
+      if (dashboardPanel) activateTabs($('[data-tabs="dashboard"]'), dashboardPanel);
+    } else if (parts[0] === 'stats') {
       const view = ['sales', 'purchase', 'contract', 'token', 'asr'].includes(parts[1]) ? parts[1] : 'sales';
       showPage('stats', view);
       if (parts[2] && (view === 'sales' || view === 'purchase')) activateTabs($(`[data-tabs="${view}-analysis"]`), parts[2]);
@@ -429,10 +769,11 @@
     } else if (parts[0] === 'system') {
       showPage('system');
       if (parts[1]) activateTabs($('.system-tabs'), parts[1]);
-    } else {
+    } else if (parts[0] === 'tenants') {
       showPage('tenants');
       if (parts[1]) activateTabs($('[data-tabs="tenant"]'), parts[1]);
-      if (parts[1] === 'dashboard' && parts[2]) activateTabs($('[data-tabs="dashboard"]'), parts[2]);
+    } else {
+      showPage('dashboard');
     }
   }
 

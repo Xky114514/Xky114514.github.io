@@ -14,6 +14,7 @@
     <symbol id="i-chart" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 16v-4M12 16V7M17 16V9M22 16V4"/></symbol>
     <symbol id="i-setting" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.83 2.83-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6 1.7 1.7 0 0 0-.4 1.1V21H9.6v-.09A1.7 1.7 0 0 0 8.5 19.4a1.7 1.7 0 0 0-1.88.34l-.06.06-2.83-2.83.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-.6-1 1.7 1.7 0 0 0-1.1-.4H3V9.6h.09A1.7 1.7 0 0 0 4.6 8.5a1.7 1.7 0 0 0-.34-1.88l-.06-.06 2.83-2.83.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-.6 1.7 1.7 0 0 0 .4-1.1V3h4v.09A1.7 1.7 0 0 0 15.5 4.6a1.7 1.7 0 0 0 1.88-.34l.06-.06 2.83 2.83-.06.06A1.7 1.7 0 0 0 19.4 9c.12.38.33.72.6 1 .3.3.69.5 1.1.6h.09v4h-.09A1.7 1.7 0 0 0 19.4 15Z"/></symbol>
     <symbol id="i-home" viewBox="0 0 24 24"><path d="m3 11 9-8 9 8"/><path d="M5 10v10h14V10M9 20v-6h6v6"/></symbol>
+    <symbol id="i-dashboard" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 21v-7h7v7M14 17.5h7"/></symbol>
     <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.34 5.66"/><path d="M20 4v7h-7"/></symbol>
     <symbol id="i-wallet" viewBox="0 0 24 24"><path d="M20 7V5a2 2 0 0 0-2-2H5a3 3 0 0 0 0 6h15v12H5a3 3 0 0 1-3-3V6"/><path d="M16 14h2"/></symbol>
     <symbol id="i-file" viewBox="0 0 24 24"><path d="M6 2h8l4 4v16H6Z"/><path d="M14 2v5h5M9 12h6M9 16h6"/></symbol>
@@ -33,7 +34,8 @@
     <aside class="sider">
       <div class="logo">AI</div>
       <nav class="side-nav" aria-label="后台导航">
-        <button class="side-item active" data-page="tenants" data-tip="租户管理"><svg><use href="#i-shop"/></svg></button>
+        <button class="side-item active" data-page="dashboard" data-tip="数据看板"><svg><use href="#i-dashboard"/></svg></button>
+        <button class="side-item" data-page="tenants" data-tip="租户管理"><svg><use href="#i-shop"/></svg></button>
         <button class="side-item" data-page="templates" data-tip="模版库"><svg><use href="#i-book"/></svg></button>
         <div class="stats-wrap">
           <button class="side-item" id="statsButton" data-tip="统计分析"><svg><use href="#i-chart"/></svg></button>
@@ -48,8 +50,40 @@
       <div class="open-tabs"><span class="home-icon"><svg><use href="#i-home"/></svg></span><span class="page-tab" id="pageTab" hidden><b id="pageTabText"></b><i>×</i></span></div>
 
       <main class="workspace">
-        <section class="page active tenant-page" id="page-tenants">
-          <div class="primary-tabs" data-tabs="tenant"><button class="active" data-target="merchant"><svg><use href="#i-shop"/></svg>租户管理</button><button data-target="quota"><svg><use href="#i-wallet"/></svg>额度管理</button><button data-target="contracts"><svg><use href="#i-file"/></svg>合同管理</button><button data-target="dashboard"><svg><use href="#i-bell"/></svg>数据看板</button></div>
+        <section class="page active dashboard-page" id="page-dashboard">
+          <div class="sub-tabs dashboard-tabs" data-tabs="dashboard">
+            <button class="active" data-target="trial-conversion">试用与转化 <span>8</span></button>
+            <button data-target="quota-contract">额度与合同 <span>6</span></button>
+            <button data-target="usage-effect">使用与效果 <span>10</span></button>
+            <button data-target="system-config">系统与配置 <span>6</span></button>
+          </div>
+          <div class="dashboard-toolbar">
+            <div class="toolbar-dates"><button class="active">今日</button><button>近 7 天</button><button>近 30 天</button><button>自定义</button></div>
+            <span class="toolbar-label">优先级 <button class="select">全部⌄</button></span>
+            <span class="toolbar-label">负责人 <button class="select">全部⌄</button></span>
+            <label class="search slim"><svg><use href="#i-search"/></svg><input placeholder="搜索租户 / 异常类型"></label>
+            <span class="dashboard-help-slot"><span class="field-help" tabindex="0" role="button" data-help="仅展示当前仍满足触发条件的异常；异常恢复后会自动从列表移除。" aria-label="查看数据看板口径说明">?</span></span>
+          </div>
+          <div class="sub-panel active" data-panel="trial-conversion">
+            <section class="alert-summary" id="trialSummary"></section>
+            <section class="card alert-card"><div class="card-head"><div class="title-count"><strong>试用与转化异常</strong><span>8 条</span></div></div><div class="table-scroll"><table class="data-table alert-table"><thead><tr><th>优先级</th><th>租户</th><th>异常类型</th><th>当前值</th><th>参考值</th><th>异常说明</th><th>异常时间</th><th>负责人</th><th>操作</th></tr></thead><tbody id="trialAlertRows"></tbody></table></div></section>
+          </div>
+          <div class="sub-panel" data-panel="quota-contract">
+            <section class="alert-summary" id="quotaContractSummary"></section>
+            <section class="card alert-card"><div class="card-head"><div class="title-count"><strong>额度与合同异常</strong><span>6 条</span></div></div><div class="table-scroll"><table class="data-table alert-table"><thead><tr><th>优先级</th><th>租户</th><th>异常类型</th><th>当前值</th><th>参考值</th><th>异常说明</th><th>异常时间</th><th>负责人</th><th>操作</th></tr></thead><tbody id="quotaContractAlertRows"></tbody></table></div></section>
+          </div>
+          <div class="sub-panel" data-panel="usage-effect">
+            <section class="alert-summary" id="usageEffectSummary"></section>
+            <section class="card alert-card"><div class="card-head"><div class="title-count"><strong>使用与效果异常</strong><span>10 条</span></div></div><div class="table-scroll"><table class="data-table alert-table"><thead><tr><th>优先级</th><th>租户</th><th>异常类型</th><th>当前值</th><th>参考值</th><th>异常说明</th><th>异常时间</th><th>负责人</th><th>操作</th></tr></thead><tbody id="usageEffectAlertRows"></tbody></table></div></section>
+          </div>
+          <div class="sub-panel" data-panel="system-config">
+            <section class="alert-summary" id="systemConfigSummary"></section>
+            <section class="card alert-card"><div class="card-head"><div class="title-count"><strong>系统与配置异常</strong><span>6 条</span></div></div><div class="table-scroll"><table class="data-table alert-table"><thead><tr><th>优先级</th><th>租户</th><th>异常类型</th><th>当前状态</th><th>参考值</th><th>错误摘要</th><th>异常时间</th><th>负责人</th><th>操作</th></tr></thead><tbody id="systemConfigAlertRows"></tbody></table></div></section>
+          </div>
+        </section>
+
+        <section class="page tenant-page" id="page-tenants">
+          <div class="primary-tabs" data-tabs="tenant"><button class="active" data-target="merchant"><svg><use href="#i-shop"/></svg>租户管理</button><button data-target="quota"><svg><use href="#i-wallet"/></svg>额度管理</button><button data-target="contracts"><svg><use href="#i-file"/></svg>合同管理</button></div>
 
           <div class="tab-panel active" data-panel="merchant">
             <section class="card tenant-card">
@@ -69,82 +103,51 @@
 
           <div class="tab-panel" data-panel="contracts"><section class="card"><div class="card-head"><div class="inline-title"><strong>合同列表</strong><button class="select extra">按租户筛选⌄</button></div><button class="btn primary"><svg><use href="#i-plus"/></svg>新建合同</button></div><table class="data-table"><thead><tr><th>租户</th><th>类型</th><th>状态</th><th>金额</th><th>已收</th><th>未收</th><th>退款</th><th>签约时间</th><th>销售</th><th>附件</th><th>操作</th></tr></thead><tbody id="contractRows"></tbody></table></section></div>
 
-          <div class="tab-panel" data-panel="dashboard">
-            <div class="sub-tabs dashboard-tabs" data-tabs="dashboard">
-              <button class="active" data-target="trial-conversion">试用与转化 <span>8</span></button>
-              <button data-target="quota-contract">额度与合同 <span>6</span></button>
-              <button data-target="usage-effect">使用与效果 <span>10</span></button>
-              <button data-target="system-config">系统与配置 <span>6</span></button>
-            </div>
-            <div class="dashboard-toolbar">
-              <div class="toolbar-dates"><button class="active">今日</button><button>近 7 天</button><button>近 30 天</button><button>自定义</button></div>
-              <span class="toolbar-label">优先级 <button class="select">全部⌄</button></span>
-              <span class="toolbar-label">负责人 <button class="select">全部⌄</button></span>
-              <label class="search slim"><svg><use href="#i-search"/></svg><input placeholder="搜索租户 / 异常类型"></label>
-            </div>
-            <div class="alert-legend"><span><i class="priority-dot high"></i>高优先级</span><span><i class="priority-dot medium"></i>中优先级</span><span><i class="priority-dot low"></i>低优先级</span><em>仅展示当前仍满足触发条件的异常；恢复后自动移除</em></div>
-            <div class="sub-panel active" data-panel="trial-conversion">
-              <section class="alert-summary" id="trialSummary"></section>
-              <section class="card alert-card"><div class="card-head"><div class="title-count"><strong>试用与转化异常</strong><span>8 条</span></div></div><div class="table-scroll"><table class="data-table alert-table"><thead><tr><th>优先级</th><th>租户</th><th>异常类型</th><th>当前值</th><th>参考值</th><th>异常说明</th><th>异常时间</th><th>负责人</th><th>操作</th></tr></thead><tbody id="trialAlertRows"></tbody></table></div></section>
-            </div>
-            <div class="sub-panel" data-panel="quota-contract">
-              <section class="alert-summary" id="quotaContractSummary"></section>
-              <section class="card alert-card"><div class="card-head"><div class="title-count"><strong>额度与合同异常</strong><span>6 条</span></div></div><div class="table-scroll"><table class="data-table alert-table"><thead><tr><th>优先级</th><th>租户</th><th>异常类型</th><th>当前值</th><th>参考值</th><th>异常说明</th><th>异常时间</th><th>负责人</th><th>操作</th></tr></thead><tbody id="quotaContractAlertRows"></tbody></table></div></section>
-            </div>
-            <div class="sub-panel" data-panel="usage-effect">
-              <section class="alert-summary" id="usageEffectSummary"></section>
-              <section class="card alert-card"><div class="card-head"><div class="title-count"><strong>使用与效果异常</strong><span>10 条</span></div></div><div class="table-scroll"><table class="data-table alert-table"><thead><tr><th>优先级</th><th>租户</th><th>异常类型</th><th>当前值</th><th>参考值</th><th>异常说明</th><th>异常时间</th><th>负责人</th><th>操作</th></tr></thead><tbody id="usageEffectAlertRows"></tbody></table></div></section>
-            </div>
-            <div class="sub-panel" data-panel="system-config">
-              <section class="alert-summary" id="systemConfigSummary"></section>
-              <section class="card alert-card"><div class="card-head"><div class="title-count"><strong>系统与配置异常</strong><span>6 条</span></div></div><div class="table-scroll"><table class="data-table alert-table"><thead><tr><th>优先级</th><th>租户</th><th>异常类型</th><th>当前状态</th><th>参考值</th><th>错误摘要</th><th>异常时间</th><th>负责人</th><th>操作</th></tr></thead><tbody id="systemConfigAlertRows"></tbody></table></div></section>
-            </div>
-          </div>
         </section>
 
         <section class="page content-page" id="page-templates"><section class="card template-card"><div class="template-head"><div>总模版 <b>20</b></div><div><button class="select extra">全部类型⌄</button><button class="select extra">全部分类⌄</button><button class="btn primary">新建模版</button></div></div><table class="data-table template-table"><thead><tr><th>模版名称</th><th>类型</th><th>分类</th><th>描述</th><th>内容预览</th><th>状态</th><th>更新时间</th><th>操作</th></tr></thead><tbody id="templateRows"></tbody></table></section></section>
 
         <section class="page stats-page" id="page-stats">
           <div class="stats-view active" data-stats-view="sales">
-            <div class="analysis-tabs" data-tabs="sales-analysis"><button class="active" data-target="sales-summary">▥ 统计</button><button data-target="sales-cases">♙ 案例分析</button></div>
+            <div class="analysis-tabs" data-tabs="sales-analysis"><button class="active" data-target="sales-summary">▥ 统计</button><button data-target="sales-cases">♙ 案例分析</button><button data-target="sales-reasons">⌁ 原因分析</button></div>
             <div class="analysis-panel active" data-panel="sales-summary">
               <div class="stats-toolbar" id="salesToolbar"></div>
               <section class="card summary-card"><div class="section-title">全局统计 <small>（2026-09-04）</small></div><div class="metric-row" id="salesMetrics"></div></section>
               <section class="card ranking-card"><div class="card-head"><div class="section-title">租户排行 <small>（2026-09-04）</small></div><label class="search slim"><input placeholder="搜索租户名"></label></div><div class="table-scroll"><table class="data-table compact rank-table"><thead><tr><th>#</th><th>租户</th><th>订阅状态</th><th>CSM</th><th>提交订单数</th><th>下单群聊数</th><th>下单客户数</th><th>提交任务数</th><th>提交比例</th><th>提交商品数</th><th>商品识别率</th><th>数量识别率</th><th>图片订单数</th><th><button class="sort-link" data-sort-table="sales" data-sort-key="imageShare">图片占比 ⇅</button></th><th>备注识别率</th></tr></thead><tbody id="salesRankRows"></tbody></table></div></section>
             </div>
             <div class="analysis-panel" data-panel="sales-cases">
-              <div class="case-section-tabs" data-case-group="sales"><button class="active" data-case-target="sales-case-list">案例列表</button><button data-case-target="sales-reason-analysis">原因分析</button></div>
-              <div class="case-section-panel active" data-case-panel="sales-case-list">
-                <div class="case-toolbar" id="salesCaseToolbar"></div>
-                <section class="card"><div class="case-list-head"><strong>问题案例列表</strong><button class="select huge">按租户筛选（默认全部）⌄</button><button class="select wide">归因状态⌄</button><label class="search medium"><input placeholder="任务编码（全匹配）"><button><svg><use href="#i-search"/></svg></button></label></div><div class="table-scroll"><table class="data-table case-table"><thead><tr><th>提交时间</th><th>租户</th><th>群聊 / 客户</th><th>类型</th><th>商品识别率</th><th>数量识别率</th><th>原因标签</th><th>归因状态</th><th>归因来源</th><th>AI置信度</th><th>判断依据</th><th>操作</th></tr></thead><tbody id="salesCaseRows"></tbody></table></div></section>
+              <div class="case-toolbar" id="salesCaseToolbar"></div>
+              <section class="card"><div class="case-list-head"><strong>问题案例列表</strong><button class="select huge">按租户筛选（默认全部）⌄</button><button class="select wide">归因状态⌄</button><label class="search medium"><input placeholder="任务编码（全匹配）"><button><svg><use href="#i-search"/></svg></button></label></div><div class="table-scroll"><table class="data-table case-table"><thead><tr><th>提交时间</th><th>租户</th><th>群聊 / 客户</th><th>类型</th><th>商品识别率</th><th>数量识别率</th><th>原因标签</th><th>归因状态</th><th>归因来源</th><th>AI置信度</th><th>判断依据</th><th>操作</th></tr></thead><tbody id="salesCaseRows"></tbody></table></div></section>
+            </div>
+            <div class="analysis-panel reason-analysis-panel" data-panel="sales-reasons">
+              <div class="reason-filter" id="salesReasonFilter"></div>
+              <section class="reason-metrics" id="salesReasonMetrics"></section>
+              <div class="reason-insight-grid">
+                <section class="card chart-card distribution-card"><div class="chart-card-head"><div class="section-title">原因标签分布 <span class="field-help" tabindex="0" role="button" data-help="按原因标签统计案例数及占比；点击任一标签可查看对应租户情况。" aria-label="查看原因标签分布说明">?</span></div><span class="chart-unit">案例数 / 占比</span></div><div class="bar-chart" id="salesReasonBars"></div></section>
+                <section class="card chart-card trend-card"><div class="chart-card-head"><div class="section-title">原因趋势 <span class="field-help" tabindex="0" role="button" data-help="展示近 7 日问题案例数量的每日变化，悬浮趋势节点可查看当日数值。" aria-label="查看原因趋势说明">?</span></div><span class="chart-unit">单位：次</span></div><div class="trend-chart" id="salesReasonTrend"></div></section>
               </div>
-              <div class="case-section-panel" data-case-panel="sales-reason-analysis">
-                <div class="reason-filter" id="salesReasonFilter"></div>
-                <section class="reason-metrics" id="salesReasonMetrics"></section>
-                <div class="chart-grid"><section class="card chart-card"><div class="section-title">原因标签分布</div><div class="bar-chart" id="salesReasonBars"></div></section><section class="card chart-card"><div class="section-title">原因趋势</div><div class="trend-chart" id="salesReasonTrend"></div></section><section class="card chart-card"><div class="section-title">平均识别率趋势</div><div class="trend-chart recognition" id="salesRecognitionTrend"></div></section></div>
-                <section class="card reason-ranking"><div class="card-head"><div class="section-title">租户问题排行</div><span class="muted">点击租户下钻查看案例明细</span></div><table class="data-table"><thead><tr><th>#</th><th>租户</th><th>问题案例数</th><th>主要原因</th><th>图片占比</th><th>平均识别率</th><th>操作</th></tr></thead><tbody id="salesReasonTenantRows"></tbody></table></section>
-              </div>
+              <section class="card reason-ranking"><div class="card-head"><div class="section-title">租户问题排行 <span class="field-help" tabindex="0" role="button" data-help="按问题案例数降序排列；点击租户名称或下钻分析可查看案例明细。" aria-label="查看租户问题排行说明">?</span></div></div><table class="data-table"><thead><tr><th>#</th><th>租户</th><th>问题案例数</th><th>主要原因</th><th>图片占比</th><th>平均识别率</th><th>操作</th></tr></thead><tbody id="salesReasonTenantRows"></tbody></table></section>
             </div>
           </div>
           <div class="stats-view" data-stats-view="purchase">
-            <div class="analysis-tabs" data-tabs="purchase-analysis"><button class="active" data-target="purchase-summary">▥ 统计</button><button data-target="purchase-cases">♙ 案例分析</button></div>
+            <div class="analysis-tabs" data-tabs="purchase-analysis"><button class="active" data-target="purchase-summary">▥ 统计</button><button data-target="purchase-cases">♙ 案例分析</button><button data-target="purchase-reasons">⌁ 原因分析</button></div>
             <div class="analysis-panel active" data-panel="purchase-summary">
               <div class="stats-toolbar" id="purchaseToolbar"></div>
               <section class="card summary-card"><div class="section-title">全局统计 <small>（2026-09-04）</small></div><div class="metric-row" id="purchaseMetrics"></div></section>
               <section class="card ranking-card"><div class="card-head"><div class="section-title">租户排行 <small>（2026-09-04）</small></div><label class="search slim"><input placeholder="搜索租户名"></label></div><div class="table-scroll"><table class="data-table compact rank-table"><thead><tr><th>#</th><th>租户</th><th>订阅状态</th><th>CSM</th><th>提交订单数</th><th>下单群聊数</th><th>下单客户数</th><th>提交任务数</th><th>提交比例</th><th>提交商品数</th><th>商品识别率</th><th>数量识别率</th><th>图片订单数</th><th><button class="sort-link" data-sort-table="purchase" data-sort-key="imageShare">图片占比 ⇅</button></th><th>备注识别率</th></tr></thead><tbody id="purchaseRankRows"></tbody></table></div></section>
             </div>
             <div class="analysis-panel" data-panel="purchase-cases">
-              <div class="case-section-tabs" data-case-group="purchase"><button class="active" data-case-target="purchase-case-list">案例列表</button><button data-case-target="purchase-reason-analysis">原因分析</button></div>
-              <div class="case-section-panel active" data-case-panel="purchase-case-list">
-                <div class="case-toolbar" id="purchaseCaseToolbar"></div>
-                <section class="card"><div class="case-list-head"><strong>问题案例列表</strong><button class="select huge">按租户筛选（默认全部）⌄</button><button class="select wide">归因状态⌄</button><label class="search medium"><input placeholder="任务编码（全匹配）"><button><svg><use href="#i-search"/></svg></button></label></div><div class="table-scroll"><table class="data-table case-table"><thead><tr><th>提交时间</th><th>租户</th><th>群聊 / 客户</th><th>类型</th><th>商品识别率</th><th>数量识别率</th><th>原因标签</th><th>归因状态</th><th>归因来源</th><th>AI置信度</th><th>判断依据</th><th>操作</th></tr></thead><tbody id="purchaseCaseRows"></tbody></table></div></section>
+              <div class="case-toolbar" id="purchaseCaseToolbar"></div>
+              <section class="card"><div class="case-list-head"><strong>问题案例列表</strong><button class="select huge">按租户筛选（默认全部）⌄</button><button class="select wide">归因状态⌄</button><label class="search medium"><input placeholder="任务编码（全匹配）"><button><svg><use href="#i-search"/></svg></button></label></div><div class="table-scroll"><table class="data-table case-table"><thead><tr><th>提交时间</th><th>租户</th><th>群聊 / 客户</th><th>类型</th><th>商品识别率</th><th>数量识别率</th><th>原因标签</th><th>归因状态</th><th>归因来源</th><th>AI置信度</th><th>判断依据</th><th>操作</th></tr></thead><tbody id="purchaseCaseRows"></tbody></table></div></section>
+            </div>
+            <div class="analysis-panel reason-analysis-panel" data-panel="purchase-reasons">
+              <div class="reason-filter" id="purchaseReasonFilter"></div>
+              <section class="reason-metrics" id="purchaseReasonMetrics"></section>
+              <div class="reason-insight-grid">
+                <section class="card chart-card distribution-card"><div class="chart-card-head"><div class="section-title">原因标签分布 <span class="field-help" tabindex="0" role="button" data-help="按原因标签统计案例数及占比；点击任一标签可查看对应租户情况。" aria-label="查看原因标签分布说明">?</span></div><span class="chart-unit">案例数 / 占比</span></div><div class="bar-chart" id="purchaseReasonBars"></div></section>
+                <section class="card chart-card trend-card"><div class="chart-card-head"><div class="section-title">原因趋势 <span class="field-help" tabindex="0" role="button" data-help="展示近 7 日问题案例数量的每日变化，悬浮趋势节点可查看当日数值。" aria-label="查看原因趋势说明">?</span></div><span class="chart-unit">单位：次</span></div><div class="trend-chart" id="purchaseReasonTrend"></div></section>
               </div>
-              <div class="case-section-panel" data-case-panel="purchase-reason-analysis">
-                <div class="reason-filter" id="purchaseReasonFilter"></div>
-                <section class="reason-metrics" id="purchaseReasonMetrics"></section>
-                <div class="chart-grid"><section class="card chart-card"><div class="section-title">原因标签分布</div><div class="bar-chart" id="purchaseReasonBars"></div></section><section class="card chart-card"><div class="section-title">原因趋势</div><div class="trend-chart" id="purchaseReasonTrend"></div></section><section class="card chart-card"><div class="section-title">平均识别率趋势</div><div class="trend-chart recognition" id="purchaseRecognitionTrend"></div></section></div>
-                <section class="card reason-ranking"><div class="card-head"><div class="section-title">租户问题排行</div><span class="muted">点击租户下钻查看案例明细</span></div><table class="data-table"><thead><tr><th>#</th><th>租户</th><th>问题案例数</th><th>主要原因</th><th>图片占比</th><th>平均识别率</th><th>操作</th></tr></thead><tbody id="purchaseReasonTenantRows"></tbody></table></section>
-              </div>
+              <section class="card reason-ranking"><div class="card-head"><div class="section-title">租户问题排行 <span class="field-help" tabindex="0" role="button" data-help="按问题案例数降序排列；点击租户名称或下钻分析可查看案例明细。" aria-label="查看租户问题排行说明">?</span></div></div><table class="data-table"><thead><tr><th>#</th><th>租户</th><th>问题案例数</th><th>主要原因</th><th>图片占比</th><th>平均识别率</th><th>操作</th></tr></thead><tbody id="purchaseReasonTenantRows"></tbody></table></section>
             </div>
           </div>
           <div class="stats-view" data-stats-view="contract"><div class="date-segment"><button class="active">全部</button><button>本周</button><button>本月</button><button>自定义</button></div><section class="card contract-stat"><div class="section-title">合同统计</div><div class="big-metric-row"><div><span>合同数</span><b>41</b></div><div><span>总金额</span><b>¥ 467,000.00</b></div><div><span>总已收</span><b>¥ 459,000.00</b></div><div><span>总未收</span><b class="gold">¥ 8,000.00</b></div><div><span>总退款</span><b class="red-text">¥ 5,000.00</b></div></div><div class="subheading">租户明细</div><table class="data-table"><thead><tr><th>租户</th><th>合同数</th><th>总金额</th><th>已收</th><th>未收</th><th>退款</th></tr></thead><tbody id="contractStatRows"></tbody></table></section></div>
@@ -161,15 +164,14 @@
             <button data-target="cause-tags">⌘ 原因标签管理</button>
           </div>
           <div class="tab-panel active" data-panel="channels"><section class="card"><div class="card-head"><div class="section-title large">信道管理</div><div><button class="btn"><svg><use href="#i-download"/></svg>导出</button><button class="btn primary"><svg><use href="#i-plus"/></svg>新建信道</button></div></div><table class="data-table"><thead><tr><th>名称</th><th>类型</th><th>状态</th><th>启用</th><th>操作</th></tr></thead><tbody id="channelRows"></tbody></table></section></div>
-          <div class="tab-panel" data-panel="models"><section class="card model-card"><div class="model-title"><strong>全局默认</strong><span>未在租户/群级单独配置时使用；留空则回退到环境变量。保存后最长 30 秒在所有服务生效</span></div><table class="data-table model-table"><thead><tr><th>用途</th><th>供应商</th><th>模型</th><th>temperature</th><th>max_tokens</th><th>思考强度</th><th>实际生效</th><th>操作</th></tr></thead><tbody id="modelRows"></tbody></table></section><section class="card provider-card"><div class="card-head"><div class="section-title large">模型供应商</div><button class="btn primary"><svg><use href="#i-plus"/></svg>新建供应商</button></div></section></div>
-          <div class="tab-panel" data-panel="asr-config"><section class="card asr-config-card"><div class="card-head"><div class="section-title large">♩ 系统默认 ASR 配置</div></div><div class="config-box"><div class="config-top"><strong>系统默认</strong><div><button class="btn primary">▣ 保存</button><button class="btn">♧ 清除</button></div></div><label>ASR 供应商<button class="select config-select">腾讯云-主账号（tencent）⌄</button><small>不选 = 回退下一层配置</small></label><label>引擎 / 资源<button class="select config-select">16k_zh⌄</button><small>腾讯填 EngSerViceType（如 16k_zh）；留空用 16k_zh</small></label><label>热词表 ID<input class="text-input" placeholder="留空不启用"><small>可选；腾讯热词表，提升行业黑话/品名识别率</small></label><p>解析顺序：群级 → 客户级 → 租户级 → 系统默认 → 环境变量兜底</p></div></section><section class="card provider-card"><div class="card-head"><div class="section-title large">ASR 供应商</div><button class="btn primary"><svg><use href="#i-plus"/></svg>新建供应商</button></div><table class="data-table"><thead><tr><th>名称</th><th>类型</th><th>凭证</th><th>引擎/资源</th><th>启用</th><th>操作</th></tr></thead><tbody><tr><td>腾讯云-主账号</td><td>腾讯</td><td>secretId AKID0UqAPl… · ap-guangzhou</td><td>16k_zh</td><td><span class="tag green">启用</span></td><td><a>编辑</a><a class="danger">删除</a></td></tr></tbody></table></section></div>
+          <div class="tab-panel" data-panel="models"><section class="card model-card"><div class="model-title"><strong>全局默认 <span class="field-help" tabindex="0" role="button" data-help="租户或群聊未单独配置时使用这里的模型；留空将回退到环境变量，保存后最长 30 秒在所有服务生效。" aria-label="查看全局默认模型说明">?</span></strong></div><table class="data-table model-table"><thead><tr><th>用途</th><th>供应商</th><th>模型</th><th>temperature</th><th>max_tokens</th><th>思考强度</th><th>实际生效</th><th>操作</th></tr></thead><tbody id="modelRows"></tbody></table></section><section class="card provider-card"><div class="card-head"><div class="section-title large">模型供应商</div><button class="btn primary"><svg><use href="#i-plus"/></svg>新建供应商</button></div></section></div>
+          <div class="tab-panel" data-panel="asr-config"><section class="card asr-config-card"><div class="card-head"><div class="section-title large">♩ 系统默认 ASR 配置 <span class="field-help" tabindex="0" role="button" data-help="配置解析顺序：群级 → 客户级 → 租户级 → 系统默认 → 环境变量兜底。" aria-label="查看 ASR 配置层级说明">?</span></div></div><div class="config-box"><div class="config-top"><strong>系统默认</strong><div><button class="btn primary">▣ 保存</button><button class="btn">♧ 清除</button></div></div><label><span class="field-label">ASR 供应商 <span class="field-help" tabindex="0" role="button" data-help="不选择供应商时，将继续回退到下一层配置。" aria-label="查看 ASR 供应商说明">?</span></span><button class="select config-select">腾讯云-主账号（tencent）⌄</button></label><label><span class="field-label">引擎 / 资源 <span class="field-help" tabindex="0" role="button" data-help="腾讯云对应 EngSerViceType，例如 16k_zh；留空时使用 16k_zh。" aria-label="查看引擎资源说明">?</span></span><button class="select config-select">16k_zh⌄</button></label><label><span class="field-label">热词表 ID <span class="field-help" tabindex="0" role="button" data-help="可选配置。填写腾讯云热词表 ID，可提升行业术语及商品名称的识别率。" aria-label="查看热词表说明">?</span></span><input class="text-input" placeholder="留空不启用"></label></div></section><section class="card provider-card"><div class="card-head"><div class="section-title large">ASR 供应商</div><button class="btn primary"><svg><use href="#i-plus"/></svg>新建供应商</button></div><table class="data-table"><thead><tr><th>名称</th><th>类型</th><th>凭证</th><th>引擎/资源</th><th>启用</th><th>操作</th></tr></thead><tbody><tr><td>腾讯云-主账号</td><td>腾讯</td><td>secretId AKID0UqAPl… · ap-guangzhou</td><td>16k_zh</td><td><span class="tag green">启用</span></td><td><a>编辑</a><a class="danger">删除</a></td></tr></tbody></table></section></div>
           <div class="tab-panel" data-panel="bridges"><section class="card"><div class="card-head"><div class="section-title large">Bridge 管理</div><button class="btn primary"><svg><use href="#i-plus"/></svg>新建 Bridge</button></div><table class="data-table bridge-table"><thead><tr><th>名称</th><th>API Key</th><th>环境</th><th>启用</th><th>自动绑定</th><th>来源信道</th><th>群聊数量</th><th>过期时间</th><th>创建时间</th><th>操作</th></tr></thead><tbody id="bridgeRows"></tbody></table></section></div>
           <div class="tab-panel" data-panel="cause-tags">
             <section class="card cause-tag-card">
-              <div class="card-head"><div><div class="section-title large">原因标签管理</div><span class="muted">AI 与人工归因只能从启用的系统标签中选择</span></div><button class="btn primary"><svg><use href="#i-plus"/></svg>新建标签</button></div>
+              <div class="card-head"><div class="cause-title-wrap"><div class="section-title large">原因标签管理</div><span class="field-help" tabindex="0" role="button" data-help="AI 与人工归因只能选择已启用的系统标签；停用标签不再参与新案例归因，但历史案例仍会继续展示。" aria-label="查看原因标签使用说明">?</span></div><button class="btn primary"><svg><use href="#i-plus"/></svg>新建标签</button></div>
               <div class="tag-toolbar"><button class="select wide">适用类型：全部⌄</button><button class="select wide">启用状态：全部⌄</button><label class="search slim"><svg><use href="#i-search"/></svg><input placeholder="搜索标签名称"></label></div>
               <table class="data-table"><thead><tr><th>展示排序</th><th>标签名称</th><th>适用类型</th><th>启用状态</th><th>近 30 天案例</th><th>更新时间</th><th>操作</th></tr></thead><tbody id="causeTagRows"></tbody></table>
-              <div class="card-foot-note">停用标签不再参与新案例归因，但历史案例继续展示。</div>
             </section>
           </div>
         </section>
@@ -190,17 +192,36 @@
   </aside>
 
   <aside class="detail-drawer wide-drawer" id="tenantDrawer" aria-hidden="true">
-    <div class="drawer-head"><div><strong id="tenantDrawerTitle">租户分析</strong><span>继承当前筛选条件</span></div><button class="drawer-close" data-close-drawer>×</button></div>
+    <div class="drawer-head"><div class="drawer-title-help"><strong id="tenantDrawerTitle">租户分析</strong><span class="field-help" tabindex="0" role="button" data-help="抽屉中的数据会继承进入前页面的日期、类型及租户筛选条件。" aria-label="查看筛选继承说明">?</span></div><button class="drawer-close" data-close-drawer>×</button></div>
     <div class="drawer-body"><section class="drawer-kpis" id="tenantDrawerKpis"></section><section class="card inset-card"><div class="section-title">原因标签分布</div><div class="bar-chart compact-bars" id="tenantReasonBars"></div></section><section class="card inset-card"><div class="card-head"><div class="section-title">问题案例</div></div><table class="data-table"><thead><tr><th>提交时间</th><th>类型</th><th>商品识别率</th><th>原因标签</th><th>归因状态</th></tr></thead><tbody id="tenantCaseRows"></tbody></table></section></div>
     <div class="drawer-foot"><button class="btn" data-close-drawer>关闭</button><button class="btn primary">进入租户分析</button></div>
   </aside>
 
+  <aside class="detail-drawer reason-detail-drawer" id="reasonDrawer" aria-hidden="true">
+    <div class="drawer-head"><div><strong id="reasonDrawerTitle">原因标签 · 租户情况</strong><span id="reasonDrawerMeta">原因分析</span></div><button class="drawer-close" data-close-drawer>×</button></div>
+    <div class="drawer-body">
+      <section class="drawer-kpis reason-drawer-kpis" id="reasonDrawerKpis"></section>
+      <section class="card reason-tenant-card">
+        <div class="card-head"><div class="section-title">对应租户情况 <span class="field-help" tabindex="0" role="button" data-help="列表按照问题案例数从高到低排列。" aria-label="查看租户情况排序说明">?</span></div></div>
+        <div class="table-scroll"><table class="data-table reason-tenant-table"><thead><tr><th>租户</th><th>案例数</th><th>主要内容</th><th>平均识别率</th><th>近期情况</th><th>操作</th></tr></thead><tbody id="reasonTenantRows"></tbody></table></div>
+      </section>
+    </div>
+    <div class="drawer-foot"><button class="btn" data-close-drawer>关闭</button><button class="btn primary" data-action="toast">导出当前明细</button></div>
+  </aside>
+
+  <aside class="detail-drawer operation-drawer" id="operationDrawer" aria-hidden="true">
+    <div class="drawer-head"><div><strong id="operationDrawerTitle">操作详情</strong><span id="operationDrawerMeta">数据看板快捷操作</span></div><button class="drawer-close" data-close-drawer>×</button></div>
+    <div class="drawer-body operation-drawer-body" id="operationDrawerBody"></div>
+    <div class="drawer-foot"><button class="btn" data-close-drawer>取消</button><button class="btn primary" id="operationConfirm">确认</button></div>
+  </aside>
+
   <aside class="detail-drawer" id="tagDrawer" aria-hidden="true">
-    <div class="drawer-head"><div><strong>人工调整原因标签</strong><span>仅影响当前案例，人工结果不会被 AI 覆盖</span></div><button class="drawer-close" data-close-drawer>×</button></div>
-    <div class="drawer-body"><div class="notice blue-notice">只能从系统预设且已启用的标签中选择，不支持在案例页面创建自定义标签。</div><label class="drawer-search">搜索原因标签<input id="tagSearch" placeholder="输入标签名称"></label><div class="tag-picker" id="tagPicker"></div><div class="selected-box"><strong>已选择</strong><div id="selectedTags"></div></div></div>
+    <div class="drawer-head"><div><strong>人工调整原因标签 <span class="field-help" tabindex="0" role="button" data-help="人工结果仅影响当前案例且不会被 AI 覆盖；这里只能选择系统预设并已启用的标签，不支持临时创建自定义标签。" aria-label="查看人工归因说明">?</span></strong></div><button class="drawer-close" data-close-drawer>×</button></div>
+    <div class="drawer-body"><label class="drawer-search">搜索原因标签<input id="tagSearch" placeholder="输入标签名称"></label><div class="tag-picker" id="tagPicker"></div><div class="selected-box"><strong>已选择</strong><div id="selectedTags"></div></div></div>
     <div class="drawer-foot"><button class="btn" data-close-drawer>取消</button><button class="btn primary" id="saveCaseTags">保存人工结果</button></div>
   </aside>
 
+  <div class="global-help-tooltip" id="globalHelpTooltip" role="tooltip" hidden></div>
   <div class="toast" id="toast" role="status"></div>
   <script src="app.js"></script>
 </body>
