@@ -1,0 +1,804 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>定价助手 · 对话工作台</title>
+<meta name="description" content="查看定价依据，自主决定报价，确认版本并核验实际录单。单文件交互演示。">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%230b7864'/%3E%3Cpath d='M9 22V14m7 8V9m7 13V5' stroke='white' stroke-width='3'/%3E%3C/svg%3E">
+<style>
+:root{font-family:Inter,"PingFang SC","Microsoft YaHei",sans-serif;color:#24343d;background:#f4f6f8;font-synthesis:none;--ink:#24343d;--muted:#75818c;--line:#e4e9ec;--green:#087963;--green-soft:#e9f5f0;--amber:#92611e;--amber-soft:#fff5e4;--red:#b44242;--red-soft:#fff0ef;--surface:#fff}
+*{box-sizing:border-box}body{margin:0;font-size:14px;line-height:1.55}button,input,textarea,select{font:inherit}button{cursor:pointer;color:inherit}button:disabled{cursor:not-allowed;opacity:.45}button,a,input,textarea,select,summary{touch-action:manipulation}button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-visible{outline:3px solid #72bbaa;outline-offset:3px}button{border:0;background:none}button:hover:not(:disabled){filter:brightness(.96)}input,textarea,select{color:var(--ink);background:white;border:1px solid #ccd6dc;border-radius:8px;padding:9px 11px;min-width:0}input:disabled,textarea:disabled{background:#f6f8f9;color:#596873}textarea{resize:vertical;min-height:82px}input[type=checkbox]{accent-color:var(--green);width:17px;height:17px;flex:none}h1,h2,h3,p{margin:0}h1{font-size:28px;line-height:1.35;letter-spacing:-.7px}h2{font-size:20px;letter-spacing:-.4px}h3{font-size:15px}small,.small{font-size:12px}strong{font-weight:600}[hidden]{display:none!important}.muted{color:var(--muted)}.icon{width:19px;height:19px;flex-shrink:0;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}.sr-only{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0,0,0,0)}.flex{display:flex;align-items:center;gap:10px}.spread{justify-content:space-between}.wrap{flex-wrap:wrap}.stack{display:grid;gap:12px}.num{font-variant-numeric:tabular-nums}.btn{border:1px solid var(--line);border-radius:8px;padding:9px 14px;min-height:40px;display:inline-flex;align-items:center;justify-content:center;gap:7px;background:white;font-weight:500;white-space:normal;text-align:center}.btn.primary{background:var(--green);color:white;border-color:var(--green)}.btn.quiet{background:transparent;border-color:transparent;color:var(--muted)}.btn.slim{padding:5px 10px;min-height:32px;font-size:12px}.iconbtn{display:inline-grid;place-items:center;border-radius:8px;min-width:36px;min-height:36px}.iconbtn:hover{background:#f0f4f6}.link{padding:0;color:var(--green);font-size:13px;display:inline-flex;align-items:center;gap:5px}.tag{display:inline-flex;align-items:center;gap:5px;border-radius:5px;padding:3px 7px;font-size:12px;background:#f0f3f5;color:#64737e;line-height:1.4;white-space:normal}.tag.green{background:var(--green-soft);color:var(--green)}.tag.amber{background:var(--amber-soft);color:var(--amber)}.tag.red{background:var(--red-soft);color:var(--red)}.tag.outline{background:white;border:1px solid var(--line)}
+.appbar{height:72px;background:white;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;padding:0 32px;gap:12px}.brand{font-size:19px;font-weight:650;letter-spacing:-.5px;display:flex;align-items:center;gap:11px}.brandmark{background:var(--green);color:white;display:grid;place-items:center;width:34px;height:34px;border-radius:10px}.brandmark .icon{width:22px;height:22px}.top-right{display:flex;gap:18px;align-items:center}.demo{font-size:12px;color:var(--muted);border:1px solid var(--line);border-radius:30px;padding:4px 9px}.avatar{display:grid;place-items:center;width:32px;height:32px;border-radius:50%;background:#eaf0f3;color:#546975;font-size:12px}.app{display:grid;grid-template-columns:218px minmax(0,1fr);min-height:calc(100vh - 72px)}.sidebar{padding:30px 15px 18px;border-right:1px solid var(--line);display:flex;flex-direction:column;gap:18px;background:#f8fafb}.sidebar-heading{padding:0 9px;display:flex;align-items:center;justify-content:space-between}.search{position:relative;display:flex;align-items:center;gap:8px;background:white;border:1px solid var(--line);border-radius:8px;padding:0 10px;color:var(--muted)}.search .icon{width:16px}.search input{border:0;padding:10px 0;width:100%;background:transparent;font-size:13px}.quote-list{display:grid;gap:8px}.quote{width:100%;padding:14px 12px;text-align:left;display:grid;gap:9px;border-radius:10px;border:1px solid transparent}.quote:hover{background:#eef3f5}.quote.active{background:white;border-color:#d2e5df;box-shadow:0 3px 10px #1b554605}.quote strong{font-size:15px}.quote.active strong{color:var(--green)}.quote-meta{display:flex;align-items:center;justify-content:space-between;gap:6px}.side-bottom{margin-top:auto;padding:24px 8px 0}.side-bottom button{font-size:12px;color:var(--muted)}.main{padding:36px clamp(20px,4vw,62px);min-width:0;max-width:1640px;width:100%;margin:0 auto}.breadcrumbs{font-size:12px;color:var(--muted);margin-bottom:9px}.heading{display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap}.heading-actions{display:flex;gap:8px;align-items:center}.context{display:flex;align-items:center;gap:12px;margin-top:11px;color:var(--muted);font-size:13px;flex-wrap:wrap}.context .sep{width:3px;height:3px;background:#c1cbd2;border-radius:50%}.work{margin-top:28px;background:white;border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:0 6px 18px #243c4b03}.workbar{padding:19px 24px;display:flex;justify-content:space-between;align-items:center;gap:10px}.workbar .tag{margin-left:5px}.segmented{display:inline-flex;background:#f2f5f6;padding:3px;border-radius:7px;gap:2px}.segmented button{padding:5px 11px;font-size:12px;border-radius:5px;color:var(--muted)}.segmented button[aria-pressed=true]{background:white;color:var(--ink);box-shadow:0 1px 3px #20343d12}.tablewrap{width:100%;overflow-x:auto}table{width:100%;border-collapse:collapse;table-layout:fixed}th{text-align:left;font-size:12px;color:var(--muted);font-weight:400;background:#fafbfc;border-bottom:1px solid var(--line);padding:12px 16px}td{padding:20px 16px;border-bottom:1px solid #edf0f2;vertical-align:middle;font-size:14px;font-variant-numeric:tabular-nums}th:first-child,td:first-child{padding-left:24px}th:last-child,td:last-child{padding-right:24px}tbody tr:last-child td{border-bottom:0}th:nth-child(1){width:25%}th:nth-child(2){width:13%}th:nth-child(3){width:28%}th:nth-child(4){width:23%}th:nth-child(5){width:11%}tbody tr:hover{background:#fbfdfc}.product-name{display:flex;align-items:center;gap:12px;text-align:left;padding:0}.product-mark{height:36px;width:36px;flex:none;border-radius:9px;background:#f3f5f7;display:grid;place-items:center;color:#81939c;font-size:15px}.product-name strong{display:block}.product-name small{display:block;margin-top:3px;color:var(--muted)}.advice{display:grid;gap:5px;justify-items:start}.advice-title{font-weight:500;line-height:1.5}.advice-sub{font-size:12px;color:var(--muted);display:flex;gap:8px;align-items:center;flex-wrap:wrap}.use-price{color:var(--green);padding:0;font-size:12px;text-decoration:underline;text-underline-offset:3px}.price{max-width:106px;width:100%;padding:9px 10px;text-align:right;font-variant-numeric:tabular-nums;background:#fff}.price::placeholder{color:#a4aeb6;font-size:12px}.row-flag{font-size:12px;color:var(--amber);margin-top:6px;max-width:150px}.row-flag.conflict{color:var(--red)}.empty{padding:55px 20px;text-align:center;color:var(--muted)}.work-footer{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:20px 24px;border-top:1px solid var(--line);background:#fff}.footer-note{font-size:12px;color:var(--muted);margin-top:3px}.progress-count{font-weight:600;font-size:14px}.support-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:16px;color:var(--muted);font-size:12px;flex-wrap:wrap}.hint{display:flex;gap:7px;align-items:center}.hint .icon{width:15px;height:15px}.phase{display:flex;align-items:center;gap:7px;font-size:12px}.phase span{color:#a7b1b8}.phase .current{color:var(--green);font-weight:600}.phase .done{color:#657b76}.phase i{display:block;width:16px;height:1px;background:#d8e1e5}.status-banner{padding:13px 16px;border-radius:9px;background:var(--green-soft);margin-bottom:18px;color:var(--green);display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:13px}.status-banner small{display:block;margin-top:3px}.mobile-list{display:none}
+.drawer-backdrop{position:fixed;inset:0;background:#172e3c24;z-index:30;backdrop-filter:blur(1px)}.drawer{position:fixed;right:0;top:0;bottom:0;width:480px;max-width:100%;z-index:31;background:white;box-shadow:-8px 0 48px #10283018;display:flex;flex-direction:column}.drawer-header{padding:23px 24px 14px;border-bottom:1px solid var(--line);flex-shrink:0}.drawer-header .small{margin-bottom:5px}.drawer-heading{display:flex;align-items:center;justify-content:space-between;gap:10px}.drawer-meta{display:flex;gap:10px;color:var(--muted);font-size:12px;margin-top:7px}.tabs{display:flex;gap:19px;margin-top:21px}.tabs button{padding:0 0 13px;font-size:13px;border-bottom:2px solid transparent;color:var(--muted)}.tabs button[aria-selected=true]{border-bottom-color:var(--green);color:var(--green);font-weight:600}.drawer-scroll{padding:22px 24px;overflow-y:auto;flex:1;min-height:0;overscroll-behavior:contain}.drawer-footer{padding:16px 24px;border-top:1px solid var(--line);background:#fff;flex-shrink:0}.drawer-footer .price{max-width:118px}.price-label{font-size:12px;color:var(--muted)}.rangebox{padding:19px;border-radius:11px;background:var(--green-soft);margin-bottom:18px}.rangebox .label{font-size:12px;color:#69877e}.range-value{font-size:28px;font-weight:600;letter-spacing:-.6px;margin-top:5px}.range-value small{font-size:12px;font-weight:400;margin-left:6px;letter-spacing:0}.target-price{padding-top:13px;border-top:1px solid #d1e5de;margin-top:14px;display:flex;align-items:center;justify-content:space-between;gap:10px}.mini-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:21px 0 12px}.factor-short{display:grid;gap:12px}.factor-line{display:flex;align-items:flex-start;gap:9px;font-size:13px}.factor-line .factor-dot{width:6px;height:6px;background:#91a69e;border-radius:50%;margin-top:7px;flex:none}.factor-line span{color:#566771}.disclosure{border-top:1px solid var(--line);padding:14px 0}.disclosure summary{font-size:13px;cursor:pointer;list-style:none;display:flex;justify-content:space-between;gap:10px;align-items:center}.disclosure summary:after{content:'＋';color:var(--muted)}.disclosure[open] summary:after{content:'−'}.disclosure .body{padding-top:12px;font-size:13px;color:#60717a;display:grid;gap:12px}.kv{display:grid;grid-template-columns:66px 1fr;gap:10px;align-items:start;font-size:13px}.kv .label{color:var(--muted)}.subtle-box{padding:13px 14px;background:#f6f8fa;border-radius:8px;font-size:13px}.subtle-box .small{margin-top:5px}.notice-box{padding:14px;border-radius:9px;background:var(--amber-soft);color:var(--amber);font-size:13px}.notice-box.red{background:var(--red-soft);color:var(--red)}.notice-box p+p{margin-top:8px}.checkline{display:flex;gap:9px;align-items:flex-start;font-size:13px}.checkline input{margin-top:2px}.factor-nav{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:18px}.factor-nav button{padding:6px 9px;border-radius:6px;background:#f4f6f8;color:var(--muted);font-size:12px}.factor-nav button[aria-pressed=true]{background:var(--green-soft);color:var(--green)}.evidence-card{padding:0 0 19px;margin-bottom:18px;border-bottom:1px solid var(--line)}.evidence-card:last-child{border:0;margin:0}.evidence-card p{font-size:13px;margin:9px 0}.evidence-tags{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px}.evidence-card details{font-size:12px;color:var(--muted)}.evidence-card details p{font-size:12px}.evidence-card.excluded{opacity:.64}.check-facts{margin-top:12px}.chat-status{font-size:12px;color:var(--muted);padding-bottom:14px}.chat-list{display:grid;gap:15px}.bubble{font-size:14px;background:#f4f7f8;border-radius:4px 12px 12px 12px;padding:14px 16px;overflow-wrap:anywhere}.bubble.user{background:var(--green-soft);margin-left:30px;border-radius:12px 4px 12px 12px}.bubble strong{display:block;margin-bottom:8px}.bubble p+p{margin-top:9px}.bubble ol{margin:10px 0;padding-left:20px}.bubble li+li{margin-top:9px}.bubble .small{font-size:12px;color:var(--muted);margin-top:10px}.chat-quick{display:flex;gap:7px;flex-wrap:wrap;margin-top:16px}.chat-form{border:1px solid var(--line);border-radius:10px;padding:11px;margin-top:18px}.chat-form textarea{border:0;width:100%;padding:0;min-height:65px;resize:vertical}.chat-form .flex{margin-top:8px}.chat-form .btn{min-height:34px;padding:5px 12px}.final-value{font-size:32px;font-weight:600}.field{display:grid;gap:7px;font-size:13px}.field>span{color:var(--muted)}.field textarea{width:100%}.two-cols{display:grid;grid-template-columns:1fr 1fr;gap:14px}.decision-calcs{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin:18px 0}.decision-calcs .label{font-size:12px;color:var(--muted)}.decision-calcs strong{display:block;margin-top:3px}.dialog-cover{position:fixed;inset:0;z-index:50;background:#172a3b52;padding:32px 20px;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(2px);overflow-y:auto}.dialog{width:690px;max-width:100%;max-height:calc(100dvh - 64px);overflow:auto;overscroll-behavior:contain;background:white;border-radius:15px;box-shadow:0 18px 80px #172a3b30;display:flex;flex-direction:column}.dialog-head{padding:23px 26px 18px;display:flex;justify-content:space-between;align-items:center;gap:14px;border-bottom:1px solid var(--line);flex-shrink:0}.dialog-body{padding:23px 26px;overflow:auto}.dialog-foot{padding:17px 26px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:9px;flex-wrap:wrap;background:#fafcfc;flex-shrink:0}.dialog table{table-layout:auto;margin:16px 0}.dialog th,.dialog td{padding:12px 8px;width:auto}.dialog td{font-size:13px}.dialog .price{max-width:94px}.review-issues{font-size:13px;padding:13px 15px;background:var(--amber-soft);border-radius:8px;margin-top:17px;color:var(--amber)}.review-issues ul{margin:8px 0 0;padding-left:18px}.review-issues li+li{margin-top:5px}.error{color:var(--red);font-size:13px;margin-top:12px}.error:empty{display:none}.history{padding:16px 0;border-bottom:1px solid var(--line)}.history:first-child{padding-top:0}.history:last-child{border-bottom:0}.history p{font-size:13px;color:var(--muted);margin-top:8px}.toast{position:fixed;left:50%;bottom:25px;transform:translateX(-50%);max-width:min(90vw,640px);padding:12px 18px;background:#263d39;color:white;border-radius:10px;box-shadow:0 6px 28px #14382f25;font-size:13px;z-index:90}.toast:empty{display:none}.save-state{font-size:12px;color:var(--muted)}
+@media(min-width:1600px){.main{padding-top:46px}.work{margin-top:35px}td{padding-top:24px;padding-bottom:24px}}
+@media(max-width:1150px){.app{grid-template-columns:185px minmax(0,1fr)}.main{padding:28px 24px}.sidebar{padding:26px 11px 16px}.product-mark{display:none}.workbar,.work-footer{padding:17px 18px}th,td{padding-left:11px;padding-right:11px}th:first-child,td:first-child{padding-left:18px}th:last-child,td:last-child{padding-right:18px}th:nth-child(1){width:25%}th:nth-child(2){width:13%}th:nth-child(3){width:26%}th:nth-child(4){width:24%}th:nth-child(5){width:12%}.price{max-width:94px}}
+@media(max-width:850px){.appbar{padding:0 22px;height:64px}.app{grid-template-columns:1fr;min-height:calc(100vh - 64px)}.sidebar{display:none}.main{padding:22px}.mobile-list{display:block;border:1px solid var(--line);border-radius:7px;background:white;padding:6px 9px;font-size:13px}.heading{align-items:flex-start}.heading-actions{gap:3px}.heading-actions .btn{padding:7px 10px}.heading-actions .btn.quiet{display:none}.top-right{gap:9px}.work{margin-top:24px}.product-name strong{font-size:14px}}
+@media(max-width:560px){body{font-size:14px}.appbar{padding:0 14px}.brand{font-size:17px;gap:8px}.brandmark{width:29px;height:29px}.demo{font-size:11px;padding:3px 6px}.avatar{display:none}.main{padding:22px 12px}.breadcrumbs{font-size:11px}h1{font-size:24px}.heading-actions{width:100%;justify-content:flex-start}.heading-actions .btn{min-height:36px;font-size:12px}.heading-actions .btn.quiet{display:inline-flex}.context{font-size:12px;gap:8px}.work{border-radius:10px;margin-top:20px}.workbar{padding:14px 12px}.workbar h3{font-size:14px}.segmented button{padding:5px 7px}.work-footer{padding:15px 12px;flex-wrap:wrap}.work-footer .btn.primary{margin-left:auto;font-size:13px}.progress-count{font-size:13px}.footer-note{font-size:11px}.tablewrap{overflow:visible}thead{display:none}tbody{display:block}tr.product-row{display:grid;grid-template-columns:1fr 1fr;position:relative;padding:16px 13px;border-top:1px solid var(--line);gap:13px 15px}td{padding:0!important;border:0;font-size:14px;min-width:0}td.product-cell{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;padding-right:55px!important}.product-mark{display:grid;width:30px;height:30px;font-size:12px}.product-name{gap:9px}.product-name small{font-size:11px}.current-cell{display:flex;gap:7px;align-items:center;font-size:12px;color:var(--muted)}.current-cell::before{content:'当前价'}.advice-cell{grid-column:1;grid-row:3}.advice-cell::before{content:'AI 参考';font-size:11px;color:var(--muted);display:block;margin-bottom:4px}.price-cell{grid-column:2;grid-row:2/4;align-self:end;text-align:right}.price-cell::before{content:'我的报价';display:block;font-size:11px;color:var(--muted);margin-bottom:7px}.row-flag{margin-left:auto;font-size:11px}.price{font-size:16px;width:104px;max-width:100%}.details-cell{position:absolute;right:13px;top:18px}.details-cell .link{font-size:12px}.advice-title{font-size:13px}.advice-sub{font-size:11px}.use-price{font-size:11px}.support-row{font-size:11px}.phase{font-size:11px}.drawer{width:100%}.drawer-header{padding:20px 18px 0}.tabs{gap:19px;margin-top:18px}.tabs button{font-size:13px}.drawer-scroll{padding:20px 18px}.drawer-footer{padding:13px 18px}.drawer-footer input{font-size:16px}.dialog-cover{padding:12px}.dialog{max-height:calc(100dvh - 24px);border-radius:12px}.dialog-head{padding:18px}.dialog-body{padding:18px}.dialog-foot{padding:15px 18px}.dialog h2{font-size:19px}.dialog th,.dialog td{padding:10px 5px!important;font-size:12px}.dialog thead{display:table-header-group}.dialog tbody{display:table-row-group}.dialog th{font-size:11px}.dialog .price{font-size:14px;width:78px}.two-cols{grid-template-columns:1fr}.dialog-cover .tag{font-size:11px}.toast{bottom:15px;font-size:12px}.range-value{font-size:26px}}
+@media(prefers-reduced-motion:no-preference){.drawer{animation:slide-in .18s ease-out}.toast{animation:toast-in .15s ease-out}@keyframes slide-in{from{transform:translateX(24px);opacity:.5}to{transform:translateX(0);opacity:1}}@keyframes toast-in{from{opacity:0;bottom:15px}to{opacity:1;bottom:25px}}}
+@media print{.sidebar,.appbar,.heading-actions,.support-row,.drawer,.drawer-backdrop,.dialog-cover,.toast,.segmented{display:none!important}.app{display:block}.main{padding:10px}.work{box-shadow:none}.work-footer .btn{display:none}}
+/* Conversation-led workspace. Existing detail and verification surfaces remain available. */
+:root{--ink:#282a2e;--muted:#81838a;--line:#e8e8e6;--green:#303236;--green-soft:#f0f1f1;--amber:#946321;--surface:#fff;background:#fcfcfb;color:var(--ink);font-family:"Inter","PingFang SC","Microsoft YaHei",sans-serif}body{font-size:14px}h1{font-size:26px;letter-spacing:-.6px}.btn{border-radius:9px;font-size:13px}.btn.primary{background:#303236;border-color:#303236}.tag.green{background:#edf6ef;color:#487359}.brandmark{background:#303236;border-radius:8px;width:28px;height:28px}.brandmark .icon{width:19px;height:19px}.link,.use-price{color:#435b50}.toast{background:#303236}.chat-app{min-height:100dvh;display:grid;grid-template-columns:224px minmax(0,1fr)}.chat-sidebar{position:sticky;top:0;height:100dvh;background:#f4f4f2;border-right:1px solid #e9e9e6;padding:24px 13px 12px;display:flex;flex-direction:column;gap:21px}.chat-brand{display:flex;align-items:center;gap:10px;padding:0 9px;min-height:33px}.chat-brand strong{font-size:17px;letter-spacing:-.3px}.chat-brand .small{margin-left:auto;font-size:11px}.main-nav{display:grid;gap:5px}.main-nav button{display:flex;align-items:center;gap:10px;padding:11px 13px;text-align:left;border-radius:8px;font-size:14px;color:#65686e}.main-nav button.active{background:#e6e7e4;color:#292d30;font-weight:500}.main-nav .icon{width:17px;height:17px}.sidebar-label{font-size:12px;color:#929398;padding:0 12px;margin-bottom:-12px}.chat-sidebar .quote-list{gap:4px}.chat-sidebar .quote{border:0;padding:12px 13px;border-radius:8px;background:transparent;box-shadow:none;gap:7px}.chat-sidebar .quote.active{background:#eaece9;color:#2b3430}.chat-sidebar .quote strong{font-size:13px;font-weight:500;color:inherit}.chat-sidebar .quote-meta small{font-size:11px}.chat-sidebar .tag{font-size:10px;padding:2px 5px;background:#ffffff80}.sidebar-bottom{margin-top:auto;display:grid;gap:5px}.sub-nav{display:flex;align-items:center;gap:10px;padding:10px 12px;color:#7a7c81;font-size:12px;border-radius:7px;text-align:left}.sub-nav:hover{background:#e9eae7}.sub-nav .avatar{background:#e6e7e4;color:#51575c;width:30px;height:30px}.sub-nav>span:nth-child(2){flex:1}.sub-nav small{display:block;font-size:10px;margin-top:2px;color:#98999e}.sub-nav>.icon:last-child{width:15px}.chat-workspace{min-width:0;display:flex;flex-direction:column;min-height:100dvh}.workspace-top{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:19px 30px;background:#fcfcfb;border-bottom:1px solid #f0f0ee;min-height:74px}.workspace-title{display:flex;align-items:center;gap:14px;min-width:0;flex-wrap:wrap}.client-switch{display:flex;align-items:center;gap:11px;font-size:15px;font-weight:550;padding:3px 0}.chevron-down{color:#8c8e93;font-size:16px}.workspace-context{font-size:12px;color:#97989c}.workspace-actions{display:flex;align-items:center;gap:9px;flex-shrink:0}.workspace-actions .btn{font-size:12px}.workspace-actions .iconbtn{color:#8b8d92}.mobile-menu{display:none}.chat-page{display:flex;flex-direction:column;min-height:calc(100dvh - 75px);width:100%;max-width:880px;margin:0 auto;padding:0 30px}.conversation{padding:34px 0 28px;flex:1}.welcome{min-height:330px;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;max-width:600px;margin:auto}.welcome-kicker{display:flex;align-items:center;gap:7px;color:#9b9ca1;font-size:12px;margin-bottom:18px}.welcome-kicker .icon{width:15px;height:15px}.welcome h1{font-size:27px;line-height:1.5;font-weight:550;letter-spacing:-.65px}.welcome p{font-size:14px;color:#8b8d92;margin-top:10px}.start-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:25px}.start-actions button{display:flex;align-items:center;gap:7px;padding:9px 12px;background:white;border:1px solid #e9e9e7;border-radius:9px;font-size:12px;color:#666b70}.start-actions .icon{width:15px;height:15px}.sample-command{margin-top:20px;color:#989ba0;font-size:12px;padding:0;text-align:left}.composer-area{position:sticky;bottom:0;background:linear-gradient(to bottom,#fcfcfb00,#fcfcfb 14px);padding:12px 0 17px;margin-top:0}.main-composer{padding:17px 18px 13px;background:#fff;border:1px solid #dedfdd;border-radius:19px;box-shadow:0 4px 20px #292f3b05}.main-composer textarea{width:100%;padding:0;border:0;outline:none;background:transparent;min-height:63px;resize:vertical;font-size:15px;line-height:1.7;max-height:260px}.main-composer textarea::placeholder{color:#a0a2a7}.composer-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:13px}.context-chip{display:inline-flex;gap:7px;align-items:center;border-radius:7px;border:1px solid #e2e4df;background:#f6f7f4;padding:6px 8px;font-size:12px;color:#596350;min-height:32px}.context-chip .icon{width:14px;height:14px}.context-chip span:last-child{color:#92978e;margin-left:3px}.composer-tool{font-size:12px;color:#8a8d93;padding:4px 7px;min-height:32px}.composer-tool:hover{color:#3d4348;background:#f6f6f4;border-radius:6px}.send-button{font-size:24px;line-height:1;display:grid;place-items:center;background:#303236;color:white;width:34px;height:34px;border-radius:11px;flex-shrink:0;padding-bottom:2px}.composer-foot{display:flex;justify-content:center;align-items:center;gap:10px;margin-top:10px;font-size:10px;color:#a4a6ab}.composer-foot button{color:#9b9da2;font-size:10px;padding:0}.composer-state:empty{display:none}.composer-state{display:flex;justify-content:space-between;align-items:center;gap:12px;color:#858a87;font-size:12px;padding:0 6px 10px}.composer-state .link{font-size:12px}.conversation-message{margin:0 0 24px}.conversation-message.user{display:flex;justify-content:flex-end}.user-message{max-width:85%;background:#f0f0ed;padding:12px 17px;border-radius:15px 15px 3px 15px;font-size:14px;line-height:1.7;overflow-wrap:anywhere}.assistant-message{font-size:14px;line-height:1.75;padding:0 3px;overflow-wrap:anywhere}.assistant-message strong{font-weight:550}.assistant-message p+p{margin-top:8px}.assistant-message .small{color:#8d9095}.assistant-marker{font-size:11px;color:#9a9c9f;margin-bottom:9px;display:flex;align-items:center;gap:7px}.assistant-marker .icon{width:14px;height:14px}.assistant-message ol{padding-left:22px}.preview-card{border:1px solid #e2e4e0;border-radius:13px;background:white;overflow:hidden}.preview-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:16px 18px 12px}.preview-head strong{font-size:14px;font-weight:550}.preview-tags{display:flex;gap:6px;flex-wrap:wrap;padding:0 18px 12px}.preview-tags span{font-size:11px;color:#858b87;background:#f4f6f3;padding:3px 7px;border-radius:5px}.preview-summary{padding:0 18px 12px;font-size:12px;color:#83898e}.preview-card table{table-layout:auto}.preview-card th,.preview-card td{padding:10px 18px!important;width:auto;font-size:13px}.preview-card th{font-size:11px;background:#fafbf9;color:#929792}.preview-card .price-change{display:flex;gap:12px;align-items:center;font-variant-numeric:tabular-nums}.preview-card .price-change .old{color:#9a9c9e}.preview-card .price-change strong{font-weight:550}.preview-card .row-note{font-size:11px;color:#a38658;margin-top:3px}.preview-card details{padding:9px 18px;color:#8c826d;font-size:12px;border-top:1px solid #eee}.preview-card details ul{margin:9px 0 5px;padding-left:18px}.preview-card footer{display:flex;gap:9px;align-items:center;justify-content:flex-end;padding:13px 18px;border-top:1px solid #eeefed}.preview-card footer .plan-state{margin-right:auto;color:#868e86;font-size:12px}.preview-card footer .btn{font-size:12px;min-height:33px;padding:6px 11px}.assistant-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:12px}.assistant-actions .btn{font-size:12px;min-height:34px;padding:6px 10px}.evidence-page{padding:35px 38px 60px;max-width:1240px;width:100%;margin:0 auto}.page-title{display:flex;justify-content:space-between;align-items:center;gap:18px;margin-bottom:27px}.page-title p{font-size:13px;margin-top:8px}.page-title h1{font-size:24px}.customer-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:30px}.customer-card{padding:18px;text-align:left;border:1px solid #e6e7e3;border-radius:12px;background:white;display:grid;gap:13px}.customer-card.selected{border-color:#adb9a9;background:#f7f9f5}.customer-card .customer-name{font-size:15px;font-weight:550;display:flex;align-items:center;gap:9px}.customer-card .customer-avatar{width:27px;height:27px;border-radius:7px;background:#e9ece7;color:#7c8975;display:grid;place-items:center;font-size:12px}.customer-card .small{font-size:11px;color:#8f9590}.customer-card .mini-tags{display:flex;gap:4px;flex-wrap:wrap}.customer-card .mini-tags span{background:#eff1ed;color:#8a9285;font-size:10px;padding:3px 5px;border-radius:4px}.basis-heading{display:flex;justify-content:space-between;gap:15px;align-items:center;margin-bottom:17px;flex-wrap:wrap}.basis-heading h2{font-size:17px}.basis-heading p{margin-top:5px;color:#92968f;font-size:12px}.basis-heading select{font-size:12px;border-color:#e0e4dd;max-width:100%}.basis-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.basis-card{background:white;border:1px solid #e4e7e1;border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:11px;min-width:0}.basis-card.excluded{background:#f7f7f5;color:#8e918b}.basis-card h3{font-size:14px;font-weight:550}.basis-card .type{font-size:10px;color:#9a9f95}.basis-card p{font-size:13px;line-height:1.7}.basis-card .evidence-tags{margin:0}.basis-card .tag{font-size:10px;padding:3px 5px;background:#f3f4f1;color:#8d9488}.basis-card .tag.green{background:#edf4eb;color:#657a5e}.basis-card .tag.amber{color:#a38758;background:#faf4e8}.basis-card details{font-size:12px;color:#91978c;border-top:1px solid #eef0eb;padding-top:10px}.basis-card details p{font-size:12px;margin-top:10px;overflow-wrap:anywhere}.basis-card footer{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:auto;font-size:11px;color:#92988c}.basis-card .link{font-size:12px}.basis-card .constraint-lock{font-size:11px;color:#7e866f}.sheet-backdrop{position:fixed;inset:0;background:#222a3224;z-index:20}.quote-sheet{position:fixed;top:0;bottom:0;right:0;width:min(980px,100%);z-index:21;background:#fff;display:flex;flex-direction:column;box-shadow:-12px 0 48px #172b3212}.sheet-top{display:flex;justify-content:space-between;gap:16px;padding:23px 27px;border-bottom:1px solid var(--line)}.sheet-top h2{font-size:22px}.sheet-scroll{overflow:auto;flex:1;min-height:0;padding:0 25px 22px}.sheet-scroll .work{box-shadow:none;margin-top:18px}.sheet-scroll .workbar{padding:15px}.quote-sheet>.work-footer{padding:17px 25px}.drawer{z-index:41}.drawer-backdrop{z-index:40}.drawer .tabs button[aria-selected=true]{color:#383b3c}.drawer .rangebox{background:#f1f4ee}.drawer .tabs{gap:24px}.drawer .tabs [data-tab=chat]{display:none}.dialog-cover{z-index:60}.rule-fields{display:grid;grid-template-columns:1fr 1fr;gap:15px}.rule-scope{border:1px solid var(--line);border-radius:9px;padding:13px;margin-top:16px}.rule-products{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}.rule-products label{font-size:13px;display:flex;gap:8px;align-items:center}.rule-summary{font-size:12px;color:#96998f;margin-top:11px}.rules-line{display:flex;gap:8px;align-items:center}.rules-line input,.rules-line select{width:100%}.rule-locked{margin-top:15px;font-size:12px;color:#94968f;display:flex;align-items:center;gap:7px}.rule-locked .icon{width:15px;height:15px}.customer-picker{display:grid;gap:10px}.customer-picker button{border:1px solid #e2e5de;border-radius:10px;padding:15px;display:flex;justify-content:space-between;align-items:center;text-align:left}.customer-picker small{display:block;margin-top:4px;color:#979d94}.clarify-card{border-left:2px solid #d7ddd0;padding-left:15px}.clarify-card .btn{margin-top:11px}.main-composer:focus-within{border-color:#bfc5bd;box-shadow:0 3px 20px #33442b08}
+@media(min-width:1600px){.chat-page{max-width:930px}.welcome{min-height:410px}.chat-sidebar{padding-top:27px}.workspace-top{padding:23px 36px}}
+@media(max-width:1100px){.chat-app{grid-template-columns:194px minmax(0,1fr)}.chat-sidebar{padding:22px 10px 12px}.workspace-top{padding:17px 22px;gap:9px}.workspace-context{font-size:11px}.workspace-title{gap:5px 13px}.workspace-actions{gap:5px}.workspace-actions .btn{padding:5px 8px}.chat-page{padding:0 27px}.customer-cards{gap:9px}.customer-card{padding:13px}.evidence-page{padding:29px 24px}.customer-card .mini-tags span{font-size:10px}.customer-card .mini-tags span:nth-child(n+4){display:none}}
+@media(max-width:760px){.chat-app{grid-template-columns:1fr}.chat-sidebar{display:none}.workspace-top{padding:13px 14px;align-items:center;min-height:66px}.workspace-title{gap:6px}.client-switch{font-size:14px}.workspace-context{display:none}.workspace-actions>.iconbtn{display:none}.workspace-actions .btn{font-size:11px;min-height:31px;padding:5px 8px}.mobile-menu{display:inline-grid;min-width:28px;min-height:30px}.mobile-menu .icon{width:17px}.chat-page{padding:0 18px;min-height:calc(100dvh - 67px)}.conversation{padding:22px 0}.welcome{min-height:300px}.welcome h1{font-size:23px}.welcome p{font-size:13px}.start-actions{gap:7px}.start-actions button{font-size:11px;padding:8px 10px}.composer-area{padding-bottom:15px}.main-composer{padding:15px 13px 11px;border-radius:16px}.main-composer textarea{font-size:16px}.composer-toolbar{gap:6px}.composer-toolbar>.flex{gap:4px}.composer-tool{font-size:11px;padding:3px 6px}.context-chip{font-size:11px;padding:5px 7px}.evidence-shortcut{display:none}.composer-foot{font-size:9px}.composer-foot button{font-size:9px}.send-button{width:31px;height:31px;font-size:23px}.evidence-page{padding:26px 17px}.page-title{align-items:flex-start;gap:11px}.page-title h1{font-size:22px}.page-title p{font-size:12px}.page-title .btn{font-size:11px;padding:7px 9px;min-height:33px}.customer-cards{grid-template-columns:1fr;gap:8px}.customer-card{grid-template-columns:1fr auto;gap:7px 12px;padding:13px}.customer-card .customer-name{font-size:14px}.customer-card .mini-tags{grid-column:1/-1}.basis-grid{grid-template-columns:1fr}.basis-heading h2{font-size:16px}.basis-heading select{width:100%}.preview-card table thead{display:table-header-group}.preview-card table tbody{display:table-row-group}.preview-card th,.preview-card td{font-size:12px;padding:9px 12px!important}.preview-card th{font-size:10px}.preview-card footer{padding:12px;gap:7px;flex-wrap:wrap}.preview-card .price-change{gap:7px}.preview-head,.preview-summary{padding-left:13px;padding-right:13px}.preview-tags{padding-left:13px;padding-right:13px}.preview-card .row-note{font-size:10px}.preview-card .tag{font-size:10px}.preview-card footer .btn{font-size:11px}.preview-card footer .plan-state{font-size:11px}.user-message{font-size:13px;max-width:92%}.assistant-message{font-size:13px}.sheet-top{padding:18px}.sheet-scroll{padding:0 13px 18px}.quote-sheet>.work-footer{padding:15px}.rule-fields{grid-template-columns:1fr}.rule-products{gap:10px 5px}.rules-line{flex-wrap:wrap}#mobile-nav:not([hidden]){display:flex;gap:6px;padding:10px 14px;border-bottom:1px solid var(--line);background:#f5f6f3}#mobile-nav button{font-size:12px;padding:6px 9px;border-radius:6px;background:white}.conversation{overflow-wrap:anywhere}.sample-command{font-size:11px}.preview-card table{min-width:0}}
+@media(max-width:760px){.workspace-title{flex:1}.workspace-context{display:block;width:100%;padding-left:34px;font-size:10px}.workspace-actions{align-self:flex-start;padding-top:3px}.workspace-top{align-items:flex-start}.chat-page{min-height:calc(100dvh - 88px)}}
+@media(max-width:480px){.preview-card table thead{display:none}.preview-card table tbody{display:block}.preview-card table tr{display:grid;grid-template-columns:minmax(0,1fr) auto;padding:7px 0;border-bottom:1px solid #eeefed}.preview-card table tr:last-child{border-bottom:0}.preview-card table td{display:block;width:auto!important;border:0;padding:4px 12px!important}.preview-card table td:nth-child(2){align-self:center;white-space:nowrap}.preview-card table td:last-child{grid-column:1/-1;padding-top:0!important}.preview-card .price-change{white-space:nowrap;gap:9px}.preview-card .row-note{margin:0}.preview-card .row-note,.preview-card td:last-child .small{font-size:11px}}
+.chat-workspace{height:100dvh;min-height:0;overflow:hidden}.chat-page{flex:1;min-height:0!important;height:0}.conversation{min-height:0;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#e2e5df transparent}.composer-area{flex-shrink:0}.evidence-page{overflow-y:auto;min-height:0}#mobile-nav{flex-shrink:0;flex-wrap:wrap}
+/* Whole-quote evidence. Scoped additions leave the pricing and chat surfaces unchanged. */
+#customer-cards.oe-customer-host{display:block;margin:20px 0 26px}
+.oe-customer-selector{position:relative;max-width:760px}
+.oe-selector-label{display:block;font-size:12px;color:var(--muted);margin-bottom:8px}
+.oe-customer-trigger,.oe-customer-option{width:100%;display:flex;align-items:center;justify-content:space-between;gap:16px;text-align:left;background:#fff;border:1px solid var(--line);border-radius:10px;padding:15px 17px}
+.oe-customer-trigger{min-height:92px;border-color:#d6e1df}
+.oe-customer-trigger[aria-expanded=true]{border-color:#8ab9ac}
+.oe-customer-copy{display:grid;gap:10px;min-width:0;flex:1}
+.oe-customer-top{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.oe-customer-top strong{font-size:15px}
+.oe-customer-top small{font-size:12px;color:var(--muted);font-weight:400}
+.oe-five-tags{display:flex;gap:5px;flex-wrap:wrap}
+.oe-five-tags>span{display:inline-block;padding:2px 6px;border-radius:4px;color:#74838a;background:#f3f6f7;font-size:11px;font-weight:400}
+.oe-dropdown-arrow{color:var(--muted);font-size:20px;flex:none;transition:transform .15s}
+.oe-customer-trigger[aria-expanded=true] .oe-dropdown-arrow{transform:rotate(180deg)}
+.oe-customer-options{position:absolute;top:calc(100% + 7px);left:0;right:0;z-index:12;max-height:352px;overflow:auto;padding:6px;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 32px #213d4819}
+.oe-customer-option{border:0;border-radius:7px;min-height:91px}
+.oe-customer-option+.oe-customer-option{margin-top:3px}
+.oe-customer-option:hover,.oe-customer-option:focus-visible{background:#f4f8f6}
+.oe-customer-option[aria-selected=true]{background:var(--green-soft)}
+.oe-customer-option[aria-selected=true] .oe-customer-top strong{color:var(--green)}
+.oe-selected-mark{width:20px;color:var(--green);flex:none}
+.oe-selected-mark .icon{width:18px;height:18px}
+.oe-modal-customer-list{display:grid;gap:6px}
+.oe-modal-customer-list .oe-customer-option{border:1px solid var(--line)}
+.oe-order-heading{display:flex;justify-content:space-between;align-items:center;gap:16px;margin:0 0 18px}
+.oe-order-heading h2{font-size:19px}
+.oe-order-heading p{font-size:12px;color:var(--muted);margin-top:5px}
+.oe-order-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.oe-order-card{display:flex;flex-direction:column;align-items:flex-start;text-align:left;padding:20px;min-width:0;min-height:182px;border:1px solid var(--line);border-radius:12px;background:#fff;transition:border-color .15s,box-shadow .15s}
+.oe-order-card:hover{border-color:#accbc1;box-shadow:0 4px 14px #1d5c4808}
+.oe-order-title{font-size:12px;color:var(--muted);margin-bottom:10px}
+.oe-order-card>strong{font-size:16px;line-height:1.6;font-weight:600}
+.oe-order-detail{color:var(--muted);font-size:12px;margin-top:7px;line-height:1.7}
+.oe-order-card-foot{display:flex;align-items:center;justify-content:space-between;width:100%;gap:8px;font-size:12px;color:var(--green);padding-top:17px;margin-top:auto}
+.oe-order-card-foot .icon{height:15px;width:15px}
+.oe-page-note{font-size:12px;color:var(--muted);margin-top:17px;line-height:1.75}
+.oe-dialog-intro{font-size:13px;color:var(--muted);margin-bottom:18px;line-height:1.75}
+.oe-dialog-context{display:grid;gap:5px;padding:13px 15px;background:#f5f8f9;border-radius:8px;margin-bottom:19px;font-size:13px}
+.oe-dialog-context>span{color:var(--muted);font-size:12px}
+.oe-record-list{display:grid;gap:14px}
+.oe-record{padding:17px;border:1px solid var(--line);border-radius:9px}
+.oe-record.is-excluded{border-style:dashed;background:#fbfcfc}
+.oe-record>header,.oe-source-record>header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:9px}
+.oe-record>header strong,.oe-source-record>header strong{font-size:14px}
+.oe-record>header small{font-size:12px;color:var(--muted)}
+.oe-record-value{font-size:14px;line-height:1.7;margin-top:10px}
+.oe-record-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:11px}
+.oe-record-tags .tag{font-size:11px}
+.oe-record-note{font-size:12px;color:var(--muted);line-height:1.8;margin-top:10px}
+.oe-record>footer{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding-top:15px;margin-top:13px;border-top:1px solid #edf1f2}
+.oe-source-channel-list{display:grid;gap:10px}
+.oe-source-channel{display:flex;align-items:center;justify-content:space-between;gap:15px;text-align:left;padding:16px;border:1px solid var(--line);border-radius:9px;background:#fff}
+.oe-source-channel:hover{background:#f8faf9;border-color:#bed7ce}
+.oe-source-channel>span:first-child{display:grid;gap:5px}
+.oe-source-channel strong{font-size:14px}
+.oe-source-channel small{font-size:12px;color:var(--muted)}
+.oe-source-channel>span:last-child{display:flex;align-items:center;gap:5px;white-space:nowrap;font-size:12px;color:var(--green)}
+.oe-source-channel .icon{width:15px;height:15px}
+.oe-source-records{display:grid;gap:18px}
+.oe-source-record{border:1px solid var(--line);border-radius:10px;padding:18px}
+.oe-source-content{background:#f6f8fa;border-radius:7px;padding:13px 14px;margin-top:15px}
+.oe-field-label{display:block;color:var(--muted);font-size:11px;margin-bottom:5px}
+.oe-source-content>p:not(.oe-record-note){font-size:14px;line-height:1.8}
+.oe-source-meta{display:grid;grid-template-columns:72px minmax(0,1fr);gap:9px 12px;font-size:12px;line-height:1.7;margin:17px 0 0}
+.oe-source-meta dt{color:var(--muted)}
+.oe-source-meta dd{margin:0;overflow-wrap:anywhere}
+.oe-constraint-note{background:var(--green-soft);color:#316f60;border-radius:7px;padding:12px;font-size:12px;line-height:1.8;margin-top:15px}
+@media(max-width:1200px){.oe-order-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:700px){
+  #customer-cards.oe-customer-host{margin:17px 0 23px}
+  .oe-customer-trigger,.oe-customer-option{padding:13px 12px;gap:8px}
+  .oe-customer-top{gap:4px 10px}.oe-customer-top strong{font-size:14px}
+  .oe-five-tags{gap:4px}.oe-five-tags>span{font-size:10px;padding:2px 5px}
+  .oe-order-grid{grid-template-columns:1fr;gap:10px}
+  .oe-order-card{min-height:157px;padding:17px}
+  .oe-order-heading{align-items:flex-start;gap:10px}.oe-order-heading h2{font-size:17px}
+  .oe-order-heading>.tag{font-size:11px;white-space:nowrap}
+  .oe-record,.oe-source-record{padding:14px}
+  .oe-source-channel{padding:13px;gap:10px}
+  .oe-source-meta{grid-template-columns:60px minmax(0,1fr);gap:8px 10px}
+}
+
+.strategies-page{padding:35px 36px 45px;max-width:1450px;width:100%;margin:auto;min-height:0;overflow:auto}.strategy-toolbar{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:22px}.strategy-toolbar select{min-width:155px;font-size:13px}.strategy-filters{display:flex;gap:4px;flex-wrap:wrap}.strategy-filters button{padding:8px 12px;color:#8c908b;font-size:12px;border-radius:7px}.strategy-filters button.selected{color:#313b31;background:#e9ede6}.strategy-list{background:white;border:1px solid #e3e7df;border-radius:13px;overflow:hidden}.strategy-row{display:grid;grid-template-columns:108px minmax(160px,1.15fr) 65px minmax(135px,1fr) minmax(135px,auto);gap:16px;align-items:center;padding:22px 19px;border-bottom:1px solid #edf0e9}.strategy-row:last-child{border-bottom:0}.strategy-row.is-active{background:#fafcf8}.strategy-row strong{font-weight:550;font-size:13px}.strategy-customer small{display:block;font-size:11px;color:#959b91;margin-top:5px}.strategy-name{display:flex;align-items:center;gap:7px}.strategy-sample{font-size:10px;color:#999f93;border:1px solid #e6e9e1;border-radius:4px;padding:1px 4px;white-space:nowrap}.strategy-info p{font-size:11px;color:#91978b;margin:6px 0;line-height:1.6}.strategy-info>small{font-size:10px;color:#a0a598}.strategy-state .tag{font-size:10px;white-space:nowrap}.strategy-period{font-size:11px;color:#67705e;line-height:1.8;white-space:nowrap}.strategy-period span{display:block}.strategy-actions{display:flex;align-items:center;justify-content:flex-end;gap:9px;flex-wrap:wrap}.strategy-actions button{font-size:11px;white-space:nowrap}.strategy-actions .btn{padding:6px 9px;min-height:32px}.strategy-footnote{font-size:11px;color:#9da496;margin-top:17px;line-height:1.8}.strategy-date-fields{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:22px 0 12px}.strategy-date-fields input{min-width:0;max-width:100%;font-size:13px}.strategy-date-fields input:disabled{background:#f3f5ef;color:#8a9480}.strategy-detail-time{padding:15px;background:#f5f7f2;border-radius:8px;margin:18px 0;font-size:13px;line-height:1.7}.strategy-detail-time small{display:block;color:#929b88;font-size:11px}.strategy-events p{display:grid;gap:5px;padding-bottom:14px}.strategy-events time{color:#9b9f96;font-size:11px}.strategy-conflicts{display:grid;gap:12px;margin:18px 0}.strategy-conflicts>div{border:1px solid #e8dfcf;background:#fdfbf7;padding:14px;border-radius:8px}.strategy-conflicts p{font-size:12px;color:#9b8a6f;margin:8px 0}.strategy-conflicts small{color:#ae7c38}.strategy-page .page-title .btn{white-space:nowrap}
+@media(max-width:1200px){.strategies-page{padding:28px 24px}.strategy-row{grid-template-columns:100px minmax(130px,1fr) 65px minmax(135px,1fr);gap:12px}.strategy-actions{grid-column:2/-1;justify-content:flex-end}.strategy-toolbar{flex-wrap:wrap}}
+@media(max-width:760px){.strategies-page{padding:25px 17px 35px}.strategy-row{grid-template-columns:1fr auto;padding:17px;gap:12px}.strategy-customer{grid-column:1}.strategy-info{grid-column:1/-1;grid-row:2}.strategy-state{grid-column:2;grid-row:1}.strategy-period{grid-column:1/-1;grid-row:3}.strategy-actions{grid-column:1/-1;grid-row:4}.strategy-toolbar{gap:10px}.strategy-filters{gap:2px}.strategy-filters button{padding:7px 9px;font-size:11px}.strategy-date-fields{grid-template-columns:1fr}.strategy-period span{display:inline}.strategy-period .muted{margin-left:5px}.strategy-customer small{display:inline;margin-left:8px}.strategy-footnote{font-size:10px}.composer-toolbar>.flex{flex:1}.composer-tool{white-space:nowrap}}
+.strategy-renewal{padding:15px;border:1px solid #e6dac1;border-radius:9px;background:#fffdf7;margin-top:16px;line-height:1.75}.strategy-renewal>strong{font-size:13px;color:#8e783f}.strategy-renewal-prices{display:flex;gap:7px 16px;flex-wrap:wrap;font-size:12px;padding:10px 0;color:#80745b}
+.strategies-page .page-title>.btn{white-space:nowrap;flex-shrink:0} .strategy-row{padding-top:18px;padding-bottom:18px}
+</style>
+</head>
+<body>
+<svg aria-hidden="true" style="display:none"><defs>
+<symbol id="i-mark" viewBox="0 0 24 24"><path d="M5 18v-6m7 6V7m7 11V3"/></symbol><symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></symbol><symbol id="i-chat" viewBox="0 0 24 24"><path d="M5 4h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H9l-6 3V6a2 2 0 0 1 2-2Z"/><path d="M7 9h10M7 13h6"/></symbol><symbol id="i-history" viewBox="0 0 24 24"><path d="M3 5v5h5M3 10a9 9 0 1 1 1 7M12 7v5l3 2"/></symbol><symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6"/></symbol><symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol><symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9Zm0 0v6h6M8 13h8M8 17h6"/></symbol><symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7h.01"/></symbol><symbol id="i-chevron" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol>
+</defs></svg>
+<div class="chat-app">
+ <aside class="chat-sidebar" aria-label="工作区导航">
+  <div class="chat-brand"><span class="brandmark"><svg class="icon"><use href="#i-mark"/></svg></span><strong>定价助手</strong><span class="small muted">试用</span></div>
+  <nav class="main-nav"><button data-page="chat" class="active"><svg class="icon"><use href="#i-chat"/></svg>报价对话</button><button data-page="evidence"><svg class="icon"><use href="#i-file"/></svg>客户与依据</button><button data-page="strategies"><svg class="icon"><use href="#i-history"/></svg>报价策略</button></nav>
+  <div class="sidebar-label">客户报价</div><input id="quote-search" hidden><div id="quote-list" class="quote-list"></div>
+  <div class="sidebar-bottom"><button data-action="sources" class="sub-nav"><svg class="icon"><use href="#i-file"/></svg>资料来源</button><button data-action="about" class="sub-nav"><span class="avatar">林</span><span>林负责人<small>本地演示空间</small></span><svg class="icon"><use href="#i-info"/></svg></button></div>
+ </aside>
+ <main class="chat-workspace">
+  <header class="workspace-top"><div class="workspace-title"><button class="iconbtn mobile-menu" data-action="mobile-nav" aria-label="切换工作区"><svg class="icon"><use href="#i-mark"/></svg></button><button class="client-switch" data-action="choose-customer"><span id="active-client">晨禾食堂</span><span class="chevron-down">⌄</span></button><span id="workspace-context" class="workspace-context"></span></div><div class="workspace-actions"><button class="iconbtn" data-action="history" aria-label="版本记录"><svg class="icon"><use href="#i-history"/></svg></button><button class="btn slim" data-action="open-sheet" id="sheet-button">查看报价单</button><button class="btn primary slim" data-action="review" id="stage-action">确认报价</button></div></header>
+  <nav id="mobile-nav" hidden><button data-page="chat">报价对话</button><button data-page="evidence">客户与依据</button><button data-page="strategies">报价策略</button><button data-action="choose-customer">切换客户</button><button data-action="history">版本记录</button></nav>
+  <section id="chat-page" class="chat-page" aria-label="报价对话">
+   <div id="conversation" class="conversation" aria-live="polite"></div>
+   <div class="composer-area"><div class="composer-state" id="composer-state"></div><form id="main-chat-form" class="main-composer"><label class="sr-only" for="main-prompt">输入本次报价调整需求</label><textarea id="main-prompt" rows="2" placeholder="描述要调整的商品和价格…"></textarea><div class="composer-toolbar"><div class="flex wrap"><button type="button" class="context-chip" data-action="choose-customer"><svg class="icon"><use href="#i-file"/></svg><span id="composer-client">晨禾食堂</span><span>⌄</span></button><button type="button" class="composer-tool" data-action="rules">按条件调整</button><button type="button" class="composer-tool" data-strategy-action="name">存为策略</button><button type="button" class="composer-tool evidence-shortcut" data-page="evidence" id="evidence-chip">已关联依据</button></div><button type="submit" class="send-button" aria-label="发送报价需求">↑</button></div></form><div class="composer-foot"><span>AI 辅助判断，最终价格由你确认</span><button data-action="about">演示回复</button></div><div id="storage-note" class="save-state" role="status"></div></div>
+  </section>
+  <section id="evidence-page" class="evidence-page" hidden aria-label="客户与依据"><div class="page-title"><div><h1>客户与依据</h1><p class="muted">查看整单依据，点击卡片深入到商品与来源。</p></div><button class="btn" data-page="chat">返回报价对话</button></div><div id="customer-cards" class="customer-cards"></div><div id="basis-workspace"></div></section>
+  <section id="strategies-page" class="strategies-page" hidden aria-label="报价策略"></section>
+ </main>
+</div>
+<select id="mobile-quotes" hidden aria-label="切换客户"></select>
+<div id="sheet-backdrop" class="sheet-backdrop" hidden></div><section id="quote-sheet" class="quote-sheet" role="dialog" aria-modal="true" aria-labelledby="client-name" hidden><header class="sheet-top"><div><div class="breadcrumbs" id="quote-id"></div><div class="flex wrap"><h2 id="client-name"></h2><span class="tag" id="quote-status"></span></div></div><button class="iconbtn" data-action="close-sheet" aria-label="关闭报价单"><svg class="icon"><use href="#i-close"/></svg></button></header><div class="sheet-scroll"><div class="context"><span>10月1日—7日</span><span>含税 · 元/斤</span><span id="client-summary"></span><button class="link" data-action="conditions">适用条件</button></div><section class="work"><div class="workbar"><div class="flex"><h3>本版报价</h3><span class="muted small" id="item-count"></span></div><div class="segmented"><button data-filter="all" aria-pressed="true">全部</button><button data-filter="pending" aria-pressed="false">待处理 <span id="pending-count"></span></button></div></div><div class="tablewrap"><table><thead><tr><th>商品 / 规格</th><th>当前价</th><th>AI 参考</th><th>我的报价</th><th>详情</th></tr></thead><tbody id="product-rows"></tbody></table></div><div id="empty-list" class="empty" hidden>没有待处理的商品</div></section><div class="support-row"><span class="hint" id="main-hint"></span><div class="phase" id="phase"></div></div></div><footer class="work-footer"><div><div id="progress" class="progress-count"></div><div id="footer-note" class="footer-note"></div></div><button class="btn primary" id="main-action" data-action="review">检查并确认</button></footer></section>
+
+<div class="drawer-backdrop" id="drawer-backdrop" hidden></div><aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="drawer-title" hidden><header class="drawer-header"><div class="small muted" id="drawer-client"></div><div class="drawer-heading"><h2 id="drawer-title"></h2><button class="iconbtn" data-action="close-drawer" aria-label="关闭商品详情"><svg class="icon"><use href="#i-close"/></svg></button></div><div class="drawer-meta" id="drawer-meta"></div><div class="tabs" role="tablist" aria-label="商品详情"><button role="tab" data-tab="advice" id="tab-advice" aria-controls="drawer-body" aria-selected="true">AI 建议</button><button role="tab" data-tab="evidence" id="tab-evidence" aria-controls="drawer-body" aria-selected="false">客观依据</button><button role="tab" data-tab="decision" id="tab-decision" aria-controls="drawer-body" aria-selected="false">我的决定</button><button role="tab" data-tab="chat" id="tab-chat" aria-controls="drawer-body" aria-selected="false">讨论</button></div></header><div class="drawer-scroll" id="drawer-body" role="tabpanel" aria-labelledby="tab-advice"></div><footer class="drawer-footer" id="drawer-footer"></footer></aside>
+<div class="dialog-cover" id="dialog-cover" hidden><section class="dialog" role="dialog" aria-modal="true" aria-labelledby="dialog-title"><header class="dialog-head"><h2 id="dialog-title"></h2><button class="iconbtn" data-action="close-dialog" aria-label="关闭"><svg class="icon"><use href="#i-close"/></svg></button></header><div class="dialog-body" id="dialog-body"></div><footer class="dialog-foot" id="dialog-foot"></footer></section></div><div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function (global) {
+  'use strict';
+
+  // Deliberately bounded demo parser. Ambiguous commands never become executable changes.
+  var NUMBER = '(\\d+(?:\\.\\d+)?)';
+  var VERBS = '(上涨|上调|涨价|涨|增加|提高|加价|加|下跌|下调|降价|跌|降|减少|降低|减)';
+  var SYNONYMS = [['大白菜', '白菜'], ['鲜鸡蛋', '鸡蛋'], ['西红柿', '番茄']];
+  function escapeRegExp(s) { return String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+  function positiveVerb(s) { return /^(上涨|上调|涨价|涨|增加|提高|加价|加)$/.test(s); }
+  function aliasesFor(item) {
+    var aliases = Array.isArray(item.aliases) ? item.aliases.slice() : (item.aliases ? [item.aliases] : []);
+    aliases.push(item.name || '');
+    SYNONYMS.forEach(function (group) {
+      if (aliases.some(function (name) { return group.indexOf(name) !== -1; })) aliases = aliases.concat(group);
+    });
+    return aliases.filter(Boolean).sort(function (a, b) { return b.length - a.length; });
+  }
+  function categoryMatches(item, category) {
+    var cats = Array.isArray(item.category) ? item.category : [item.category];
+    return cats.indexOf(category) !== -1 || (category === '蔬菜' && cats.indexOf('叶菜') !== -1);
+  }
+  function parse(text, context) {
+    context = context || {};
+    var input = String(text || '').trim();
+    var items = Array.isArray(context.items) ? context.items : [];
+    var result = { kind: 'unknown', ids: [], operation: null, value: null, base: null, reason: '', text: input };
+    function finish(kind, reason) { result.kind = kind; result.reason = reason; return result; }
+    if (!input) return finish('unknown', '请说出要调整的商品和价格。');
+
+    var active = typeof context.activeCustomer === 'object' && context.activeCustomer
+      ? (context.activeCustomer.name || context.activeCustomer.id) : context.activeCustomer;
+    var customerNames = (context.customerNames || []).map(function (customer) {
+      return typeof customer === 'string' ? customer : customer.name;
+    }).filter(Boolean);
+    var otherCustomer = customerNames.find(function (name) { return name !== active && input.indexOf(name) !== -1; });
+    if (otherCustomer) return finish('clarify', '这条需求涉及“' + otherCustomer + '”。请先切换到该客户的报价任务。');
+
+    var filters = [];
+    var working = input.replace(/(?:当前(?:执行)?(?:单价|价格|价)|执行(?:价格|价))\s*(高于|低于|大于|小于|超过|不足)\s*[￥¥]?\s*(\d+(?:\.\d+)?)\s*(?:元|块)?/g,
+      function (matched, operator, amount) { filters.push({ high: /高于|大于|超过/.test(operator), amount: Number(amount) }); return ' '; });
+
+    // A filter's “当前价” describes its scope, not the calculation base.
+    var currentBase = /当前(?:执行)?(?:单价|价格|价)|执行(?:价格|价)/.test(working);
+    var draftBase = /草稿(?:价格|价)|我的报价/.test(working);
+    result.base = currentBase && !draftBase ? 'current' : (draftBase && !currentBase ? 'draft' : null);
+
+    var operations = [];
+    function collect(regex, fn) {
+      var match;
+      while ((match = regex.exec(working))) {
+        var operation = fn(match); operation.start = match.index; operation.raw = match[0];
+        operations.push(operation);
+      }
+    }
+    collect(new RegExp(VERBS + '\\s*' + NUMBER + '\\s*[%％]', 'g'), function (m) {
+      return { operation: 'percent', value: Number(m[2]) * (positiveVerb(m[1]) ? 1 : -1) };
+    });
+    collect(new RegExp(VERBS + '\\s*百分之\\s*' + NUMBER, 'g'), function (m) {
+      return { operation: 'percent', value: Number(m[2]) * (positiveVerb(m[1]) ? 1 : -1) };
+    });
+    collect(new RegExp(VERBS + '\\s*[￥¥]?\\s*' + NUMBER + '\\s*(?:元|块)(?:\\s*(?:[/／]|每)\\s*斤)?(?!\\s*[%％])', 'g'), function (m) {
+      return { operation: 'delta', value: Number(m[2]) * (positiveVerb(m[1]) ? 1 : -1) };
+    });
+    collect(/(?:改为|改成|改到|调为|调成|调到|设为|设成|定为|设定为|调整为|调整成|调整到|降到|涨到|报价为|定价为|定价|报价|报)\s*[￥¥]?\s*(-?\d+(?:\.\d+)?)\s*(?:(?:元|块)(?:\s*(?:[/／]|每)\s*斤)?)?/g,
+      function (m) { return { operation: 'set', value: Number(m[1]) }; });
+    collect(/(?:采用|采纳|使用|应用|按)(?:\s*(?:AI|人工智能))?\s*(?:建议价|倾向价|推荐价|建议)(?:格)?/gi,
+      function () { return { operation: 'adopt', value: null }; });
+    operations.sort(function (a, b) { return a.start - b.start; });
+    if (operations.length) { result.operation = operations[0].operation; result.value = operations[0].value; }
+
+    var questionIndex = working.search(/为什么|为何|原因|解释|缺什么|缺哪些|哪些依据|有什么依据|合理吗|合适吗|怎么定|怎么调|多少钱|建议多少|价格如何/);
+    var firstOperation = operations.length ? operations[0].start : Infinity;
+    if ((questionIndex !== -1 && questionIndex < firstOperation) || /(?:会怎样|会怎么样|会发生什么|可以吗|行吗|对吗|吗[？?]?)\s*$/.test(working)) {
+      return finish('question', '这是解释或咨询需求，不会调整价格。');
+    }
+
+    var nameMatches = [];
+    var knownNames = [];
+    items.forEach(function (item) {
+      var aliases = aliasesFor(item);
+      knownNames = knownNames.concat(aliases);
+      if (aliases.some(function (name) { return working.indexOf(name) !== -1; })) nameMatches.push(item.id);
+    });
+    var categories = ['叶菜', '蔬菜', '蛋类'].filter(function (category) { return working.indexOf(category) !== -1; });
+    var allScope = /全部|所有|全单|整单/.test(working);
+    var hasScope = nameMatches.length || categories.length || allScope || filters.length;
+    result.ids = items.filter(function (item) {
+      var scoped = nameMatches.length || categories.length
+        ? nameMatches.indexOf(item.id) !== -1 || categories.some(function (category) { return categoryMatches(item, category); })
+        : !!(allScope || filters.length);
+      return scoped && filters.every(function (filter) {
+        var price = Number(item.current);
+        return Number.isFinite(price) && (filter.high ? price > filter.amount : price < filter.amount);
+      });
+    }).map(function (item) { return item.id; });
+
+    if (!operations.length) {
+      if (/查看|展示|看看|依据|风险|建议|价格|报价单|缺|[？?]/.test(input)) return finish('question', '这是查看或咨询需求，不会调整价格。');
+      return finish(hasScope ? 'clarify' : 'unknown', '请说明调整方式，例如“大白菜设为 3.5 元”或“叶菜按当前执行价涨 3%”。');
+    }
+    if (operations.length !== 1 || filters.length > 1) return finish('clarify', '这条需求包含多条调整或筛选规则。请拆开处理，每次预览一条规则。');
+    if (currentBase && draftBase) return finish('clarify', '同时提到了执行价和草稿价，请明确本次计算基准。');
+    if (!hasScope) return finish('clarify', '请明确商品、分类或“全部商品”，不会默认调整整张报价单。');
+    if (categories.length > 1) {
+      result.ids = [];
+      return finish('clarify', '同时提到了多个分类，请明确一个分类，或在规则筛选中选择具体商品。');
+    }
+    if (nameMatches.length && categories.length) return finish('clarify', '同时提到了分类和具体商品，请选用一个明确范围，或在规则筛选中选择商品。');
+    if (/斤/.test(operations[0].raw) && items.some(function (item) {
+      return result.ids.indexOf(item.id) !== -1 && item.unit && item.unit !== '斤';
+    })) return finish('clarify', '所选商品的计价单位与“元/斤”不一致，请先确认单位。');
+
+    // Remove only grammar we support; leftover nouns catch “白菜和黄瓜” partial matches.
+    var residue = working.replace(operations[0].raw, ' ');
+    customerNames.concat(active ? [active] : []).sort(function (a, b) { return b.length - a.length; }).forEach(function (name) {
+      residue = residue.replace(new RegExp(escapeRegExp(name), 'g'), ' ');
+    });
+    knownNames.sort(function (a, b) { return b.length - a.length; }).forEach(function (name) {
+      residue = residue.replace(new RegExp(escapeRegExp(name), 'g'), ' ');
+    });
+    residue = residue
+      .replace(/协议(?:商品|价格|价|产品)?(?:保持不变|维持不变|不调整|不变|不动)/g, ' ')
+      .replace(/(?:再|并|并且)?(?:解释一下|解释|说明一下|说明)(?:原因|依据)/g, ' ')
+      .replace(/当前(?:执行)?(?:单价|价格|价)|执行(?:价格|价)|草稿(?:价格|价)|我的报价/g, ' ')
+      .replace(/在此基础上|的基础上|为基准|为基础|基础上/g, ' ')
+      .replace(/全部商品|所有商品|全部|所有|全单|整单|叶菜类?|蔬菜类?|蛋类/g, ' ')
+      .replace(/麻烦|请帮我|帮我|请|把|将|给|对|按照|按|基于|以|在|客户|商品|产品|价格|单价|报价|每个|每项|分别|统一|一起|进行|调整|一下|的|中|和|与|以及|及|、/g, ' ')
+      .replace(/[\s，,。.!！?？：:；;（）()“”"'【】\[\]+\/]+/g, '');
+    if (residue) return finish('clarify', '还有未识别的商品或条件：“' + residue.slice(0, 24) + '”。请明确后再预览，避免只调整部分商品。');
+    if (!result.ids.length) return finish('clarify', '当前报价单中没有符合条件的商品，请检查名称或筛选条件。');
+    if (result.operation === 'set' && result.value <= 0) return finish('clarify', '指定单价需要大于 0 元。');
+    if (result.operation === 'percent' && result.value <= -100) return finish('clarify', '降幅会使单价不大于 0，请重新指定调整幅度。');
+    if ((result.operation === 'delta' || result.operation === 'percent') && !result.base) {
+      return finish('clarify', '请明确按“当前执行价”还是“草稿价”增减，避免重复计算。');
+    }
+    return finish('adjust', '已识别调整需求，请核对商品范围和变更预览后应用。');
+  }
+  global.PricingIntent = { parse: parse };
+})(typeof window !== 'undefined' ? window : globalThis);
+
+
+(()=>{'use strict';
+const $=s=>document.querySelector(s),$$=s=>Array.from(document.querySelectorAll(s));
+const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const icon=n=>`<svg class="icon" aria-hidden="true"><use href="#i-${n}"/></svg>`;
+const money=n=>Number(n).toFixed(2),cents=n=>Math.round(Number(n)*100),signed=n=>(n>=0?'+':'')+money(n);
+const tag=(t,k='')=>`<span class="tag ${k}">${esc(t)}</span>`;
+const KEY='pricing-assistant-conversation-v2';
+const products=[
+{name:'大白菜',spec:'净菜',mark:'菜',current:5,cost:4.2,kind:'normal',low:5,high:5.3,target:5.1},
+{name:'鲜鸡蛋',spec:'M级散装',mark:'蛋',current:7.6,cost:6.5,kind:'fixed',target:7.6},
+{name:'土豆',spec:'一级',mark:'薯',current:3.2,cost:2.8,kind:'missing'},
+{name:'西红柿',spec:'一级',mark:'果',current:5.2,cost:4.1,kind:'wide',low:4.2,high:6.8}
+];
+const quotes=[{name:'晨禾食堂',id:'BJ-20261001-001',items:[0,1,2,3],summary:'每日配送'},{name:'云栖酒店',id:'BJ-20261001-002',items:[0,2],summary:'规格待核实'},{name:'桥头餐厅',id:'BJ-20261001-003',items:[0,3],summary:'配送频次待核实'}];
+const fresh=()=>({version:1,stage:0,prices:{},methods:{},notes:{},excluded:false,merchantChanged:false,needsReview:{},agreementDraft:false,history:[],discussion:[],execution:null,actual:{},checkAttempts:[],messages:[],plans:[],planSerial:0,sequence:0,lastUndo:null});
+let books=[fresh(),fresh(),fresh()],view={quote:0,product:0,tab:'advice',factor:'key',filter:'all',drawer:false},toastTimer,drawerFocus,dialogFocus,dialogType='',revisionAction=null;
+let pointerIsDown=false,priceRenderPending=false,priceRenderTimer;
+function flushPriceRender(){if(pointerIsDown||!priceRenderPending)return;priceRenderPending=false;const focused=document.activeElement;const focusId=focused?.id;const focusKey=focused?.dataset?Object.entries(focused.dataset).find(([key])=>['detail','price','adopt','tab','action','filter','quote'].includes(key)):null;const wasInDrawer=focused?.closest('#drawer');const scopeBefore=wasInDrawer?$('#drawer'):document;const matches=(scope,key,value)=>Array.from(scope.querySelectorAll('[data-'+key+']')).filter(el=>el.dataset[key]===value&&el.getClientRects().length);const focusOrdinal=focusKey?matches(scopeBefore,...focusKey).indexOf(focused):-1;render();if(focused&&!focused.isConnected){let next=focusId?document.getElementById(focusId):null;if(!next&&focusKey){const scope=wasInDrawer&&view.drawer?$('#drawer'):document;const candidates=matches(scope,...focusKey);next=candidates[focusOrdinal]||candidates[0];}if(next&&!next.disabled)next.focus({preventScroll:true});}}
+function schedulePriceRender(){clearTimeout(priceRenderTimer);priceRenderTimer=setTimeout(flushPriceRender,0);}
+document.addEventListener('pointerdown',()=>{pointerIsDown=true;},true);
+document.addEventListener('pointerup',()=>{pointerIsDown=false;schedulePriceRender();},true);
+document.addEventListener('pointercancel',()=>{pointerIsDown=false;schedulePriceRender();},true);
+window.addEventListener('blur',()=>{pointerIsDown=false;schedulePriceRender();});
+try{const stored=JSON.parse(localStorage.getItem(KEY)||localStorage.getItem('pricing-assistant-light-v1'));if(stored?.schema===1&&Array.isArray(stored.books)&&stored.books.length===3){books=stored.books.map(b=>({...fresh(),...b}));view.quote=[0,1,2].includes(stored.quote)?stored.quote:0;view.product=quotes[view.quote].items[0];}}catch{}
+const b=()=>books[view.quote],q=()=>quotes[view.quote],p=()=>products[view.product];
+function save(){try{localStorage.setItem(KEY,JSON.stringify({schema:1,books,quote:view.quote}));$('#storage-note').textContent='';}catch{$('#storage-note').textContent='当前浏览器未允许本地保存；关闭页面后演示记录可能丢失。';}}
+function toast(t){clearTimeout(toastTimer);$('#toast').textContent=t;toastTimer=setTimeout(()=>$('#toast').textContent='',4600);}
+function target(i){const x=products[i];if(x.kind==='normal'&&(b().excluded||b().merchantChanged))return null;return x.target??null;}
+function formatPrice(i){const x=products[i];if(x.kind==='fixed')return '协议 '+money(x.target);if(x.kind==='missing'||(x.kind==='normal'&&b().excluded))return '暂不形成区间';if(x.kind==='wide')return '待确认条件';return money(x.low)+'–'+money(x.high);}
+function flags(i){const x=products[i],value=b().prices[i];if(value&&x.kind==='fixed'&&cents(value)!==cents(x.target))return{label:'与有效协议冲突',type:'conflict'};if(b().needsReview[i])return{label:'依据更新，待复核',type:'review'};if(value&&x.low&&!(x.kind==='normal'&&b().excluded)){if(cents(value)>cents(x.high))return{label:'高于 AI 上沿 '+money((cents(value)-cents(x.high))/100),type:'deviation'};if(cents(value)<cents(x.low))return{label:'低于 AI 下沿 '+money((cents(x.low)-cents(value))/100),type:'deviation'};}return null;}
+function pending(i){const f=flags(i);return !b().prices[i]||f?.type==='conflict'||f?.type==='review';}
+function renderLegacy(){
+$('#quote-list').innerHTML=quotes.map((x,i)=>`<button class="quote ${view.quote===i?'active':''}" data-quote="${i}" aria-pressed="${view.quote===i}"><strong>${x.name}</strong><div class="quote-meta"><small class="muted">${x.items.length} 个商品</small>${tag(['定价中','待落实','待核验','已核验'][books[i].stage],books[i].stage?'green':'')}</div></button>`).join('');
+const query=$('#quote-search').value.trim();$$('[data-quote]').forEach(el=>{const x=quotes[+el.dataset.quote];el.hidden=!(x.name+x.id).includes(query);});
+$('#mobile-quotes').innerHTML=quotes.map((x,i)=>`<option value="${i}" ${i===view.quote?'selected':''}>${x.name}</option>`).join('');
+$('#quote-id').textContent=q().id+' / v'+b().version+(b().stage?'':' 草稿');$('#client-name').textContent=q().name;$('#quote-status').textContent=['定价中','待人工落实','待录单核验','已核验'][b().stage];$('#quote-status').className='tag '+(b().stage?'green':'');$('#client-summary').textContent=q().summary;
+const visible=q().items.filter(i=>view.filter==='all'||pending(i));$('#product-rows').innerHTML=visible.map(row).join('');$('#empty-list').hidden=visible.length>0;
+$('#item-count').textContent=q().items.length+' 项';$('#pending-count').textContent=q().items.filter(pending).length;
+$$('[data-filter]').forEach(el=>el.setAttribute('aria-pressed',String(el.dataset.filter===view.filter)));
+const count=q().items.filter(i=>b().prices[i]).length;
+$('#progress').textContent=b().stage?`v${b().version} · ${['','价格已确认','已人工落实','核验完成'][b().stage]}`:`${count} / ${q().items.length} 项已填写`;
+$('#footer-note').textContent=['草稿自动保存','下一步：在原系统人工录入','下一步：核对实际录单','本版记录已保留'][b().stage];
+$('#main-action').textContent=['检查并确认','记录人工落实','核验实际录单','查看核验结果'][b().stage];
+$('#phase').innerHTML=['定价','落实','核验'].map((x,i)=>`${i?'<i></i>':''}<span class="${b().stage===3||i<b().stage?'done':i===b().stage?'current':''}">${b().stage===3||i<b().stage?'✓ ':''}${x}</span>`).join('');
+$('#main-hint').innerHTML=icon('info')+'<span>'+(b().stage?'已确认价格受保护；需要调整时创建修订版':'点“详情”查看依据，报价可直接修改')+'</span>';
+if(view.drawer)renderDrawer();
+}
+function row(i){const x=products[i],f=flags(i),t=target(i);const sub=x.kind==='normal'?(b().excluded?'行情已排除':b().merchantChanged?'经营条件变化':'倾向 '+money(x.target)):x.kind==='fixed'?'有效协议约束':x.kind==='missing'?'缺可比规格与损耗':'参考范围过宽';return `<tr class="product-row"><td class="product-cell"><button class="product-name" data-detail="${i}" aria-label="查看${x.name}详情"><span class="product-mark" aria-hidden="true">${x.mark}</span><span><strong>${x.name}</strong><small>${x.spec} · 斤</small></span></button></td><td class="current-cell">${money(x.current)}</td><td class="advice-cell"><div class="advice"><span class="advice-title">${formatPrice(i)}</span><span class="advice-sub">${sub}${t!==null&&!b().stage?`<button class="use-price" data-adopt="${i}" aria-label="${x.name}采用${money(t)}元">采用</button>`:''}</span></div></td><td class="price-cell"><input class="price" data-price="${i}" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="填价格" aria-label="${x.name}我的报价，元每斤" value="${esc(b().prices[i]||'')}" ${b().stage?'disabled':''}>${f?`<div class="row-flag ${f.type==='conflict'?'conflict':''}">${f.label}</div>`:''}</td><td class="details-cell"><button class="link" data-detail="${i}">详情 ${icon('chevron')}</button></td></tr>`;}
+function setPrice(i,value,method='自主定价'){if(b().stage){toast('此版本已确认，请先创建修订版。');return false;}if(value!==''&&(!Number.isFinite(Number(value))||Number(value)<=0||Number(value)>99999||Math.abs(Number(value)*100-Math.round(Number(value)*100))>.00001)){toast('请填写大于 0、最多两位小数的价格。');return false;}b().sequence++;b().prices[i]=value===''?'':money(value);b().methods[i]=method;save();return true;}
+function adopt(i){const t=target(i);if(t===null)return;if(setPrice(i,t,products[i].kind==='fixed'?'按有效协议':'采纳倾向价')){render();toast('已填入草稿，确认整版前可继续修改。');}}
+function openDrawer(i,tab='advice'){drawerFocus=document.activeElement;view.product=i;view.tab=tab;view.drawer=true;$('#drawer').hidden=false;$('#drawer-backdrop').hidden=false;document.body.style.overflow='hidden';renderDrawer();$('#drawer [data-action="close-drawer"]').focus();}
+function closeDrawer(){view.drawer=false;$('#drawer').hidden=true;$('#drawer-backdrop').hidden=true;if($('#dialog-cover').hidden&&!view.sheet)document.body.style.overflow='';if(drawerFocus?.isConnected)drawerFocus.focus();}
+function renderDrawer(){const x=p(),stage=b().stage;$('#drawer-client').textContent=q().name+' · v'+b().version;$('#drawer-title').textContent=x.name;$('#drawer-meta').textContent=x.spec+' · 含税元/斤 · 当前价 '+money(x.current);$$('[data-tab]').forEach(el=>el.setAttribute('aria-selected',String(el.dataset.tab===view.tab)));$('#drawer-body').setAttribute('aria-labelledby','tab-'+view.tab);$('#drawer-body').innerHTML=({advice:adviceHTML,evidence:evidenceHTML,decision:decisionHTML,chat:chatHTML}[view.tab])();const t=target(view.product);$('#drawer-footer').innerHTML=stage?`<div class="flex spread"><div><div class="price-label">已确认最终价</div><strong>${money(b().prices[view.product])} 元/斤</strong></div><button class="btn" data-action="revise">创建修订版</button></div>`:`<div class="flex spread wrap"><label><span class="price-label" style="display:block;margin-bottom:5px">我的报价</span><input class="price" data-price="${view.product}" aria-label="详情中${x.name}我的报价" type="number" min="0.01" step="0.01" placeholder="填价格" value="${esc(b().prices[view.product]||'')}"></label><div class="flex">${t!==null?`<button class="btn" data-adopt="${view.product}">${x.kind==='fixed'?'使用协议价':'采用 '+money(t)}</button>`:''}<button class="btn primary" data-action="finish-item">完成此项</button></div></div>`;}
+function adviceHTML(){const x=p();if(x.kind==='fixed')return `<div class="rangebox"><div class="label">有效协议价</div><div class="range-value">7.60<small>元/斤</small></div><div class="target-price"><span class="small">固定价协议 A-018</span>${tag('已核实 · 有效约束','green')}</div></div><div class="stack"><div class="kv"><span class="label">适用</span><span>M级散装 · 10月1日—31日</span></div><div class="kv"><span class="label">影响</span><span>本次须按协议执行</span></div></div><details class="disclosure" style="margin-top:18px"><summary>需要调整协议价？</summary><div class="body"><p>先讨论改约方案，核实双方确认的生效材料。自行填写新价不等于协议已变更。</p><button class="btn" data-action="amend">讨论改约</button></div></details>${b().agreementDraft?'<div class="notice-box">改约草案尚未生效，现有协议仍适用。</div>':''}`;
+if(x.kind==='missing'||(x.kind==='normal'&&b().excluded))return `<div class="notice-box"><strong>暂不形成区间</strong><p>${x.kind==='missing'?'可比规格与损耗资料不足。':'不适用的市场行情已排除。'}</p></div><div class="mini-heading"><h3>已有参考点</h3></div><div class="stack"><div class="kv"><span class="label">当前价</span><span>${money(x.current)} 元/斤</span></div><div class="kv"><span class="label">采购成本</span><span>${money(x.cost)} 元/斤</span></div></div><div class="mini-heading"><h3>还缺什么</h3></div><p class="muted small">${x.kind==='missing'?'同规格销售报价、损耗口径。':'同规格可比报价、客户接受情况。'}</p><div class="flex" style="margin-top:18px"><button class="btn" data-action="questions">补充资料</button><button class="btn" data-action="own">自主定价</button></div>`;
+if(x.kind==='wide')return `<div class="rangebox"><div class="label">AI 初步范围</div><div class="range-value">4.20—6.80<small>元/斤</small></div></div><div class="notice-box">范围过宽，先确认配送频次与商品等级。</div><div class="mini-heading"><h3>不同价格对应不同条件</h3></div><div class="stack"><div class="kv"><span class="label">下沿</span><span>批量、集中配送的初步参考</span></div><div class="kv"><span class="label">上沿</span><span>高等级、每日配送，前提待核实</span></div></div><p class="small muted" style="margin-top:18px">不同条件尚不可直接比较，暂不推荐具体点价。</p><div class="flex" style="margin-top:18px"><button class="btn" data-action="questions">确认关键条件</button><button class="btn" data-action="own">自主定价</button></div>`;
+return `<div class="rangebox"><div class="label">AI 参考区间</div><div class="range-value">5.00—5.30<small>元/斤</small></div><div class="target-price"><span class="small">倾向参考价</span><strong>${b().merchantChanged?'待确认经营条件':'5.10 元/斤'}</strong></div></div><div class="mini-heading"><h3>主要考虑</h3><button class="link" data-switch="evidence">查看依据</button></div><div class="factor-short"><div class="factor-line"><i class="factor-dot"></i><span>采购成本上涨，支持重新评估价格。</span></div><div class="factor-line"><i class="factor-dot"></i><span>${b().merchantChanged?'采购量与配送要求变化，需重新核实。':'采购关系稳定，支持控制调整幅度。'}</span></div></div><details class="disclosure" style="margin-top:20px"><summary>区间上下沿为什么合理？</summary><div class="body"><div class="kv"><span class="label">5.00 下沿</span><span>沿用当前价，偏向维持合作稳定。</span></div><div class="kv"><span class="label">5.30 上沿</span><span>参考可比销售报价，客户接受程度待确认。</span></div><div class="kv"><span class="label">取舍</span><span>价格较低更利于维持合作；较高可增加成本空间，但成交接受度未明确。</span></div></div></details><details class="disclosure"><summary>哪些新信息会改变判断？</summary><div class="body">客户接受程度、行情可比性、采购量和实际配送要求。没有依据时，不将账期或客户规模直接折算为加减价。<button class="btn" data-action="questions">讨论待确认项</button></div></details><details class="disclosure"><summary>市场参考与业务限制</summary><div class="body"><div class="kv"><span class="label">市场报价</span><span>5.10—5.30 元/斤，规格待核实</span></div><div class="kv"><span class="label">业务限制</span><span>暂无已核实强制限制</span></div><p class="small">AI 区间是经营建议，不是统计置信区间，也不保证成交。</p></div></details>`;}
+function evidenceItems(){const x=p(),i=view.product;return[
+{cat:'cost',title:'采购与成本',value:`采购参考成本 ${money(x.cost)} 元/斤${i===0?'，较上期 +0.20':''}`,certainty:'已核实事实',impact:i===0?'支持上调':'提供参考点',constraint:'非强制约束',source:'系统采购导出',date:'09-28',scope:x.name+' / '+x.spec+' / 含税元/斤',more:'入库、库存成本暂未提供；已知损耗和配送成本尚不完整，不能将采购价当作全部成本。'},
+{cat:'history',title:'历史价格',value:`当前价 ${money(x.current)} 元/斤；近期成交同价`,certainty:'已核实事实',impact:'比较调整幅度',constraint:'非强制约束',source:'原系统成交导出',date:'09-21—28',scope:q().name+' / '+x.name+' / 同规格含税元/斤',more:'近期无已知调价记录；历史成交不自动形成固定价约束。'},
+{cat:'market',title:'市场与供应',value:i===0?'可比销售报价 5.10—5.30 元/斤':i===2?'现有报价规格不一致':i===3?'4.20—6.80 元/斤，适用条件不一致':'暂无同规格市场资料',certainty:'待核实信息',impact:i===0?'支持上调的参考':'暂无法判断',constraint:'非强制约束',source:'服务人员汇集 / 指定市场报价表',date:'09-28',scope:x.name+' / 含税元/斤 / 规格与配送条件待核实',more:'市场资料人工汇集；供货变化暂无进一步信息。只在规格、时间、计价口径可比时参考。'},
+{cat:'merchant',title:'商户情况',value:i===0?(b().merchantChanged?'负责人补充：采购量下降，仍需每日配送':'长期稳定采购；每日配送，账期30天'):'采购量、频次、配送要求与账期待确认',certainty:'人员转述',impact:i===0&&!b().merchantChanged?'支持控制涨幅':'待确认经营影响',constraint:'约束待核实',source:'负责人 / 企微沟通摘录',date:'09-29',scope:q().name+' / '+x.name+' / 本次报价周期',more:'采购量、采购频率、规格要求、配送要求、账期分别核实。人员陈述不直接视为双方协议。'},
+{cat:'terms',title:'约定与条件',value:i===1?'固定价 7.60 元/斤；10月1日—31日':'暂无已核实固定价；其他业务条件待确认',certainty:i===1?'已核实事实':'待核实信息',impact:i===1?'须遵循协议价':'暂无法判断',constraint:i===1?'有效约束':'约束待核实',source:i===1?'固定价协议 A-018':'业务条件记录 / 企微补充',date:i===1?'09-25':'09-29',scope:q().name+' / '+x.name+' / '+x.spec,more:'数量阶梯、时价、适用时段和原系统限制均需核对。消息、建议或手填新价不使协议自动变更。'}];}
+function evidenceHTML(){const cats=[['key','关键'],['all','全部'],['cost','采购'],['history','历史'],['market','市场'],['merchant','商户'],['terms','约定']];let items=evidenceItems();if(view.factor==='key')items=items.filter(x=>(view.product===1?['terms','cost']:['cost','market','merchant']).includes(x.cat));else if(view.factor!=='all')items=items.filter(x=>x.cat===view.factor);return `<div class="factor-nav" aria-label="依据类别">${cats.map(([id,name])=>`<button data-factor="${id}" aria-pressed="${view.factor===id}">${name}</button>`).join('')}</div>`+items.map(x=>`<article class="evidence-card ${x.cat==='market'&&view.product===0&&b().excluded?'excluded':''}"><div class="flex spread"><h3>${x.title}</h3>${x.cat==='market'&&view.product===0?`<button class="link" data-action="toggle-market">${b().excluded?'恢复参考':'排除此条'}</button>`:''}</div><p>${esc(x.value)}${x.cat==='market'&&view.product===0&&b().excluded?'（已排除）':''}</p><div class="evidence-tags">${tag(x.certainty,x.certainty==='待核实信息'?'amber':'')}${tag(x.impact)}${tag(x.constraint,x.constraint==='有效约束'?'green':'')}</div><details><summary>来源与口径 · ${x.date}</summary><p>来源：${x.source}<br>适用：${x.scope}<br>时间：2026-${x.date}<br>${x.more}</p></details></article>`).join('');}
+function decisionHTML(){const i=view.product,x=p(),value=b().prices[i],f=flags(i);return `<div class="price-label">负责人最终价</div><div class="final-value">${value?money(value):'未定价'}${value?'<small class="small muted"> 元/斤</small>':''}</div><div style="margin-top:7px">${tag(b().methods[i]||'可直接填写')}${b().stage?' '+tag('已确认版本','green'):''}</div>${f?`<div class="notice-box ${f.type==='conflict'?'red':''}" style="margin-top:18px"><strong>${f.label}</strong><p>${f.type==='conflict'?'请按现有协议报价；如需改约，须核实双方确认的生效材料。':f.type==='review'?'新信息已更新建议，原定价格保留，请复核。':'允许保留这个价格；AI 原区间不会因此改变。'}</p></div>`:''}<div class="decision-calcs"><div><span class="label">较当前价</span><strong>${value?signed((cents(value)-cents(x.current))/100):'—'}</strong></div><div><span class="label">采购成本价差</span><strong>${value?signed((cents(value)-cents(x.cost))/100):'—'}</strong></div></div><details class="disclosure"><summary>计算口径与已知影响</summary><div class="body"><p>价差 = 最终价 − 当前价；采购成本价差 = 最终价 − 采购参考成本。按分计算后换算为元。</p><p>未扣损耗、配送等费用；该价差不是净利润。</p>${value?`<p>较当前价：${((cents(value)-cents(x.current))/cents(x.current)*100).toFixed(1)}%。${f?.type==='deviation'?'区间外价格的客户接受程度仍需核实。':''}</p>`:''}</div></details><label class="field" style="margin-top:13px"><span>经营考虑（选填）</span><textarea id="decision-note" rows="2" placeholder="也可直接在“讨论”里补充" ${b().stage?'disabled':''}>${esc(b().notes[i]||'')}</textarea></label>${b().needsReview[i]?'<button class="btn" style="margin-top:14px" data-action="keep-price">复核并保留此价格</button>':''}`;}
+function welcome(){const x=p();if(x.kind==='fixed')return '<strong>这项按有效协议报价</strong><p>适用价为 7.60 元/斤。需要调价时，可先讨论改约草案。</p>';if(x.kind==='missing'||(x.kind==='normal'&&b().excluded))return '<strong>目前不生成区间</strong><p>现有参考点已保留。补齐可比资料后，再讨论具体价格。</p>';if(x.kind==='wide')return '<strong>先确认最影响价格的条件</strong><p>本次是每日配送，还是集中配送？</p>';if(b().merchantChanged)return '<strong>商户条件已更新</strong><p>采购量下降与配送要求需要重新核实，暂不推荐具体点价。</p>';return '<strong>大白菜先考虑 5.10 元/斤</strong><p>成本上涨支持调价，稳定采购关系支持控制涨幅。</p>';}
+function chatHTML(){const messages=b().discussion.filter(m=>m.product===view.product);return `<div class="chat-status">围绕当前商品讨论 · 演示回复</div><div class="chat-list" aria-live="polite"><div class="bubble">${welcome()}</div>${messages.slice(-10).map(m=>`<div class="bubble ${m.role==='user'?'user':''}">${m.role==='user'?esc(m.text):m.html}${m.price?`<button class="btn" style="margin-top:10px" data-chat-price="${m.price}" data-product="${m.product}" data-context="${view.quote}">填写 ${money(m.price)}</button>`:''}</div>`).join('')}</div><div class="chat-quick"><button class="btn slim" data-action="explain">解释建议</button><button class="btn slim" data-action="questions">还缺什么</button>${view.product===0?'<button class="btn slim" data-action="toggle-market">'+(b().excluded?'恢复行情':'排除行情')+'</button>':''}</div><form class="chat-form" id="chat-form"><label class="sr-only" for="chat-input">补充信息或指定价格</label><textarea id="chat-input" rows="2" placeholder="例如：这项报 5.40"></textarea><div class="flex spread"><small class="muted">已定价格不会被覆盖</small><button class="btn primary" type="submit">发送</button></div></form>`;}
+function questionHTML(){const kind=p().kind;const list=kind==='normal'?['客户能否接受 0.10 元/斤的上涨？','市场报价是否与本次规格、配送条件一致？']:kind==='fixed'?['本次是否满足协议的规格及有效期？','改约是否已有双方确认的生效材料？']:kind==='missing'?['有没有同规格、同等级的可比报价？','本批次的已知损耗是多少？']:['本次是每日配送，还是集中配送？','商品是否仍按一级规格执行？'];return '<strong>本轮确认这两项</strong><ol>'+list.map(t=>'<li>'+t+'</li>').join('')+'</ol>';}
+function changeMarket(){if(view.product!==0)return;if(b().stage){requestRevise({type:'market',product:view.product,quote:view.quote,label:b().excluded?'恢复大白菜行情参考':'排除大白菜行情'});return;}b().sequence++;b().excluded=!b().excluded;if(b().prices[0])b().needsReview[0]=true;b().discussion.push({product:0,role:'assistant',html:b().excluded?'<strong>已排除这条行情</strong><p>区间与倾向价暂时撤回，保留采购成本和历史参考点。已定价格不变。</p>':'<strong>行情已恢复参考</strong><p>请继续核实规格与适用条件，负责人价格保持不变。</p>'});b().messages.push({role:'assistant',kind:'text',html:'<p>大白菜行情'+(b().excluded?'已排除，暂不形成区间':'已恢复参考')+'。已定价格保持不变。</p>'});save();render();toast('仅更新大白菜的依据和建议，已填报价保留。');}
+function sendChat(text){if(b().stage&&view.product===0&&/排除|别参考|规格不同|采购量.*下降|每天配送|每日配送/.test(text)){requestRevise({type:'chat',product:view.product,quote:view.quote,text,label:'补充依据：'+text});return;}b().discussion.push({product:view.product,role:'user',text});if(/排除|别参考|规格不同/.test(text)&&view.product===0){if(!b().excluded)changeMarket();else addMessage('<p>这条行情已处于排除状态。</p>');return;}if(/采购量.*下降|每天配送|每日配送/.test(text)&&view.product===0){b().sequence++;b().merchantChanged=true;if(b().prices[0])b().needsReview[0]=true;addMessage('<strong>商户情况已补充</strong><p>标记为人员转述、待核实。原范围保留，但暂不推荐具体点价；不将经营条件机械换算成加价。</p><p>你的最终价保持不变。</p>');return;}const match=text.match(/(?:报|定|价格(?:为|是)?|价为|价是)\s*[¥￥]?\s*(\d+(?:\.\d{1,2})?)(?!\d|\.)/);if(match&&Number(match[1])>0){b().discussion.push({product:view.product,role:'assistant',html:'<strong>按你的决定填写</strong><p>这会修改草稿中的具体价格，AI 原建议保持不变。</p>',price:Number(match[1])});save();render();return;}if(/为什么|解释|建议/.test(text)){addMessage(welcome()+'<p class="small">区间上下沿、取舍和参考来源可在“AI 建议”和“客观依据”中查看。</p>');return;}if(/缺|确认|问题/.test(text)){addMessage(questionHTML());return;}addMessage('<strong>已记录这条补充</strong><p>信息暂列为待核实，本演示不会据此编造新价格。实际产品需核实来源后更新受影响商品。</p>');}
+function openDialog(type,title,html,footer){dialogFocus=document.activeElement;dialogType=type;$('#dialog-title').textContent=title;$('#dialog-body').innerHTML=html;$('#dialog-foot').innerHTML=footer;$('#dialog-cover').hidden=false;document.body.style.overflow='hidden';$('#dialog-cover [data-action="close-dialog"]').focus();}
+function closeDialog(){$('#dialog-cover').hidden=true;dialogType='';if(!view.drawer&&!view.sheet)document.body.style.overflow='';if(dialogFocus?.isConnected)dialogFocus.focus();}
+const cancel='<button class="btn" data-action="close-dialog">返回</button>';
+function unresolved(){const list=[];for(const i of q().items){const x=products[i];if(x.kind==='normal')list.push('大白菜：'+(b().excluded?'行情已排除，区间暂缺。':b().merchantChanged?'采购量与配送要求变化待核实。':'客户接受程度、行情规格待核实。'));if(x.kind==='missing')list.push('土豆：可比规格与损耗信息不足。');if(x.kind==='wide')list.push('西红柿：配送频次、等级待确认。');}return list;}
+function review(){if(b().stage===1){executionDialog();return;}if(b().stage>=2){verificationDialog();return;}const empty=q().items.filter(i=>!b().prices[i]),conflicts=q().items.filter(i=>flags(i)?.type==='conflict'),changed=q().items.filter(i=>b().needsReview[i]);const blocked=empty.length||conflicts.length||changed.length;openDialog('review','确认本版报价',`<div class="flex spread wrap"><div><strong>${q().name}</strong><div class="small muted">v${b().version} · 10月1日—7日 · 含税元/斤</div></div><button class="link" data-action="review-conditions">适用条件</button></div><table><thead><tr><th>商品</th><th>当前价</th><th>最终价</th><th>提示</th></tr></thead><tbody>${q().items.map(i=>`<tr><td>${products[i].name}<br><small class="muted">${products[i].spec}</small></td><td>${money(products[i].current)}</td><td><strong>${b().prices[i]?money(b().prices[i]):'未填写'}</strong></td><td>${flags(i)?esc(flags(i).label):esc(b().methods[i]||'待决定')}</td></tr>`).join('')}</tbody></table><div class="small muted">仅影响 ${q().name}；适用本单所列规格。鲜鸡蛋如适用协议 A-018，仍受 7.60 元/斤固定价约束。</div><div class="review-issues"><strong>未解决项</strong><ul>${unresolved().map(t=>'<li>'+t+'</li>').join('')}</ul></div>${empty.length?'<div class="error">'+empty.length+' 项尚未填写具体价格。</div>':''}${conflicts.length?'<div class="error">鸡蛋报价与有效协议冲突。请使用协议价，或核实变更生效后创建修订版；勾选知悉不能消除约束。</div>':''}${changed.length?'<div class="error">新依据影响的价格待复核，请到“我的决定”中确认。</div>':''}<label class="checkline" style="margin-top:18px"><input id="confirm-checked" type="checkbox"><span>我已检查具体价格、适用条件与未解决项，确认 v${b().version}。</span></label><div id="dialog-error" class="error" role="alert"></div>`,cancel+`<button class="btn primary" data-action="confirm-version" ${blocked?'disabled':''}>确认 v${b().version}</button>`);}
+function confirmVersion(){if(!$('#confirm-checked').checked){$('#dialog-error').textContent='请先确认已检查本版报价。';return;}const book=b();book.history.push({version:book.version,time:new Date().toLocaleString('zh-CN'),prices:{...book.prices},methods:{...book.methods},notes:{...book.notes},evidence:{excluded:book.excluded,merchantChanged:book.merchantChanged},unresolved:unresolved(),conditions:'10月1日—7日 / 含税元/斤 / 本单所列规格',execution:null,checkAttempts:[],verified:null});book.stage=1;registerConfirmedStrategy(book,view.quote);save();closeDialog();closeDrawer();render();toast('本版已保存为报价策略；可在策略页设置生效时间，并继续人工落实。');}
+function executionDialog(){const e=b().execution||{};openDialog('execution','记录人工落实',`<div class="subtle-box"><strong>${q().name} · v${b().version}</strong><p class="small muted">在原系统完成本版录入后，记录实际执行信息。</p></div><div class="two-cols" style="margin-top:20px"><label class="field"><span>执行人员</span><input id="executor" value="${esc(e.person||'')}" placeholder="填写姓名"></label><label class="field"><span>原系统记录号</span><input id="order-id" value="${esc(e.order||'')}" placeholder="报价单或订单编号"></label><label class="field"><span>实际落实时间</span><input id="execution-time" type="datetime-local" value="${esc(e.time||'')}"></label></div><label class="checkline" style="margin-top:20px"><input id="execution-checked" type="checkbox"><span>已在原系统人工录入 v${b().version}，下一步核验实际录单。</span></label><div id="dialog-error" class="error" role="alert"></div>`,`<button class="btn" data-action="revise">创建修订版</button>`+cancel+'<button class="btn primary" data-action="save-execution">记录落实</button>');}
+function saveExecution(){const person=$('#executor').value.trim(),order=$('#order-id').value.trim(),time=$('#execution-time').value;if(!person||!order||!time||!$('#execution-checked').checked){$('#dialog-error').textContent='请填写执行信息，并确认已在原系统录入。';return;}b().execution={person,order,time};const h=b().history.find(h=>h.version===b().version);h.execution={...b().execution};b().stage=2;save();closeDialog();render();toast('落实记录已保存，请继续核验实际录单。');}
+function verificationDialog(){const done=b().stage===3,e=b().execution;openDialog('verify',done?'本版核验结果':'核验实际录单',`<div class="subtle-box"><strong>${q().name} · v${b().version}</strong><p class="small muted">${esc(e.person)} · ${esc(e.order)} · ${esc(e.time.replace('T',' '))}</p></div><table><thead><tr><th>商品</th><th>确认价</th><th>实际录单价</th></tr></thead><tbody>${q().items.map(i=>`<tr><td>${products[i].name}<br><small class="muted">${products[i].spec} · 元/斤</small></td><td>${money(b().prices[i])}</td><td><input class="price" data-actual="${i}" type="number" min="0.01" step="0.01" placeholder="实际价" value="${esc(b().actual[i]||'')}" aria-label="${products[i].name}实际录单价" ${done?'disabled':''}></td></tr>`).join('')}</tbody></table>${done?'<div class="notice-box" style="background:var(--green-soft);color:var(--green)">价格及适用条件已核对一致。</div>':'<label class="checkline"><input id="order-checked" type="checkbox"><span>商户、规格、计价单位、税价和适用日期已核对。</span></label>'}<div class="error" id="dialog-error" role="alert"></div>`,`<button class="btn" data-action="revise">创建修订版</button>`+cancel+(done?'':'<button class="btn primary" data-action="save-verification">核对并记录</button>'));}
+function saveVerification(){const inputs=$$('[data-actual]'),book=b();if(inputs.some(el=>!el.value||!Number.isFinite(Number(el.value))||Number(el.value)<=0||Math.abs(Number(el.value)*100-cents(el.value))>.00001)||!$('#order-checked').checked){$('#dialog-error').textContent='请填写有效实际价格，并核对适用条件。';return;}for(const el of inputs)book.actual[el.dataset.actual]=money(el.value);const differences=q().items.filter(i=>cents(book.actual[i])!==cents(book.prices[i]));const attempt={time:new Date().toLocaleString('zh-CN'),actual:{...book.actual},differences:[...differences]};book.checkAttempts.push(attempt);const h=book.history.find(h=>h.version===book.version);h.checkAttempts.push(attempt);if(differences.length){save();$('#dialog-error').textContent='存在差异：'+differences.map(i=>products[i].name).join('、')+'。请回原系统更正后重验，或创建修订版重新确认。';return;}h.verified={...attempt,conditionsChecked:true};book.stage=3;save();closeDialog();render();toast('本版录单核验完成，落实与核验记录已保留。');}
+function requestRevise(change=null){if(!b().stage){closeDialog();return;}revisionAction=change;openDialog('revise','创建修订版',`<div class="stack"><p>保留 v${b().version} 的价格、依据、落实与核验记录。</p><div class="subtle-box">新建 v${b().version+1} 草稿，沿用现有价格；调整后需要重新确认、落实与核验。</div>${change?'<div class="notice-box">新草稿将执行：'+esc(change.label)+'。<br>已定价格保持不变。</div>':''}</div>`,cancel+`<button class="btn primary" data-action="create-revision">创建 v${b().version+1}</button>`);}
+function createRevision(){const book=b(),change=revisionAction;revisionAction=null;book.version++;book.sequence++;book.lastUndo=null;book.stage=0;book.execution=null;book.actual={};book.checkAttempts=[];save();closeDialog();closeDrawer();if(change&&change.quote===view.quote){view.product=change.product;openDrawer(change.product,change.type==='market'?'evidence':'chat');if(change.type==='market')changeMarket();if(change.type==='chat')sendChat(change.text);if(change.type==='amend')amend();if(change.type==='adjust'){closeDrawer();createPlan(change.spec);}}render();toast('修订草稿已创建，上一版完整记录保留。');}
+function amend(){if(b().stage){requestRevise({type:'amend',product:view.product,quote:view.quote,label:'讨论鸡蛋改约草案'});return;}b().agreementDraft=true;addMessage('<strong>改约草案 · 未生效</strong><p>可以讨论新价格和生效时间。现有协议继续适用，需核实双方确认材料。</p>');}
+function historyDialog(){openDialog('history','版本记录',b().history.length?b().history.slice().reverse().map(h=>`<article class="history"><div class="flex spread wrap"><strong>v${h.version}</strong>${tag(h.verified?'已核验':h.execution?'已落实 · 待核验':'已确认',h.verified?'green':'')}</div><p>${esc(h.time)} · ${h.conditions}</p><p>${q().items.map(i=>products[i].name+' '+money(h.prices[i])).join(' / ')} 元/斤</p><details class="disclosure" style="margin-top:12px"><summary>查看本版记录</summary><div class="body"><div>依据：${h.evidence.excluded?'行情已排除':'行情保留'}；${h.evidence.merchantChanged?'商户情况已补充':'原商户情况'}。</div><div>未解决项：${h.unresolved.map(esc).join(' ')}</div>${h.execution?'<div>落实：'+esc(h.execution.person)+' / '+esc(h.execution.order)+' / '+esc(h.execution.time.replace('T',' '))+'</div>':''}${h.checkAttempts?.map(a=>'<div>核验 '+esc(a.time)+'：'+(a.differences.length?'差异 '+a.differences.map(i=>products[i].name+'（确认 '+money(h.prices[i])+' / 实际 '+money(a.actual[i])+' 元/斤）').join('、'):'一致')+'</div>').join('')||''}</div></details></article>`).join(''):'<p class="muted">当前为首版草稿。确认后可在此追溯历史。</p>',cancel+(b().stage?'<button class="btn primary" data-action="revise">创建修订版</button>':''));}
+function conditionsHTML(){return `<div class="stack"><div class="kv"><span class="label">商户</span><strong>${q().name}</strong></div><div class="kv"><span class="label">日期</span><span>2026-10-01—10-07</span></div><div class="kv"><span class="label">口径</span><span>人民币 · 含税 · 元/斤</span></div><div class="kv"><span class="label">规格</span><span>${q().items.map(i=>products[i].name+'（'+products[i].spec+'）').join('、')}</span></div><div class="kv"><span class="label">配送</span><span>${q().summary}</span></div>${q().items.includes(1)?'<div class="notice-box">鸡蛋适用固定价协议 A-018：7.60 元/斤，M级散装，10月1日—31日。</div>':''}<details class="disclosure"><summary>其他业务条件</summary><div class="body">采购量、数量阶梯、时价、账期及原系统限制按资料逐项核实。新填写价格不代表协议已变更。</div></details></div>`;}
+function sourcesDialog(){openDialog('sources','资料来源',`<div class="stack"><div class="subtle-box"><strong>系统导出</strong><p class="small muted">采购、入库或库存成本、成交历史、商户档案。</p></div><div class="subtle-box"><strong>企业微信</strong><p class="small muted">补充沟通线索，保留核实状态。消息不直接作为有效协议。</p></div><div class="subtle-box"><strong>指定外部来源</strong><p class="small muted">由服务人员人工汇集行情、可比报价与供货信息。</p></div><div class="subtle-box"><strong>协议及业务条件</strong><p class="small muted">保留原始来源、有效时间与适用对象。</p></div><p class="small muted">先按报价单—商户—商品规格关联，再统一单位、日期和税价口径。每条依据的来源可在商品详情中查看。</p></div>`,cancel);}
+function switchQuote(i){closeSheet();$('#main-prompt').value='';closeDrawer();closeDialog();view.quote=i;view.product=q().items[0];view.filter='all';view.factor='key';save();render();}
+function focusOwn(){if(b().stage){requestRevise();return;}view.tab='decision';renderDrawer();const el=$('#drawer-footer [data-price]');el.focus();el.select();}
+document.addEventListener('click',e=>{const el=e.target.closest('button');if(!el)return;
+if(el.dataset.quote!==undefined){switchQuote(+el.dataset.quote);return;}
+if(el.dataset.detail!==undefined){openDrawer(+el.dataset.detail);return;}
+if(el.dataset.adopt!==undefined){adopt(+el.dataset.adopt);return;}
+if(el.dataset.filter){view.filter=el.dataset.filter;render();return;}
+if(el.dataset.tab||el.dataset.switch){view.tab=el.dataset.tab||el.dataset.switch;renderDrawer();return;}
+if(el.dataset.factor){view.factor=el.dataset.factor;renderDrawer();return;}
+if(el.dataset.chatPrice){if(+el.dataset.context!==view.quote||+el.dataset.product!==view.product)return;if(setPrice(view.product,el.dataset.chatPrice,'对话指定价格')){view.tab='decision';render();toast('已按这条消息填写具体价格。');}return;}
+const actions={ask:()=>openDrawer(view.product,'chat'),history:historyDialog,conditions:()=>openDialog('conditions','报价条件',conditionsHTML(),cancel),sources:sourcesDialog,'close-drawer':closeDrawer,'close-dialog':closeDialog,review,'confirm-version':confirmVersion,'save-execution':saveExecution,'save-verification':saveVerification,revise:requestRevise,'create-revision':createRevision,'toggle-market':changeMarket,own:focusOwn,questions:()=>addMessage(questionHTML()),explain:()=>addMessage(welcome()+'<p class="small">具体区间上下沿与取舍可在“AI 建议”中展开查看。</p>'),amend,'keep-price':()=>{b().needsReview[view.product]=false;save();render();toast('已复核并保留最终价。');},'finish-item':()=>{if(!b().prices[view.product]){toast('请填写一个具体价格。');$('#drawer-footer [data-price]').focus();return;}const f=flags(view.product);if(f?.type==='conflict'||f?.type==='review'){view.tab='decision';renderDrawer();toast('请先处理该商品的约束冲突或复核提示。');return;}closeDrawer();render();toast('此项已保存在草稿中。');},'review-conditions':()=>{const existing=$('#review-conditions');if(existing){existing.remove();return;}const el=document.createElement('div');el.id='review-conditions';el.className='subtle-box';el.style.marginTop='14px';el.innerHTML=conditionsHTML();$('#dialog-body').append(el);el.scrollIntoView({block:'nearest'});},about:()=>openDialog('about','关于本演示',`<div class="stack"><p>这是可离线打开的前端交互演示，商户、价格与资料均为示例。</p><div class="subtle-box">支持定价、依据核对、场景对话、版本确认、人工落实和录单核验。演示记录只保存于当前浏览器。</div><p class="small muted">未连接真实 AI、企微或业务系统，不会发消息或自动写入原系统。自由输入采用预设场景回应。</p><button class="link" data-action="sources">查看资料来源范围</button></div>`,cancel+'<button class="btn" data-action="reset-dialog">重置演示</button>'),'reset-dialog':()=>openDialog('reset','重置演示记录',`<p>清空本浏览器中这份演示的报价草稿、讨论和历史，恢复最初示例。</p>`,cancel+'<button class="btn primary" data-action="reset-confirm">确认重置</button>'),'reset-confirm':()=>{books=[fresh(),fresh(),fresh()];view.quote=0;view.product=0;view.filter='all';save();closeDialog();closeDrawer();render();toast('演示已重置。');}};actions[el.dataset.action]?.();});
+document.addEventListener('click',flushPriceRender);
+document.addEventListener('change',e=>{const el=e.target;if(el.matches('[data-price]')){const i=+el.dataset.price,old=b().prices[i]||'';if(setPrice(i,el.value)){priceRenderPending=true;schedulePriceRender();const f=flags(i);if(f)toast(f.label+(f.type==='deviation'?'，自主价已保留。':''));}else el.value=old;}if(el.id==='decision-note'){b().notes[view.product]=el.value;save();}if(el.id==='mobile-quotes')switchQuote(+el.value);});
+document.addEventListener('submit',e=>{if(e.target.id==='chat-form'){e.preventDefault();const text=$('#chat-input').value.trim();if(text)sendChat(text);}});
+$('#quote-search').addEventListener('input',()=>{const query=$('#quote-search').value.trim();$$('[data-quote]').forEach(el=>{const x=quotes[+el.dataset.quote];el.hidden=!(x.name+x.id).includes(query);});});
+$('#drawer-backdrop').addEventListener('click',closeDrawer);
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(!$('#dialog-cover').hidden)closeDialog();else if(view.drawer)closeDrawer();return;}const scope=!$('#dialog-cover').hidden?$('#dialog-cover'):view.drawer?$('#drawer'):null;if(scope&&e.key==='Tab'){const els=Array.from(scope.querySelectorAll('button:not(:disabled),input:not(:disabled),textarea:not(:disabled),select,summary')).filter(el=>el.getClientRects().length);if(!els.length)return;const first=els[0],last=els[els.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}}if(e.target.matches('[data-tab]')&&['ArrowLeft','ArrowRight'].includes(e.key)){e.preventDefault();const tabs=$$('[data-tab]'),index=tabs.indexOf(e.target),next=tabs[(index+(e.key==='ArrowRight'?1:tabs.length-1))%tabs.length];view.tab=next.dataset.tab;renderDrawer();$('#tab-'+view.tab).focus();}});
+// Quote-scoped conversations, deterministic preview plans, and evidence workspace.
+Object.assign(view,{page:'chat',sheet:false});
+let sheetFocus;
+function render(){renderLegacy();renderShell();}
+function renderShell(){
+ $('#active-client').textContent=q().name;
+ $('#workspace-context').textContent='10月1日—7日 · v'+b().version+' '+['草稿','待落实','待核验','已核验'][b().stage];
+ $('#composer-client').textContent=q().name;
+ const count=q().items.filter(i=>b().prices[i]).length;
+ $('#sheet-button').textContent='报价单 '+count+'/'+q().items.length;
+ $('#stage-action').textContent=['确认报价','记录落实','核验录单','核验结果'][b().stage];
+ $('#chat-page').hidden=view.page!=='chat';$('#evidence-page').hidden=view.page!=='evidence';
+ $('#strategies-page').hidden=view.page!=='strategies';
+ $$('[data-page]').forEach(el=>el.classList.toggle('active',el.dataset.page===view.page));
+ const conversation=$('#conversation'),scrollBefore=conversation.scrollTop,messageKey=view.quote+':'+b().messages.length,followLatest=view.chatMessageKey!==messageKey;
+ conversation.innerHTML=b().messages.length?b().messages.map(messageHTML).join(''):heroHTML();
+ if(view.page==='chat'){conversation.scrollTop=followLatest?conversation.scrollHeight:scrollBefore;view.chatMessageKey=messageKey;}
+ const undo=b().lastUndo;
+ $('#composer-state').innerHTML=count?`<span>${count} / ${q().items.length} 项已定价 · ${b().stage?'已确认版本':'草稿已保存'}</span>${undo&&undo.sequence===b().sequence&&!b().stage?'<button class="link" data-action="undo-plan">撤销上次调整</button>':''}`:'';
+ $('#evidence-chip').textContent='5 类依据'+(b().excluded?' · 1 条排除':'');
+ if(view.page==='evidence')renderEvidencePage();
+ if(view.page==='strategies')renderStrategiesPage();
+}
+function heroHTML(){return `<div class="welcome"><div class="welcome-kicker">${icon('chat')} ${q().name}的本次报价</div><h1>这次想怎么调整报价？</h1><p>选好客户，说出商品和调整方式。</p><div class="start-actions"><button data-action="rules">${icon('search')}按条件批量调整</button><button data-action="single-rule">${icon('file')}调整指定商品</button><button data-action="show-advice">${icon('info')}看看定价建议</button></div><button class="sample-command" data-action="sample-command">试试：把蔬菜按当前价上调 3%</button></div>`;}
+function messageHTML(m,index){if(m.role==='user')return `<div class="conversation-message user"><div class="user-message">${esc(m.text)}</div></div>`;let content=m.kind==='plan'?planHTML(b().plans.find(p=>p.id===m.planId)):m.kind==='clarification'?`<div class="clarify-card"><p>${esc(m.text)}</p><div class="assistant-actions"><button class="btn" data-clarify-message="${index}">选择范围与规则</button></div></div>`:m.html||'';return `<div class="conversation-message"><div class="assistant-marker">${icon('mark')} 定价助手</div><div class="assistant-message">${content}</div></div>`;}
+function pushAssistant(html,extra={}){b().messages.push({role:'assistant',kind:'text',html,...extra});save();render();}
+function addMessage(html){b().messages.push({role:'assistant',kind:'text',html:'<div class="small muted">'+p().name+'</div>'+html});save();closeDrawer();closeSheet();view.page='chat';render();}
+function planLabel(spec){if(spec.operation==='set')return '指定 '+money(spec.value)+' 元/斤';if(spec.operation==='adopt')return '采用有效参考价';return (spec.value>=0?'上调 ':'下调 ')+Math.abs(spec.value)+(spec.operation==='percent'?'%':' 元/斤');}
+function planHTML(plan){if(!plan)return '<p class="muted">该调整记录不可用。</p>';const rows=plan.rows.filter(x=>!x.skip),exceptions=plan.rows.filter(x=>x.skip),stale=plan.version!==b().version||plan.sequence!==b().sequence;const actionable=plan.status==='pending'&&!stale&&!b().stage&&rows.length>0;
+return `<div class="preview-card"><div class="preview-head"><strong>${planLabel(plan.spec)}</strong>${tag(plan.status==='applied'?'已应用草稿':plan.status==='undone'?'已撤销':stale?'需重新预览':'调整预览',plan.status==='applied'?'green':'')}</div><div class="preview-tags"><span>${q().name}</span><span>v${plan.version}</span><span>${plan.spec.base==='draft'?'基于草稿价':plan.spec.base==='current'?'基于当前执行价':'直接指定 / 采用'}</span><span>含税元/斤 · 保留2位小数</span></div><div class="preview-summary">匹配 ${plan.rows.length} 项 · ${rows.length} 项可调整${exceptions.length?' · '+exceptions.length+' 项保持不变':''}</div>${rows.length?`<table><thead><tr><th>商品</th><th>原价 / 拟定价</th><th>提示</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${products[r.id].name}<div class="small muted">${products[r.id].spec}</div></td><td><div class="price-change"><span class="old">${money(r.basePrice)}</span><span class="muted">→</span><strong>${money(r.value)}</strong></div></td><td>${r.warning?'<div class="row-note">'+esc(r.warning)+'</div>':'<span class="small muted">'+(plan.spec.operation==='adopt'?'采用参考':'自主规则')+'</span>'}</td></tr>`).join('')}</tbody></table>`:''}${exceptions.length?`<details ${!rows.length?'open':''}><summary>${exceptions.length} 项例外 · 查看原因</summary><ul>${exceptions.map(r=>'<li>'+products[r.id].name+'：'+esc(r.skip)+'</li>').join('')}</ul></details>`:''}<footer><span class="plan-state">${plan.status==='applied'?'最终确认前仍可修改':plan.status==='undone'?'草稿已恢复':'暂未修改报价'}</span>${plan.status==='pending'?`<button class="btn" data-edit-plan="${plan.id}">修改规则</button>${stale?`<button class="btn" data-refresh-plan="${plan.id}">重新预览</button>`:`<button class="btn primary" data-apply-plan="${plan.id}" ${actionable?'':'disabled'}>应用 ${rows.length} 项到草稿</button>`}`:''}</footer></div>`;}
+function createPlan(spec){if(b().stage){requestRevise({type:'adjust',product:spec.ids[0]??view.product,quote:view.quote,spec,label:planLabel(spec)+'，先生成预览'});return;}
+ const ids=[...new Set(spec.ids)].filter(i=>q().items.includes(i));if(!ids.length){pushAssistant('<p>没有匹配到本报价单的商品。请重新选择范围。</p>');return;}
+ const book=b();const rows=ids.map(id=>{const x=products[id],before=book.prices[id]||'',basePrice=spec.base==='draft'?Number(before):x.current;let value=null,skip='',warning='';
+  if(['delta','percent'].includes(spec.operation)&&spec.base==='draft'&&!before)skip='尚未填写草稿价，无法以草稿价计算';
+  if(spec.operation==='set')value=spec.value;
+  if(spec.operation==='adopt'){value=target(id);if(value===null)skip=x.kind==='wide'?'区间过宽，暂不推荐具体点价':'缺少可用倾向价，需补充依据或自主定价';}
+  if(spec.operation==='delta')value=(cents(basePrice)+cents(spec.value))/100;
+  if(spec.operation==='percent')value=Math.round(cents(basePrice)*(100+spec.value)/100)/100;
+  if(x.kind==='fixed'&&value!==null&&cents(value)!==cents(x.target))skip='固定协议价 '+money(x.target)+'，保持不变';
+  if(!skip&&(!Number.isFinite(value)||value<=0||value>99999))skip='计算结果不是有效价格';
+  if(!skip&&before&&cents(before)===cents(value))skip='与现有草稿价一致';
+  if(!skip&&x.low&&(value<x.low||value>x.high)&&!(x.kind==='normal'&&book.excluded))warning='偏离 AI 区间，允许自主定价';
+  if(!skip&&['missing','wide'].includes(x.kind))warning='自主规则；AI 尚无可靠点价';
+  return{id,before,methodBefore:book.methods[id]||'',basePrice:spec.base==='draft'&&before?Number(before):(spec.operation==='set'||spec.operation==='adopt'?Number(before||x.current):basePrice),value:value===null?null:Number(money(value)),skip,warning};});
+ const plan={id:++book.planSerial,version:book.version,sequence:book.sequence,spec:{...spec,ids},rows,status:'pending'};
+ book.plans.push(plan);book.messages.push({role:'assistant',kind:'plan',planId:plan.id});save();view.page='chat';render();
+}
+function applyPlan(id){const plan=b().plans.find(p=>p.id===id);if(!plan||plan.status!=='pending')return;if(b().stage||plan.version!==b().version||plan.sequence!==b().sequence){toast('报价或依据已有变化，请重新预览。');render();return;}
+ const rows=plan.rows.filter(r=>!r.skip);if(!rows.length)return;
+ for(const r of rows){b().prices[r.id]=money(r.value);b().methods[r.id]=plan.spec.operation==='adopt'?(products[r.id].kind==='fixed'?'按有效协议':'采纳倾向价'):'负责人规则定价';}
+ b().sequence++;plan.status='applied';b().lastUndo={planId:id,sequence:b().sequence,version:b().version,rows:rows.map(r=>({id:r.id,price:r.before,method:r.methodBefore}))};save();render();toast(rows.length+' 项已应用到草稿，可继续调整或确认整单。');
+}
+function undoPlan(){const undo=b().lastUndo;if(!undo||b().stage||undo.sequence!==b().sequence||undo.version!==b().version){toast('后续已有变更，不能直接撤销旧操作。');return;}for(const row of undo.rows){b().prices[row.id]=row.price;b().methods[row.id]=row.method;}const plan=b().plans.find(p=>p.id===undo.planId);if(plan)plan.status='undone';b().sequence++;b().lastUndo=null;save();render();toast('已撤销本次调整，恢复应用前的草稿价。');}
+function parseContext(){return{items:q().items.map(id=>({...products[id],id,unit:'斤',category:id===0?'叶菜':id===1?'蛋类':'蔬菜'})),customerNames:quotes.map(x=>x.name),activeCustomer:q().name};}
+function submitMain(text){if(!text.trim())return;const input=text.trim();b().messages.push({role:'user',text:input});save();
+ const otherCustomer=quotes.find(x=>x.name!==q().name&&input.includes(x.name));if(otherCustomer){pushAssistant('<div class="clarify-card"><p>这条需求涉及 '+esc(otherCustomer.name)+'。请先切换到该客户，本客户报价未修改。</p><button class="btn" data-action="choose-customer">选择客户</button></div>');return;}
+ if(handleStrategyChat(input))return;
+ if(/查看.*报价单|整张报价|整单价格/.test(input)){pushAssistant('<p>当前整张报价单已打开，可以逐项检查价格。</p>');openSheet();return;}
+ if(/排除|别参考|规格不同|采购量.*下降|每天配送|每日配送/.test(input)&&!/上调|下调|涨|(?:降|减|加)\s*\d|报\s*\d/.test(input)){
+  const explicit=/大白菜|白菜/.test(input);const residue=input.replaceAll(q().name,'').replace(/大白菜|白菜|市场报价|市场行情|行情|这条|本次|规格|不一致|不匹配|不同|不要|别|参考|排除|采购量|下降|最近|每天|每日|配送|要求|需要|供货|的|它|了|还|仍|把|将|先|再|不|[\s，,。；;！!]/g,'');if(!explicit||residue){pushAssistant('<div class="clarify-card"><p>请明确补充影响的单个商品与事实，例如“大白菜的行情规格不同，别参考它”。本次尚未更新依据。</p></div>');return;}
+  view.product=0;if(!q().items.includes(0))return;sendChat(input);return;
+ }
+ if(/公斤|千克|kg|毛利|加成|打折|[0-9一二三四五六七八九十](?:成|折)|含运|未税|不含税|含税价.*不含税|成本价/.test(input)){
+  pushAssistant('<div class="clarify-card"><p>这条需求涉及其他计价口径或计算规则。请先确认单位、税价或公式；本次不生成调价结果。</p><button class="btn" data-action="rules">用明确规则调整</button></div>');return;
+ }
+ const intent=window.PricingIntent.parse(input,parseContext());
+ if(intent.kind==='question'){const ids=q().items.filter(i=>input.includes(products[i].name)||(i===1&&input.includes('鸡蛋')));view.product=ids[0]??view.product;pushAssistant('<div><strong>'+p().name+'的参考判断</strong>'+welcome()+'<div class="assistant-actions"><button class="btn" data-open-advice="'+view.product+'">查看建议与依据</button><button class="btn" data-page="evidence">客户与依据</button></div></div>');return;}
+ if(intent.kind!=='adjust'){
+  pushAssistant('',{kind:'clarification',text:intent.reason||'请明确商品范围和调整方式。',spec:intent});return;
+ }
+ if(['set','delta'].includes(intent.operation)&&(Math.abs(intent.value*100-cents(intent.value))>.00001||Math.abs(intent.value)>99999)){pushAssistant('<p>价格和增减金额最多保留两位小数，请重新填写。</p>');return;}
+ createPlan(intent);
+}
+function showAdvice(){b().messages.push({role:'user',text:'看看这张报价单的定价建议'});pushAssistant('<p>这 '+q().items.length+' 个商品的参考状态如下，最终价仍由你决定。</p><div class="assistant-actions">'+q().items.map(i=>'<button class="btn" data-open-advice="'+i+'">'+products[i].name+' · '+formatPrice(i)+'</button>').join('')+'</div>');}
+function chooseCustomer(){openDialog('customer','选择客户报价',`<div class="customer-picker">${quotes.map((x,i)=>`<button data-quote="${i}"><span><strong>${x.name}</strong><small>10月1日—7日 · v${books[i].version} · ${x.items.length} 个商品</small></span>${tag(['草稿','待落实','待核验','已核验'][books[i].stage],i===view.quote?'green':'')}</button>`).join('')}</div>`,cancel);}
+function openSheet(){sheetFocus=document.activeElement;view.sheet=true;$('#quote-sheet').hidden=false;$('#sheet-backdrop').hidden=false;document.body.style.overflow='hidden';render();$('#quote-sheet [data-action="close-sheet"]').focus();}
+function closeSheet(){view.sheet=false;$('#quote-sheet').hidden=true;$('#sheet-backdrop').hidden=true;if(!view.drawer&&$('#dialog-cover').hidden)document.body.style.overflow='';if(sheetFocus?.isConnected)sheetFocus.focus();}
+function renderEvidencePage(){
+ $('#customer-cards').innerHTML=quotes.map((x,i)=>`<button class="customer-card ${i===view.quote?'selected':''}" data-quote="${i}" aria-pressed="${i===view.quote}"><span class="customer-name"><span class="customer-avatar">${x.name[0]}</span>${x.name}</span><span class="small">${x.items.length} 个商品 · 5 类依据</span><span class="mini-tags"><span>采购成本</span><span>历史价格</span><span>市场供应</span><span>商户情况</span><span>约定条件</span></span></button>`).join('');
+ const categories={cost:'共享资料',history:'客户专属',market:'共享资料',merchant:'客户专属',terms:'客户专属'};
+ $('#basis-workspace').innerHTML=`<div class="basis-heading"><div><h2>${q().name}的关联依据</h2><p>本次报价 · 10月1日—7日 · v${b().version} ${b().stage?'已确认':'草稿'}</p></div><label class="field"><span class="sr-only">查看商品依据</span><select id="basis-product">${q().items.map(i=>`<option value="${i}" ${view.product===i?'selected':''}>${products[i].name} · ${products[i].spec}</option>`).join('')}</select></label></div><div class="basis-grid">${evidenceItems().map(x=>`<article class="basis-card ${x.cat==='market'&&view.product===0&&b().excluded?'excluded':''}"><div class="flex spread"><h3>${x.title}</h3><span class="type">${categories[x.cat]}</span></div><p>${esc(x.value)}</p><div class="evidence-tags">${tag(x.certainty,x.certainty==='待核实信息'?'amber':'')}${tag(x.impact)}${tag(x.constraint,x.constraint==='有效约束'?'green':'')}</div><details><summary>来源、日期与适用口径</summary><p>来源：${esc(x.source)}<br>日期：2026-${x.date}<br>适用：${esc(x.scope)}<br>${esc(x.more)}</p></details><footer><span>${x.cat==='market'&&view.product===0&&b().excluded?'本次已排除':'已关联本次报价'}</span>${x.cat==='market'&&view.product===0?`<button class="link" data-action="toggle-market">${b().excluded?'恢复参考':'排除此条'}</button>`:x.constraint==='有效约束'?'<span class="constraint-lock">有效约束须遵守</span>':`<button class="link" data-basis-detail="${x.cat}">查看影响</button>`}</footer></article>`).join('')}</div>`;
+}
+function rulesDialog(spec=null,single=false){const selected=spec?(Array.isArray(spec.ids)?spec.ids:[]):single?[]:q().items;openDialog('rules','按条件调整',`<div class="small muted">${q().name} · 本次报价 · 含税元/斤</div><div class="rule-fields" style="margin-top:18px"><label class="field"><span>商品分类</span><select id="rule-category"><option value="all">全部分类</option><option value="vegetable">蔬菜</option><option value="leaf">叶菜</option><option value="egg">蛋类</option></select></label><label class="field"><span>搜索商品</span><input id="rule-search" placeholder="名称 / 规格"></label><label class="field"><span>当前执行价</span><div class="rules-line"><select id="rule-price-op"><option value="any">不限价格</option><option value="lt">低于</option><option value="gt">高于</option></select><input id="rule-price-filter" type="number" min="0" step="0.01" placeholder="元/斤" aria-label="筛选价格"></div></label></div><div class="rule-scope"><div class="flex spread"><strong class="small">选择商品</strong><button class="link" data-action="select-filtered">选择当前筛选结果</button></div><div class="rule-products" id="rule-products">${q().items.map(i=>`<label data-rule-item="${i}"><input type="checkbox" data-rule-product="${i}" ${selected.includes(i)?'checked':''}>${products[i].name}</label>`).join('')}</div><div class="rule-summary" id="rule-scope-note"></div></div><div class="rule-fields" style="margin-top:18px"><label class="field"><span>调整方式</span><select id="rule-operation"><option value="percent">按百分比调整</option><option value="delta">按固定金额调整</option><option value="set">指定最终价</option><option value="adopt">采用有效参考价</option></select></label><label class="field" id="rule-value-field"><span id="rule-value-label">幅度（%，负数为下调）</span><input id="rule-value" type="number" step="0.01" value="${spec?.value??3}" aria-label="调整数值"></label><label class="field" id="rule-base-field"><span>计算基准</span><select id="rule-base"><option value="">请选择基准</option><option value="current">当前执行价</option><option value="draft">当前草稿价</option></select></label></div><div class="rule-locked">${icon('check')}适用固定协议自动检查；冲突项保留原价。</div><div id="dialog-error" class="error" role="alert"></div>`,cancel+'<button class="btn primary" data-action="preview-rule">生成调整预览</button>');$('#rule-operation').value=spec?.operation||'percent';$('#rule-base').value=spec?.base||'';updateRuleFields();filterRuleProducts();}
+function updateRuleFields(){const op=$('#rule-operation').value;$('#rule-value-field').hidden=op==='adopt';$('#rule-base-field').hidden=!['percent','delta'].includes(op);$('#rule-value-label').textContent=op==='set'?'最终价（元/斤）':op==='delta'?'增减金额（元/斤，负数为下调）':'幅度（%，负数为下调）';}
+function filterRuleProducts(){const category=$('#rule-category').value,term=$('#rule-search').value.trim(),comparison=$('#rule-price-op').value,amount=$('#rule-price-filter').value;let visible=0;$$('[data-rule-item]').forEach(el=>{const i=+el.dataset.ruleItem,x=products[i];const categoryMatch=category==='all'||category==='vegetable'&&i!==1||category==='leaf'&&i===0||category==='egg'&&i===1;const priceMatch=comparison==='any'||amount!==''&&(comparison==='lt'?x.current<Number(amount):x.current>Number(amount));el.hidden=!categoryMatch||!priceMatch||!(x.name+x.spec).includes(term);if(el.hidden)el.querySelector('input').checked=false;else visible++;});const selected=$$('[data-rule-product]:checked').length;$('#rule-scope-note').textContent='匹配 '+visible+' 项 · 已选 '+selected+' 项';}
+function previewRule(){const ids=$$('[data-rule-product]:checked').map(el=>+el.dataset.ruleProduct),operation=$('#rule-operation').value,value=operation==='adopt'?null:Number($('#rule-value').value),base=['delta','percent'].includes(operation)?$('#rule-base').value:null;if(!ids.length){$('#dialog-error').textContent='请至少选择一个商品。';return;}if(['delta','percent'].includes(operation)&&!base){$('#dialog-error').textContent='请选择计算基准，避免重复或错误调价。';return;}if(operation!=='adopt'&&($('#rule-value').value===''||!Number.isFinite(value)||Math.abs(value)>99999||operation==='set'&&value<=0||['set','delta'].includes(operation)&&Math.abs(value*100-cents(value))>.00001)){ $('#dialog-error').textContent='请填写有效数值；价格和金额最多两位小数。';return;}const spec={ids,operation,value,base,kind:'adjust'};closeDialog();closeSheet();view.page='chat';b().messages.push({role:'user',text:'按规则调整 '+ids.map(i=>products[i].name).join('、')+'：'+planLabel(spec)});createPlan(spec);}
+document.addEventListener('click',e=>{const el=e.target.closest('button');if(!el)return;
+ if(el.dataset.page){view.page=el.dataset.page;$('#mobile-nav').hidden=true;render();return;}
+ if(el.dataset.applyPlan){applyPlan(+el.dataset.applyPlan);return;}
+ if(el.dataset.editPlan){const plan=b().plans.find(p=>p.id===+el.dataset.editPlan);if(plan)rulesDialog(plan.spec);return;}
+ if(el.dataset.clarifyMessage!==undefined){const message=b().messages[+el.dataset.clarifyMessage];if(message?.kind==='clarification')rulesDialog(message.spec);return;}
+ if(el.dataset.refreshPlan){const plan=b().plans.find(p=>p.id===+el.dataset.refreshPlan);if(plan)createPlan(plan.spec);return;}
+ if(el.dataset.openAdvice!==undefined){openDrawer(+el.dataset.openAdvice);return;}
+ if(el.dataset.basisDetail){view.factor=el.dataset.basisDetail;openDrawer(view.product,'evidence');return;}
+ const extra={'choose-customer':chooseCustomer,'open-sheet':openSheet,'close-sheet':closeSheet,rules:()=>rulesDialog(), 'single-rule':()=>rulesDialog(null,true),'clarify-rules':()=>rulesDialog({ids:[]}),'preview-rule':previewRule,'undo-plan':undoPlan,'show-advice':showAdvice,'sample-command':()=>{$('#main-prompt').value='把蔬菜按当前价上调 3%，协议价不动';$('#main-prompt').focus();},'select-filtered':()=>{$$('[data-rule-item]').forEach(x=>x.querySelector('input').checked=!x.hidden);filterRuleProducts();},'mobile-nav':()=>{$('#mobile-nav').hidden=!$('#mobile-nav').hidden;}};extra[el.dataset.action]?.();
+});
+document.addEventListener('submit',e=>{if(e.target.id==='main-chat-form'){e.preventDefault();const text=$('#main-prompt').value;$('#main-prompt').value='';submitMain(text);}});
+$('#main-prompt').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();$('#main-chat-form').requestSubmit();}});
+document.addEventListener('change',e=>{if(e.target.id==='basis-product'){view.product=+e.target.value;renderEvidencePage();}if(['rule-category','rule-price-op'].includes(e.target.id)||e.target.matches('[data-rule-product]'))filterRuleProducts();if(e.target.id==='rule-operation')updateRuleFields();});
+document.addEventListener('input',e=>{if(['rule-search','rule-price-filter'].includes(e.target.id))filterRuleProducts();});
+$('#sheet-backdrop').addEventListener('click',closeSheet);
+document.addEventListener('keydown',e=>{if(!view.sheet||view.drawer||!$('#dialog-cover').hidden)return;if(e.key==='Escape'){closeSheet();return;}if(e.key==='Tab'){const els=Array.from($('#quote-sheet').querySelectorAll('button:not(:disabled),input:not(:disabled),summary')).filter(el=>el.getClientRects().length);const first=els[0],last=els.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}}});
+
+// Append inside the pricing workbench IIFE. Read-only evidence views share its quote context.
+const oeCategories = [
+  {id:'cost',label:'采购与成本',short:'采购成本'},
+  {id:'history',label:'历史价格',short:'历史价格'},
+  {id:'market',label:'市场与供应',short:'市场供应'},
+  {id:'merchant',label:'商户情况',short:'商户情况'},
+  {id:'terms',label:'约定与条件',short:'约定条件'}
+];
+const oeChannels = [
+  {id:'system',label:'系统导出',note:'采购参考成本与近期成交记录'},
+  {id:'wecom',label:'企业微信',note:'经营情况、配送要求与沟通补充'},
+  {id:'external',label:'指定外部来源',note:'人工汇集的行情与可比报价'},
+  {id:'terms',label:'协议及业务条件',note:'有效约定、适用条件与待核实事项'}
+];
+
+function oeTags(){return '<span class="oe-five-tags">'+oeCategories.map(c=>'<span>'+c.short+'</span>').join('')+'</span>';}
+function oeCustomerContent(i){
+  const customer=quotes[i];
+  return '<span class="oe-customer-copy"><span class="oe-customer-top"><strong>'+esc(customer.name)+'</strong><small>'+customer.items.length+' 个商品 · 5 类依据</small></span>'+oeTags()+'</span>';
+}
+function oeCustomerOptions(prefix){
+  return quotes.map((customer,i)=>'<button type="button" id="'+prefix+'-'+i+'" class="oe-customer-option" role="option" aria-selected="'+(i===view.quote)+'" tabindex="-1" data-oe-select-customer="'+i+'">'+oeCustomerContent(i)+'<span class="oe-selected-mark" aria-hidden="true">'+(i===view.quote?icon('check'):'')+'</span></button>').join('');
+}
+function oeRenderCustomerSelector(){
+  const host=$('#customer-cards');
+  host.classList.add('oe-customer-host');
+  host.innerHTML='<div class="oe-customer-selector" id="oe-customer-selector"><span class="oe-selector-label">当前客户</span><button type="button" id="oe-customer-trigger" class="oe-customer-trigger" role="combobox" aria-haspopup="listbox" aria-expanded="false" aria-controls="oe-customer-options" data-oe-toggle-customer>'+oeCustomerContent(view.quote)+'<span class="oe-dropdown-arrow" aria-hidden="true">⌄</span></button><div class="oe-customer-options" id="oe-customer-options" role="listbox" aria-label="选择客户报价" hidden>'+oeCustomerOptions('oe-customer-option')+'</div></div>';
+}
+function oeCloseCustomerSelector(restoreFocus=false){
+  const trigger=$('#oe-customer-trigger'),list=$('#oe-customer-options');
+  if(!trigger||!list)return;
+  list.hidden=true;trigger.setAttribute('aria-expanded','false');
+  if(restoreFocus)trigger.focus();
+}
+function oeOpenCustomerSelector(index=view.quote){
+  const trigger=$('#oe-customer-trigger'),list=$('#oe-customer-options');
+  if(!trigger||!list)return;
+  list.hidden=false;trigger.setAttribute('aria-expanded','true');
+  const options=Array.from(list.querySelectorAll('[role="option"]'));
+  options[Math.max(0,Math.min(options.length-1,index))]?.focus();
+}
+function chooseCustomer(){
+  oeCloseCustomerSelector();
+  openDialog('customer','选择客户报价','<p class="oe-dialog-intro">选择本次报价的客户，资料与调整记录按客户隔离。</p><div class="oe-modal-customer-list" role="listbox" aria-label="选择客户报价">'+oeCustomerOptions('oe-modal-customer')+'</div>',cancel);
+  const selected=$('#dialog-body [role="option"][aria-selected="true"]');
+  if(selected){selected.tabIndex=0;selected.focus();}
+}
+function oeOrderRecords(category){
+  const selected=view.product;
+  try{
+    return q().items.flatMap(id=>{
+      view.product=id;
+      return evidenceItems().filter(item=>!category||item.cat===category).map(item=>({
+        ...item,productId:id,productName:products[id].name,productSpec:products[id].spec,
+        excluded:item.cat==='market'&&id===0&&Boolean(b().excluded)
+      }));
+    });
+  }finally{view.product=selected;}
+}
+function oeCategorySummary(category,records){
+  const total=q().items.length;
+  if(category==='cost')return {headline:total+' 项商品有采购参考',detail:'损耗、配送等成本仍需逐项补齐'};
+  if(category==='history')return {headline:total+' 项商品有历史记录',detail:'按商品对照当前价与近期成交'};
+  if(category==='market'){
+    const excluded=records.filter(r=>r.excluded).length;
+    const available=records.filter(r=>!r.excluded&&!r.value.startsWith('暂无')).length;
+    return {headline:available+' 项有市场资料'+(excluded?' · '+excluded+' 项已排除':''),detail:'规格、等级与配送条件须逐项核实'};
+  }
+  if(category==='merchant'){
+    const known=records.filter(r=>!r.value.includes('待确认')).length;
+    return {headline:known+' 项有经营情况补充',detail:'其余 '+(total-known)+' 项待确认；不直接折算加减价'};
+  }
+  const constrained=records.filter(r=>r.constraint==='有效约束').length;
+  return {headline:constrained?constrained+' 项有有效协议约束':'暂无已核实固定价约束',detail:(total-constrained)+' 项其他业务条件待核实'};
+}
+function renderEvidencePage(){
+  oeRenderCustomerSelector();
+  const records=oeOrderRecords();
+  $('#basis-workspace').innerHTML='<div class="oe-order-heading"><div><h2>本单的 5 类依据</h2><p>'+esc(q().name)+' · '+q().items.length+' 个商品 · 10月1日—7日 · v'+b().version+' '+(b().stage?'已确认':'草稿')+'</p></div><span class="tag">整单汇总</span></div><div class="oe-order-grid">'+oeCategories.map(category=>{
+    const rows=records.filter(r=>r.cat===category.id),summary=oeCategorySummary(category.id,rows);
+    return '<button type="button" class="oe-order-card" data-oe-open-basis="'+category.id+'"><span class="oe-order-title">'+category.label+'</span><strong>'+esc(summary.headline)+'</strong><span class="oe-order-detail">'+esc(summary.detail)+'</span><span class="oe-order-card-foot">查看 '+rows.length+' 项商品明细 '+icon('chevron')+'</span></button>';
+  }).join('')+'</div><p class="oe-page-note">按整单归类，按商品核对；示例资料不代表已连接真实外部来源。</p>';
+}
+function oeRecordBadges(record){
+  return '<div class="oe-record-tags">'+tag(record.certainty,record.certainty==='已核实事实'?'':'amber')+tag(record.impact)+tag(record.constraint,record.constraint==='有效约束'?'green':'')+(record.excluded?tag('本次已排除','amber'):'')+'</div>';
+}
+function oeOpenCategory(category){
+  const definition=oeCategories.find(c=>c.id===category);if(!definition)return;
+  const records=oeOrderRecords(category);
+  const body='<div class="oe-dialog-context"><strong>'+esc(q().name)+' · v'+b().version+'</strong><span>本单 '+q().items.length+' 项商品 · 含税元/斤 · 演示资料</span></div><div class="oe-record-list">'+records.map(record=>'<article class="oe-record'+(record.excluded?' is-excluded':'')+'"><header><strong>'+esc(record.productName)+'</strong><small>'+esc(record.productSpec)+'</small></header><p class="oe-record-value">'+esc(record.value)+'</p>'+oeRecordBadges(record)+'<p class="oe-record-note">'+esc(record.more)+'</p><footer><button type="button" class="link" data-oe-source-category="'+category+'" data-oe-source-product="'+record.productId+'">查看来源</button><button type="button" class="btn slim" data-oe-adjust-product="'+record.productId+'">调整该商品</button></footer></article>').join('')+'</div>';
+  openDialog('order-evidence',definition.label+' · 整单明细',body,cancel);
+}
+function oeDate(date){
+  const range=String(date).match(/^(\d{2})-(\d{2})[—–](\d{2})$/);
+  return range?'2026-'+range[1]+'-'+range[2]+' 至 2026-'+range[1]+'-'+range[3]:'2026-'+date;
+}
+function oeSourceRecordHTML(record){
+  const date=oeDate(record.date);
+  return '<article class="oe-source-record"><header><strong>'+esc(record.productName)+' · '+esc(record.productSpec)+'</strong>'+tag(record.excluded?'本次已排除':'演示记录',record.excluded?'amber':'')+'</header><div class="oe-source-content"><span class="oe-field-label">记录内容</span><p>'+esc(record.value)+'</p><p class="oe-record-note">'+esc(record.more)+'</p></div><dl class="oe-source-meta"><dt>来源</dt><dd>'+esc(record.source)+'</dd><dt>日期</dt><dd>'+esc(date)+'</dd><dt>客户</dt><dd>'+esc(q().name)+'</dd><dt>适用对象</dt><dd>'+esc(record.scope)+'</dd><dt>核实状态</dt><dd>'+esc(record.certainty)+'</dd><dt>价格影响</dt><dd>'+esc(record.impact)+'</dd><dt>约束</dt><dd>'+esc(record.constraint)+'</dd><dt>适用期间</dt><dd>'+(record.cat==='terms'&&record.constraint==='有效约束'?'协议：2026-10-01 至 2026-10-31；本次报价：10月1日—7日':'本次报价：2026-10-01 至 2026-10-07；来源时点与本次适用性需核实')+'</dd></dl>'+(record.cat==='merchant'?'<p class="oe-record-note">企微沟通摘录为演示文本；人员转述不直接构成双方有效约定。</p>':'')+(record.cat==='terms'&&record.constraint==='有效约束'?'<div class="oe-constraint-note">协议 A-018（演示）：本客户 M 级散装鲜鸡蛋，7.60 元/斤。自行填写新价不使协议变更。</div>':'')+'</article>';
+}
+function oeOpenRecord(category,id){
+  if(!q().items.includes(id))return;
+  const record=oeOrderRecords(category).find(r=>r.productId===id);
+  if(!record)return;
+  const name=oeCategories.find(c=>c.id===category)?.label||'依据';
+  openDialog('evidence-source',record.productName+' · 来源记录','<p class="oe-dialog-intro">以下为可阅读的本地演示记录，未连接真实企微、文件库或业务系统。</p>'+oeSourceRecordHTML(record),'<button type="button" class="btn" data-oe-open-basis="'+category+'">返回'+name+'明细</button>'+cancel);
+}
+function oeChannelRecords(channel){
+  return oeOrderRecords().filter(record=>{
+    if(channel==='system')return ['cost','history'].includes(record.cat);
+    if(channel==='wecom')return record.cat==='merchant'||record.cat==='terms'&&record.source.includes('企微');
+    if(channel==='external')return record.cat==='market';
+    return channel==='terms'&&record.cat==='terms';
+  });
+}
+function sourcesDialog(){
+  const body='<div class="oe-dialog-context"><strong>'+esc(q().name)+' · 本次报价的来源</strong><span>可展开阅读本地演示记录；无真实外部连接</span></div><div class="oe-source-channel-list">'+oeChannels.map(channel=>'<button type="button" class="oe-source-channel" data-oe-source-channel="'+channel.id+'"><span><strong>'+channel.label+'</strong><small>'+channel.note+'</small></span><span>'+oeChannelRecords(channel.id).length+' 条 '+icon('chevron')+'</span></button>').join('')+'</div><p class="oe-page-note">共享行情仍须按客户、商品规格与业务条件核对；消息本身不等同于生效约定。</p>';
+  openDialog('sources','资料来源',body,cancel);
+}
+function oeOpenChannel(channel){
+  const definition=oeChannels.find(c=>c.id===channel);if(!definition)return;
+  const records=oeChannelRecords(channel);
+  const body='<div class="oe-dialog-context"><strong>'+esc(q().name)+' · '+records.length+' 条记录</strong><span>以下内容均为演示资料，保留来源与核实状态</span></div><div class="oe-source-records">'+records.map(oeSourceRecordHTML).join('')+'</div>';
+  openDialog('source-records',definition.label+' · 演示记录',body,'<button type="button" class="btn" data-oe-sources-home>返回来源列表</button>'+cancel);
+}
+function oeSelectCustomer(index){
+  if(!Number.isInteger(index)||!quotes[index])return;
+  oeCloseCustomerSelector();
+  switchQuote(index);
+  if(view.page==='evidence')$('#oe-customer-trigger')?.focus();
+}
+document.addEventListener('click',event=>{
+  const button=event.target.closest('button');if(!button)return;
+  if(button.hasAttribute('data-oe-toggle-customer')){
+    const open=$('#oe-customer-trigger')?.getAttribute('aria-expanded')==='true';
+    if(open)oeCloseCustomerSelector(true);else oeOpenCustomerSelector();return;
+  }
+  if(button.hasAttribute('data-oe-select-customer')){oeSelectCustomer(Number(button.dataset.oeSelectCustomer));return;}
+  if(button.dataset.oeOpenBasis){oeOpenCategory(button.dataset.oeOpenBasis);return;}
+  if(button.dataset.oeSourceCategory){oeOpenRecord(button.dataset.oeSourceCategory,Number(button.dataset.oeSourceProduct));return;}
+  if(button.dataset.oeSourceChannel){oeOpenChannel(button.dataset.oeSourceChannel);return;}
+  if(button.hasAttribute('data-oe-sources-home')){sourcesDialog();return;}
+  if(button.hasAttribute('data-oe-adjust-product')){
+    const id=Number(button.dataset.oeAdjustProduct);if(!q().items.includes(id))return;
+    closeDialog();view.page='chat';view.product=id;render();
+    rulesDialog({ids:[id],operation:'percent',value:3,base:'current'});
+  }
+});
+document.addEventListener('pointerdown',event=>{
+  const selector=$('#oe-customer-selector');
+  if(selector&&!selector.contains(event.target))oeCloseCustomerSelector();
+});
+document.addEventListener('keydown',event=>{
+  const trigger=event.target.closest('[data-oe-toggle-customer]');
+  if(trigger&&['ArrowDown','ArrowUp','Home','End'].includes(event.key)){
+    event.preventDefault();oeOpenCustomerSelector(event.key==='Home'?0:event.key==='End'?quotes.length-1:view.quote);return;
+  }
+  if(trigger&&event.key==='Escape'){event.preventDefault();oeCloseCustomerSelector(true);return;}
+  const option=event.target.closest('[data-oe-select-customer]');
+  if(!option)return;
+  const list=option.closest('[role="listbox"]'),options=Array.from(list.querySelectorAll('[role="option"]')),index=options.indexOf(option);
+  if(['ArrowDown','ArrowUp','Home','End'].includes(event.key)){
+    event.preventDefault();
+    const next=event.key==='Home'?0:event.key==='End'?options.length-1:(index+(event.key==='ArrowDown'?1:options.length-1))%options.length;
+    options[next].focus();
+  }else if(event.key==='Escape'&&list.id==='oe-customer-options'){
+    event.preventDefault();oeCloseCustomerSelector(true);
+  }else if(event.key==='Tab'&&list.id==='oe-customer-options'){
+    oeCloseCustomerSelector(true);
+  }
+});
+
+// Each strategy owns a frozen quotation snapshot and an auditable schedule.
+const strategyCopy=value=>JSON.parse(JSON.stringify(value));
+const strategyClock=()=>Math.floor(Date.now()/60000)*60000;
+const strategyInput=ms=>new Date(ms+8*3600000).toISOString().slice(0,16);
+const strategyTime=value=>Date.parse(value+':00+08:00');
+const strategyDate=value=>value?value.replace('T',' '):'尚未设置';
+let strategyPending=null,strategyEditor=null;
+Object.assign(view,{strategyCustomer:'all',strategyFilter:'all'});
+function ensureStrategies(){
+ books.forEach((book,qi)=>{
+  if(!Array.isArray(book.strategies)){
+   const now=strategyClock(),day=86400000;
+   const prices=Object.fromEntries(quotes[qi].items.map(id=>[id,money(products[id].current)]));
+   const snapshot={version:'示例',prices,methods:{},evidence:{excluded:false,merchantChanged:false},conditions:'本客户所列商品规格 / 含税元/斤',unresolved:[]};
+   book.strategies=[{id:'sample-'+qi+'-old',name:['常规供货策略','日常采购策略','基础报价策略'][qi],summary:'上一周期报价',sample:true,confirmed:true,snapshot:strategyCopy(snapshot),start:strategyInput(now-14*day),end:strategyInput(now-7*day),enabled:true,events:[{at:strategyInput(now-14*day),text:'演示历史：启用本周期报价'}]},
+    {id:'sample-'+qi+'-current',name:['稳定供货策略','酒店常规策略','餐厅常规策略'][qi],summary:['保持当前价格，协议商品按约执行','按客户规格与日常采购安排','保留当前价格，配送条件单独核实'][qi],sample:true,confirmed:true,snapshot:strategyCopy(snapshot),start:strategyInput(now-7*day),end:strategyInput(now+7*day),enabled:true,events:[{at:strategyInput(now-7*day),text:'演示当前：启用本周期报价'}]}];
+  }
+  if(book.stage&&book.history.some(h=>h.version===book.version)&&!book.strategies.some(s=>s.id==='quote-'+qi+'-v'+book.version))registerConfirmedStrategy(book,qi);
+ });
+}
+function registerConfirmedStrategy(book,qi){
+ if(!Array.isArray(book.strategies))book.strategies=[];
+ const id='quote-'+qi+'-v'+book.version;if(book.strategies.some(s=>s.id===id))return;
+ const h=book.history.find(h=>h.version===book.version);if(!h)return;
+ const applied=(book.plans||[]).filter(p=>p.status==='applied'&&p.version===book.version);
+ const rules=applied.map(plan=>({scope:plan.spec.ids.map(i=>products[i].name).join('、'),action:planLabel(plan.spec),base:plan.spec.base==='current'?'当时的当前执行价':plan.spec.base==='draft'?'当时的草稿价':'指定 / 采用'}));
+ book.strategies.push({id,name:book.strategyDraftName||'客户报价 v'+book.version,summary:rules.length?rules.length+' 条调整记录 · 以整版最终价格为准':'按负责人确认的整版价格',rules,confirmed:true,sample:false,snapshot:strategyCopy(h),start:'',end:'',enabled:false,events:[{at:strategyInput(strategyClock()),text:'确认报价 v'+book.version+'，保存独立策略快照'}]});
+}
+function strategyStatus(s,now=strategyClock()){
+ if(s.stoppedAt)return strategyTime(s.stoppedAt)<strategyTime(s.start)?'已取消':'已停用';
+ if(s.end&&strategyTime(s.end)<=now)return '已结束';
+ if(!s.enabled)return '待启用';
+ if(strategyTime(s.start)>now)return '待生效';
+ return '生效中';
+}
+function strategyIsHistory(s){return ['已停用','已取消','已结束'].includes(strategyStatus(s));}
+function strategyFind(qi,id){return books[qi]?.strategies?.find(s=>s.id===id);}
+function strategyEvent(s,text){s.events.push({at:strategyInput(strategyClock()),text});}
+function strategyEnd(s){return s.stoppedAt&&strategyTime(s.stoppedAt)>=strategyTime(s.start)?s.stoppedAt:s.end;}
+function strategyRange(s){if(!s.start)return '设置后生效';return (strategyStatus(s)==='已取消'?'原计划 ':'')+strategyDate(s.start)+' → '+strategyDate(strategyEnd(s))+(strategyStatus(s)==='已取消'?'；启用前取消于 '+strategyDate(s.stoppedAt):'');}
+function renderStrategiesPage(){
+ ensureStrategies();let rows=[];
+ books.forEach((book,qi)=>{
+  if(view.strategyCustomer!=='all'&&+view.strategyCustomer!==qi)return;
+  for(const s of book.strategies){const status=strategyStatus(s);if(view.strategyFilter==='active'&&status!=='生效中'||view.strategyFilter==='scheduled'&&status!=='待生效'||view.strategyFilter==='history'&&!strategyIsHistory(s)||view.strategyFilter==='pending'&&status!=='待启用')continue;rows.push({qi,s,status});}
+  if(!book.stage&&['all','pending'].includes(view.strategyFilter))rows.push({qi,draft:true,status:'草稿',s:{id:'draft',name:book.strategyDraftName||'本次报价草稿',summary:Object.keys(book.prices).filter(i=>book.prices[i]).length+' / '+quotes[qi].items.length+' 项已定价',snapshot:{version:book.version}}});
+ });
+ const ranks={'生效中':0,'待生效':1,'待启用':2,'草稿':3,'已停用':4,'已取消':4,'已结束':5};rows.sort((a,z)=>a.qi-z.qi||ranks[a.status]-ranks[z.status]);
+ $('#strategies-page').innerHTML=`<div class="page-title"><div><h1>报价策略</h1><p class="muted">每个客户独立管理，同一时段仅一套生效。</p></div><button class="btn" data-page="chat">去对话制定</button></div><div class="strategy-toolbar"><label class="field"><span class="sr-only">筛选客户</span><select id="strategy-customer"><option value="all">全部客户</option>${quotes.map((x,i)=>`<option value="${i}" ${String(view.strategyCustomer)===String(i)?'selected':''}>${x.name}</option>`).join('')}</select></label><div class="strategy-filters">${[['all','全部'],['active','生效中'],['scheduled','待生效'],['pending','待设置'],['history','历史']].map(([id,label])=>`<button data-strategy-filter="${id}" aria-pressed="${view.strategyFilter===id}" class="${view.strategyFilter===id?'selected':''}">${label}</button>`).join('')}</div></div><div class="strategy-list">${rows.length?rows.map(({qi,s,status,draft})=>`<article class="strategy-row ${status==='生效中'?'is-active':''}"><div class="strategy-customer"><strong>${quotes[qi].name}</strong><small>${quotes[qi].items.length} 个商品</small></div><div class="strategy-info"><div class="strategy-name"><strong>${esc(s.name)}</strong>${s.sample?'<span class="strategy-sample">演示</span>':''}</div><p>${esc(s.summary)}</p><small>${draft?'待确认':s.sample?'示例报价':'已确认 v'+s.snapshot.version}</small></div><div class="strategy-state">${tag(status,status==='生效中'?'green':'')}</div><div class="strategy-period">${draft?'<span class="muted">确认后设置生效时间</span>':s.start?`<span>${strategyDate(s.start)}</span><span class="muted">至 ${strategyDate(strategyEnd(s))}</span>`:'<span class="muted">尚未设置</span>'}</div><div class="strategy-actions">${draft?`<button class="btn" data-strategy-continue="${qi}">继续制定</button>`:`<button class="link" data-strategy-detail="${s.id}" data-sq="${qi}">详情</button>${strategyIsHistory(s)?`<button class="btn" data-strategy-copy="${s.id}" data-sq="${qi}">复制新策略</button>`:`<button class="btn" data-strategy-edit="${s.id}" data-sq="${qi}">${s.enabled?'调整时间':'设置并启用'}</button>${s.enabled?`<button class="link" data-strategy-stop="${s.id}" data-sq="${qi}">停用</button>`:''}`}`}</div></article>`).join(''):'<div class="empty">没有符合条件的策略</div>'}</div><p class="strategy-footnote">北京时间 · 起始时刻生效，结束时刻停止。策略安排与原系统的人工落实、核验分别记录。</p>`;
+}
+function strategyNameDialog(proposed=''){
+ if(b().stage){pushAssistant('<p>本版报价已确认，已保存为独立策略。可以设置其生效时间；调整价格需创建修订版。</p><button class="btn" data-page="strategies">查看报价策略</button>');return;}
+ openDialog('strategy-name','保存报价策略',`<p class="small muted">${q().name} · v${b().version} 草稿</p><label class="field" style="margin-top:18px"><span>策略名称</span><input id="strategy-name" maxlength="40" value="${esc(proposed||b().strategyDraftName||'')}" placeholder="例如：国庆保供策略"></label><p class="small muted" style="margin-top:14px">先保存名称与草稿。确认整版具体价格后，才可设置生效。</p><div class="error" id="dialog-error" role="alert"></div>`,cancel+'<button class="btn primary" data-strategy-action="save-name">保存草稿</button>');
+}
+function saveStrategyName(){const name=$('#strategy-name').value.trim();if(!name){$('#dialog-error').textContent='请填写策略名称。';return;}b().strategyDraftName=name;closeDialog();pushAssistant('<p>已保存「'+esc(name)+'」策略草稿。确认整版价格后，可选择是否启用和生效时间。</p><div class="assistant-actions"><button class="btn" data-action="review">检查并确认报价</button><button class="btn" data-page="strategies">查看全部客户策略</button></div>');}
+function handleStrategyChat(input){
+ if(/(?:查看|看看|打开).*(?:所有客户|全部客户|报价策略|历史策略|生效策略)/.test(input)){view.page='strategies';save();render();return true;}
+ if(/策略/.test(input)&&/保存为|存为|命名为|策略名称/.test(input)){
+  const quoted=input.match(/[“「"]([^”」"]+)[”」"]/);const name=quoted?.[1]||input.replace(/^.*?(?:保存为|存为|命名为|策略名称[为是：:]?)/,'').replace(/[。；;]$/,'').trim();
+  pushAssistant('<p>可以将当前客户的报价保存为命名策略，生效安排单独确认。</p>');strategyNameDialog(name);return true;
+ }
+ if(/策略/.test(input)&&/启用|停用|生效|有效期/.test(input)){pushAssistant('<p>请在策略页选择具体策略与生效时间。系统会检查同客户的时间冲突，确认后才应用。</p><button class="btn" data-page="strategies">设置报价策略</button>');return true;}
+ return false;
+}
+function strategyDetail(qi,id){
+ const s=strategyFind(qi,id);if(!s)return;
+ const snap=s.snapshot;
+ openDialog('strategy-detail',s.name,`<div class="flex spread wrap"><strong>${quotes[qi].name} · ${s.sample?'演示策略':'报价 v'+snap.version}</strong>${tag(strategyStatus(s),strategyStatus(s)==='生效中'?'green':'')}</div><p class="small muted" style="margin-top:12px">${esc(s.summary)}</p><div class="strategy-detail-time">${strategyRange(s)}<small>北京时间 · 结束时刻不再生效</small></div>${s.periodAcceptance?'<p class="small muted">新时段价格已另行确认：'+strategyDate(s.periodAcceptance.start)+' → '+strategyDate(s.periodAcceptance.end)+'；确认于 '+strategyDate(s.periodAcceptance.at)+'。原报价版本保留。</p>':''}<table><thead><tr><th>商品</th><th>规格</th><th>策略价（元/斤）</th></tr></thead><tbody>${quotes[qi].items.map(i=>`<tr><td>${products[i].name}</td><td>${products[i].spec}</td><td>${money(snap.prices[i])}</td></tr>`).join('')}</tbody></table>${s.rules?.length?'<details class="disclosure"><summary>制定规则与调整记录</summary><div class="body">'+s.rules.map(r=>'<p>'+esc(r.scope)+'：'+esc(r.action)+'（'+esc(r.base)+'）</p>').join('')+'<p class="small muted">此处为制定时的记录，不会自动重复计算；最终执行上方价格快照。</p></div></details>':'<p class="small muted">采用本版负责人确认的具体价格。</p>'}<details class="disclosure"><summary>来源报价条件与依据快照</summary><div class="body"><p>${esc(snap.conditions||'本客户 / 所列规格 / 含税元/斤')}</p><p>行情${snap.evidence?.excluded?'已排除':'保留参考'}；${snap.evidence?.merchantChanged?'商户情况已补充':'原商户情况'}。</p><p>${(snap.unresolved||[]).map(esc).join('；')||'示例记录，仅用于体验策略管理。'}</p></div></details><details class="disclosure"><summary>启停与时间变更记录（${s.events.length}）</summary><div class="body strategy-events">${s.events.slice().reverse().map(e=>`<p><time>${strategyDate(e.at)}</time>${esc(e.text)}</p>`).join('')}</div></details><p class="small muted" style="margin-top:14px">价格快照独立保留。策略启用不会自动写入原系统。</p>`,cancel+`<button class="btn" data-strategy-copy="${s.id}" data-sq="${qi}">复制新策略</button>`);
+}
+function strategyEdit(qi,id){
+ const s=strategyFind(qi,id);if(!s||strategyIsHistory(s)){toast('历史策略请复制后重新安排。');return;}
+ const now=strategyClock(),active=strategyStatus(s)==='生效中';strategyEditor={qi,id};strategyPending=null;
+ const proposedStart=s.start||strategyInput(Math.max(now,Date.parse('2026-10-01T00:00:00+08:00')));
+ const proposedEnd=s.end||strategyInput(strategyTime(proposedStart)+7*86400000);
+ strategyEditor.startNow=!s.start&&proposedStart===strategyInput(now);
+ openDialog('strategy-edit','设置策略生效',`<div class="flex spread wrap"><strong>${quotes[qi].name} · ${esc(s.name)}</strong>${tag(strategyStatus(s))}</div><div class="strategy-date-fields"><label class="field"><span>开始生效</span><input id="strategy-start" type="datetime-local" step="60" value="${proposedStart}" ${active?'disabled':''}></label><label class="field"><span>结束生效</span><input id="strategy-end" type="datetime-local" step="60" value="${proposedEnd}"></label></div>${active?'<p class="small muted">已发生的开始时间保留，可调整尚未发生的结束时间。</p>':'<button class="link" data-strategy-action="start-now">从现在开始</button>'}<p class="small muted" style="margin-top:12px">北京时间；区间不包含结束时刻。修改时间会保留记录。</p>${s.sample?'':'<p class="small muted">来源报价周期：10月1日—7日。排期不改写原报价版本。</p>'}<div id="strategy-period-renewal" class="strategy-renewal" hidden><strong>新时段需重新确认</strong><p class="small">本次安排超出来源报价周期，请核实以下价格在新时段仍然适用。</p><div class="strategy-renewal-prices">${quotes[qi].items.map(i=>'<span>'+products[i].name+' '+money(s.snapshot.prices[i])+' 元/斤</span>').join('')}</div><label class="checkline"><input type="checkbox" id="strategy-renewal-checked"><span>确认以上价格适用于所选新时段，已重新核实条件</span></label></div><label class="checkline" style="margin-top:18px"><input type="checkbox" id="strategy-enable" ${s.enabled?'checked':''}><span>启用此策略（未来时间将显示为待生效）</span></label><label class="checkline"><input type="checkbox" id="strategy-conditions"><span>已核对本时段的协议及业务条件</span></label><div class="error" id="dialog-error" role="alert"></div>`,cancel+'<button class="btn primary" data-strategy-action="save-schedule">检查并保存</button>');updateStrategyRenewal();
+}
+function outsideQuotePeriod(s,start,end){return !s.sample&&(strategyTime(start)<strategyTime('2026-10-01T00:00')||strategyTime(end)>strategyTime('2026-10-08T00:00'));}
+function updateStrategyRenewal(){if(!strategyEditor||!$('#strategy-period-renewal'))return;const s=strategyFind(strategyEditor.qi,strategyEditor.id);$('#strategy-period-renewal').hidden=!outsideQuotePeriod(s,$('#strategy-start').value,$('#strategy-end').value);$('#strategy-renewal-checked').checked=false;}
+function scheduleConflicts(qi,candidate,id){return books[qi].strategies.filter(s=>s.id!==id&&s.enabled&&!s.stoppedAt&&strategyTime(s.start)<strategyTime(candidate.end)&&strategyTime(candidate.start)<strategyTime(s.end));}
+function scheduleValidation(qi,s,candidate){
+ const now=strategyClock(),start=strategyTime(candidate.start),end=strategyTime(candidate.end),active=strategyStatus(s)==='生效中';
+ if(!Number.isFinite(start)||!Number.isFinite(end)||end<=start)return '结束时间必须晚于开始时间。';
+ if(!s.confirmed)return '请先确认具体报价版本。';
+ if(strategyIsHistory(s))return '该策略已成为历史记录，请复制新策略。';
+ if(active&&candidate.start!==s.start)return '已发生的开始时间不能改写。';
+ if(!active&&start<now)return '开始时间不能早于现在，请选择未来时间或从现在开始。';
+ if(end<=now)return '结束时间必须晚于现在。';
+ if(candidate.enabled&&!s.sample&&quotes[qi].items.includes(1)&&(start<strategyTime('2026-10-01T00:00')||end>strategyTime('2026-11-01T00:00')))return '当前鲜鸡蛋协议仅覆盖10月1日—31日。所选时段超出协议范围，请先核实新约定；本演示不会假定原协议仍然有效。';
+ if(candidate.enabled&&outsideQuotePeriod(s,candidate.start,candidate.end)&&!candidate.periodReconfirmed)return '本时段超出来源报价周期，请重新确认整版价格在新时段适用。';
+ return '';
+}
+function saveStrategySchedule(){
+ if(!strategyEditor)return;const {qi,id}=strategyEditor,s=strategyFind(qi,id);if(!s)return;
+ const candidate={start:strategyEditor.startNow?strategyInput(strategyClock()):$('#strategy-start').value,end:$('#strategy-end').value,enabled:$('#strategy-enable').checked,periodReconfirmed:$('#strategy-renewal-checked').checked,startNow:!!strategyEditor.startNow};
+ const error=scheduleValidation(qi,s,candidate);if(error){$('#dialog-error').textContent=error;return;}
+ if(candidate.enabled&&!$('#strategy-conditions').checked){$('#dialog-error').textContent='启用前请核对协议及业务条件。';return;}
+ if(s.enabled&&!candidate.enabled){strategyPending={qi,id,candidate,conflicts:[]};openDialog('strategy-disable-edit','确认停用策略',`<p>保存后将${strategyStatus(s)==='生效中'?'立即停止':'取消计划启用'}「${esc(s.name)}」，本客户可能出现没有生效策略的时段。</p><p class="small muted">此前的时间与价格保留在历史中；停用后如需恢复，请复制新策略。</p>`,cancel+'<button class="btn primary" data-strategy-action="commit-schedule">确认停用并保存</button>');return;}
+ const conflicts=candidate.enabled?scheduleConflicts(qi,candidate,id):[];strategyPending={qi,id,candidate,conflicts:conflicts.map(x=>x.id)};
+ if(conflicts.length){showStrategyConflict(s,conflicts);return;}commitStrategySchedule();
+}
+function showStrategyConflict(s,conflicts){const {candidate}=strategyPending;
+ openDialog('strategy-conflict','生效时间冲突',`<p>「${esc(s.name)}」与以下策略的时间重叠：</p><div class="strategy-conflicts">${conflicts.map(other=>`<div><strong>${esc(other.name)}</strong><p>${strategyRange(other)}</p><small>${strategyTime(other.start)<strategyTime(candidate.start)?'旧策略将于 '+strategyDate(candidate.start)+' 提前结束':'将取消该策略的启用安排'}</small></div>`).join('')}</div><p class="small muted">只影响 ${quotes[strategyPending.qi].name}。替换后不会自动恢复旧策略，已发生记录保留。</p><div class="error" id="dialog-error" role="alert"></div>`,cancel+'<button class="btn primary" data-strategy-action="commit-schedule">确认替换并启用</button>');
+}
+function commitStrategySchedule(){
+ if(!strategyPending)return;const {qi,id,candidate,conflicts}=strategyPending,s=strategyFind(qi,id);if(!s)return;
+ if(candidate.startNow&&!s.enabled)candidate.start=strategyInput(strategyClock());
+ const error=scheduleValidation(qi,s,candidate);if(error){toast(error);return;}
+ const live=candidate.enabled?scheduleConflicts(qi,candidate,id):[];
+ if(JSON.stringify(live.map(x=>x.id).sort())!==JSON.stringify([...conflicts].sort())){strategyPending.conflicts=live.map(x=>x.id);if(live.length){showStrategyConflict(s,live);return;}}
+ // All validation completes before any strategy is changed.
+ for(const old of live){const previous=strategyRange(old);if(strategyTime(old.start)<strategyTime(candidate.start))old.end=candidate.start;else{old.enabled=false;old.stoppedAt=strategyInput(strategyClock());}strategyEvent(old,'被「'+s.name+'」替换；原安排 '+previous+'；'+(old.enabled?'提前结束于 '+strategyDate(old.end):'取消启用'));}
+ const previous=strategyRange(s),wasEnabled=s.enabled;
+ if(wasEnabled&&!candidate.enabled){s.enabled=false;s.stoppedAt=strategyInput(strategyClock());strategyEvent(s,'手动停用；原安排 '+previous);}
+ else{Object.assign(s,candidate);if(candidate.enabled&&candidate.periodReconfirmed)s.periodAcceptance={start:candidate.start,end:candidate.end,at:strategyInput(strategyClock())};else delete s.periodAcceptance;strategyEvent(s,(candidate.enabled?'启用 / 调整时间':'保存未启用安排')+'：'+strategyRange(s)+'；原安排 '+previous+(candidate.enabled&&candidate.periodReconfirmed?'；已逐项复核并重新确认新时段价格与条件':''));}
+ strategyPending=null;save();closeDialog();view.page='strategies';render();toast('策略安排已保存；原系统仍需人工落实与核验。');
+}
+function strategyStop(qi,id){const s=strategyFind(qi,id);if(!s||!s.enabled||strategyIsHistory(s))return;strategyEditor={qi,id};openDialog('strategy-stop','停用报价策略',`<p>${quotes[qi].name} · ${esc(s.name)}</p><p style="margin-top:12px">${strategyStatus(s)==='生效中'?'确认后立即停止生效':'确认后取消计划启用'}。历史价格与生效记录保留，不自动切换至其他策略。</p>`,cancel+'<button class="btn primary" data-strategy-action="stop-confirm">确认停用</button>');}
+function strategyStopConfirm(){if(!strategyEditor)return;const s=strategyFind(strategyEditor.qi,strategyEditor.id);if(!s||!s.enabled)return;if(strategyIsHistory(s)){closeDialog();render();toast('该策略已结束，保留原结束时间。');return;}s.stoppedAt=strategyInput(strategyClock());s.enabled=false;strategyEvent(s,'手动停用；原安排 '+strategyDate(s.start)+' → '+strategyDate(s.end));save();closeDialog();render();toast('已停用，历史记录保留。');}
+function strategyClone(qi,id){const s=strategyFind(qi,id);if(!s)return;const clone=strategyCopy(s);clone.id='copy-'+Date.now()+'-'+qi;clone.name=s.name+' · 副本';clone.start='';clone.end='';clone.enabled=false;delete clone.stoppedAt;delete clone.periodAcceptance;delete clone.periodReconfirmed;clone.events=[{at:strategyInput(strategyClock()),text:'复制自「'+s.name+'」，价格快照不变，需重新核对生效条件'}];books[qi].strategies.push(clone);save();closeDialog();view.page='strategies';render();strategyEdit(qi,clone.id);}
+document.addEventListener('click',event=>{
+ const el=event.target.closest('button');if(!el)return;
+ if(el.dataset.strategyFilter){view.strategyFilter=el.dataset.strategyFilter;renderStrategiesPage();return;}
+ if(el.dataset.strategyContinue!==undefined){view.page='chat';switchQuote(+el.dataset.strategyContinue);return;}
+ const qi=Number(el.dataset.sq);
+ if(el.dataset.strategyDetail){strategyDetail(qi,el.dataset.strategyDetail);return;}
+ if(el.dataset.strategyEdit){strategyEdit(qi,el.dataset.strategyEdit);return;}
+ if(el.dataset.strategyStop){strategyStop(qi,el.dataset.strategyStop);return;}
+ if(el.dataset.strategyCopy){strategyClone(qi,el.dataset.strategyCopy);return;}
+ const actions={name:()=>strategyNameDialog(),'save-name':saveStrategyName,'start-now':()=>{strategyEditor.startNow=true;$('#strategy-start').value=strategyInput(strategyClock());if(strategyTime($('#strategy-end').value)<=strategyClock())$('#strategy-end').value=strategyInput(strategyClock()+7*86400000);updateStrategyRenewal();},'save-schedule':saveStrategySchedule,'commit-schedule':commitStrategySchedule,'stop-confirm':strategyStopConfirm};actions[el.dataset.strategyAction]?.();
+});
+document.addEventListener('change',event=>{if(event.target.id==='strategy-customer'){view.strategyCustomer=event.target.value;renderStrategiesPage();}if(event.target.id==='strategy-start'&&strategyEditor)strategyEditor.startNow=false;if(['strategy-start','strategy-end'].includes(event.target.id))updateStrategyRenewal();});
+ensureStrategies();save();
+setInterval(()=>{if(view.page==='strategies'&&$('#dialog-cover').hidden)renderStrategiesPage();},30000);
+
+render();
+})();
+
+</script>
+</body></html>
