@@ -36,7 +36,9 @@ test('native fixed / variation / multiple and basic-unit conversion', () => {
   assert.equal(E.resolve(db, 'A1', 'Q1-SKU0005').settle_price, 550);
   assert.equal(E.resolve(db, 'A3', 'Q1-SKU0008').settle_price, 4500);
   assert.equal(E.resolve(db, 'A1', 'Q2-SKU0011').settle_price, 1213);
-  assert.equal(E.resolve(db, 'A2', 'Q3-SKU0011').strategy, 'unsupported');
+  assert.equal(E.resolve(db, 'A2', 'Q3-SKU0011').strategy, 'normal');
+  db.rules.find(r=>r.id==='R-SPU-A2').status=3;
+  assert.equal(E.resolve(db,'A2','Q3-SKU0011').settle_price,1266);
 });
 test('cross-midnight source behavior and backend statuses', () => {
   const db = seed();
@@ -79,6 +81,7 @@ test('shared rule, category coverage, SPU exclusivity and date conflicts block',
   assert.equal(p.ok,false);
   p = E.makePlan(db,ctx('customer','A1','Q2'),spec(['Q2-SKU0011']),NOW);
   assert.equal(p.ok,false); assert.match(p.errors.join(''),/分类/);
+  db.rules.find(r=>r.id==='R-SPU-A2').status=3;
   p = E.makePlan(db,ctx('customer','A2','Q1'),spec(['Q1-SKU0001']),NOW);
   assert.equal(p.ok,false); assert.match(p.errors.join(''),/上浮率/);
 });
@@ -110,9 +113,9 @@ test('shared quote preview resolves fixed, floating, and regular customers', () 
 test('quote changes do not override timing or step pricing', () => {
   const db = seed(), c = ctx('quote');
   const p = E.makePlan(db,c,spec(['Q1-SKU0002','Q1-SKU0003'],{operation:'percent',value:5}),NOW);
-  assert.equal(p.ok,true); assert.equal(p.skipped_count,0);
+  assert.equal(p.ok,true); assert.equal(p.skipped_count,1);
   assert.equal(p.affectedCustomers[0].rows[0].after.requires_quantity,true);
-  assert.equal(p.affectedCustomers[0].rows[1].after.settle_price,null);
+  assert.equal(p.affectedCustomers[0].rows[1].after,null);
 });
 test('unit guard, native cents validation, missing values and no fabricated zero', () => {
   const db = seed(), c = ctx('quote');
@@ -159,6 +162,6 @@ test('1000 SKU plans retain all IDs and atomically apply', () => {
   const db=GMD.seed(1000),c=ctx('quote'),ids=E.quoteSkus(db,'Q1').map(s=>s.sku_id);
   const p=E.makePlan(db,c,spec(ids),NOW);
   assert.equal(p.ok,true); assert.equal(p.rows.length,1000);
-  assert.equal(E.applyPlan(db,p,c,NOW).changed,1000);
+  assert.equal(p.skipped_count,1); assert.equal(E.applyPlan(db,p,c,NOW).changed,999);
 });
 process.stdout.write(`\n${count} scenario groups passed.\n`);

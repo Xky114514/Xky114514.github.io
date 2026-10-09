@@ -12,7 +12,10 @@
   });
   function seed(options) {
     const size = Math.max(10, Math.min(10000, Number(typeof options === 'number' ? options : options && options.size) || 300));
-    const db = { schema: 3, fixtureDate: '2026-09-30', station_id: 'ST01',
+    const db = { schema: 4, fixtureDate: '2026-09-30', station_id: 'ST01',
+      demoRole: 'manager', operationLogs: [], customerTasks: [], meta: { now: '2026-09-30T10:00', station_name: '示例配送站' },
+      // Local source-trace adapter, not fields returned by the SKU list endpoint.
+      purchaseSources: {},
       customers: [
         { address_id: 'A1', user_id: 'U1', name: '晨禾食堂', customized_code: 'KH001', contact: '陈先生', phone: '138****1001', address: '示例市晨禾路 18 号·食堂收货点', time_config_ids: ['TC01', 'TC02'] },
         { address_id: 'A2', user_id: 'U2', name: '云栖酒店', customized_code: 'KH002', contact: '林女士', phone: '138****1002', address: '示例市云栖路 26 号·酒店收货点', time_config_ids: ['TC01', 'TC02'] },
@@ -21,7 +24,7 @@
       accounts: [
         { user_id: 'U1', pay_method: 3, settle_way: 1, settle_date_type: 1, begin_day: 1, settle_day: 5 },
         { user_id: 'U2', pay_method: 2, settle_way: 1, settle_date_type: 2, begin_day: 1, settle_day: 5 },
-        { user_id: 'U3', pay_method: 4, settle_way: 1, settle_date_type: 1, cycle_length: 14, delay_day: 3, effective_date: '2026-09-01', begin_day: null, settle_day: null }
+        { user_id: 'U3', pay_method: 5, settle_way: 1, settle_date_type: 1, delay_day: 3, begin_day: null, settle_day: null }
       ],
       salemenus: [
         { id: 'Q1', name: '日常配送报价单', is_active: true, fee_type: 'CNY', time_config: { id: 'TC01', name: '上午运营' }, type: 4 },
@@ -57,6 +60,7 @@
       ['洋葱', '一级', '公斤', '公斤', 1, '根茎', 'C22', 550]
     ];
     db.salemenus.forEach((menu, mi) => {
+      menu.station_id = 'ST01';
       const count = mi === 0 ? size : 48;
       for (let i = 1; i <= count; i++) {
         const base = catalog[(i - 1) % catalog.length], batch = Math.floor((i - 1) / catalog.length);
@@ -88,6 +92,11 @@
           suggest_price_max: missing || timing ? null : Math.round(stdPrice * 1.18)
         };
         db.skus.push(sku);
+        db.purchaseSources[sku.sku_id] = {
+          latest: { supplier_name: missing ? null : ['示例蔬菜供应商', '示例鲜品供应商', '示例食材供应商'][i % 3], record_date: missing || i === 9 ? null : (i === 5 ? '2026-09-20' : '2026-09-29'), source_type: '最近采购记录', fee_type: 'CNY' },
+          supplier: { supplier_name: missing ? null : ['示例食材供应商', '示例鲜品供应商'][i % 2], record_date: missing ? null : (i === 5 ? '2026-09-19' : '2026-09-28'), source_type: '供应商最近采购记录', fee_type: 'CNY' },
+          fx_status: mi === 3 ? 'missing' : 'not_required'
+        };
         // Sparse actual change records, never fabricated daily closing prices.
         if (!timing && i % 17 !== 0) {
           const changeDates = i % 3 === 0 ? ['2026-09-24T08:00:00+08:00', '2026-09-28T09:30:00+08:00'] : ['2026-09-26T08:30:00+08:00'];
@@ -108,7 +117,7 @@
               standard: '平台规格：' + base[1], unit_name: std, market_price_avg: marketPrice,
               market_price_max: Number((marketPrice + 0.4).toFixed(2)),
               market_price_min: i % 19 === 0 ? null : Number(Math.max(0.01, marketPrice - 0.3).toFixed(2)),
-              record_date: Date.parse('2026-09-29T08:00:00+08:00') }
+              record_date: Date.parse((i === 5 ? '2026-09-24' : '2026-09-29') + 'T08:00:00+08:00') }
           ] });
         } else db.market.push({ sku_id: sku.sku_id, default_product_id: null, matched_products: [] });
       }
@@ -126,10 +135,10 @@
       rule('R-NIGHT-A1', '晨禾生菜夜间价格', 'Q1', ['A1'], [{ sku_id: 'Q1-SKU0007', rule_type: 0, yx_price: 550 }], { begin_time: '22:00', end_time: '06:00', time_limit: 1 }),
       rule('R-BASIC-A3', '桥头胡萝卜基本单位价', 'Q1', ['A3'], [{ sku_id: 'Q1-SKU0008', rule_type: 0, yx_price: 450 }], { locking_price_unit: 1 }),
       rule('R-CATEGORY-A1', '晨禾水果分类加价', 'Q2', ['A1'], [], { rule_object_type: 2, category_2_list: [{ category_2_id: 'C28', rule_type: 1, yx_price: 20 }] }),
-      rule('R-SPU-A2', '云栖苹果上浮率', 'Q3', ['A2'], [], { rule_object_type: 3, price_type: 1, spus: [{ spu_id: 'SPU0011', rule_type: 2, yx_price: 105 }] }),
+      rule('R-SPU-A2', '云栖苹果上浮率', 'Q3', ['A2'], [], { rule_object_type: 3, price_type: 1, status: 1, spus: [{ spu_id: 'SPU0011', rule_type: 2, yx_price: 105 }] }),
       rule('R-ORDER-A3', '桥头外币整单折扣', 'Q4', ['A3'], [], { rule_object_type: 4, change_rate: 98, begin: '2026-10-01', end: '2026-10-31', status: 2 }),
-      rule('R-EXPIRED-A2', '云栖九月初叶菜价', 'Q3', ['A2'], [{ sku_id: 'Q3-SKU0001', rule_type: 0, yx_price: 510 }], { end: '2026-09-10', status: 1 }),
-      rule('R-CLOSED-A3', '桥头暂停的豆腐价', 'Q4', ['A3'], [{ sku_id: 'Q4-SKU0009', rule_type: 0, yx_price: 98 }], { status: 0 })
+      rule('R-EXPIRED-A2', '云栖九月初叶菜价（已到期）', 'Q3', ['A2'], [{ sku_id: 'Q3-SKU0001', rule_type: 0, yx_price: 510 }], { end: '2026-09-10', status: 0 }),
+      rule('R-CLOSED-A3', '桥头已关闭的豆腐价', 'Q4', ['A3'], [{ sku_id: 'Q4-SKU0009', rule_type: 0, yx_price: 98 }], { status: 0 })
     ];
     // /station_statistics/order/customers_analysis returns modelValues[].kv.
     // grpc_client/client.py strips `_alias` and stringifies these native keys.
@@ -153,11 +162,30 @@
       { rule_id: 'JOB-001', rule_name: '十月日常报价单调价', salemenu_id: 'Q1', effective_time: '2026-10-01T06:00', rule_status: 0,
         creator: '演示操作员', create_time: '2026-09-29 15:00', last_operator: '演示操作员', modify_time: '2026-09-29 15:00', abnormal_status: 0, task_id: null, task_result: null },
       { rule_id: 'JOB-002', rule_name: '食堂补充单九月调价', salemenu_id: 'Q2', effective_time: '2026-09-28T06:00', rule_status: 1,
-        creator: '演示操作员', create_time: '2026-09-27 15:00', last_operator: '演示操作员', modify_time: '2026-09-28 06:01', abnormal_status: 0, task_id: 'TASK-DEMO-002', task_result: '演示执行记录：已完成' },
+        creator: '演示操作员', create_time: '2026-09-27 15:00', last_operator: '演示操作员', modify_time: '2026-09-28 06:01', abnormal_status: 1, task_id: 'TASK-DEMO-002', task_result: '演示执行记录：部分商品执行失败' },
       { rule_id: 'JOB-003', rule_name: '酒店九月上旬调价', salemenu_id: 'Q3', effective_time: '2026-09-10T06:00', rule_status: 2,
         creator: '演示操作员', create_time: '2026-09-09 15:00', last_operator: '演示操作员', modify_time: '2026-09-11 09:00', abnormal_status: 0, task_id: 'TASK-DEMO-003', task_result: '演示执行记录：已结束' },
-      { rule_id: 'JOB-004', rule_name: '外币商品待执行任务', salemenu_id: 'Q4', effective_time: '2026-09-29T06:00', rule_status: 0,
+      { rule_id: 'JOB-004', rule_name: '外币商品异常任务（只读）', salemenu_id: 'Q4', effective_time: '2026-09-29T06:00', rule_status: 0,
         creator: '演示操作员', create_time: '2026-09-28 15:00', last_operator: '演示操作员', modify_time: '2026-09-29 06:01', abnormal_status: 1, task_id: 'TASK-DEMO-004', task_result: '演示执行记录：任务未完成，需检查执行结果' }
+    ];
+    // Offline task item adapter: a planned set of quotation SKU target prices.
+    db.jobs.forEach(job => {
+      job.items = db.skus.filter(s => s.salemenu_id === job.salemenu_id).slice(0,2).map(s => ({sku_id:s.sku_id,operation:'set',value:s.sale_price/100,sale_price:s.sale_price,base_price:s.sale_price,sale_unit_name:s.sale_unit_name,fee_type:s.fee_type}));
+    });
+    // Local failure adapter for previewing partial-failure recovery; native task
+    // status remains unchanged and the browser does not execute tasks.
+    const partialJob = db.jobs.find(j => j.rule_id === 'JOB-002');
+    partialJob.items.forEach((item, index) => { item.sale_price += index ? 30 : 20; item.value = item.sale_price / 100; });
+    partialJob.failures = [{ sku_id: 'Q2-SKU0002', reason: '执行时商品价格已发生变化，需重新核对目标价' }];
+    partialJob.execution_summary = { succeeded: 1, failed: 1 };
+    // Explicit fictional assistant task history. Existing native rules are not
+    // reverse-grouped into tasks; these two examples deliberately illustrate
+    // known task provenance and per-item recovery, not backend API records.
+    const taskItem = (id, extra) => { const s=db.skus.find(x=>x.sku_id===id); return Object.assign({sku_id:id,name:s.sku_name,code:s.outer_id,spec:s.specification_desc,unit:s.sale_unit_name,basic_unit:s.std_unit_name_forsale,currency:s.fee_type,category_name_1:s.category_name_1,category_name_2:s.category_name_2,category_id_2:s.category_id_2,setting_unit:s.sale_unit_name,setting_currency:s.fee_type,operation:'set',value:7.4,base:'quote',quantity:null,before_price:s.sale_price,base_price:s.sale_price,proposed_price:740,rule_type:0,yx_price:740,status:'success',reason:'演示样例：价格规则配置成功',rule_ids:['R-FIXED-A1']},extra||{}); };
+    const taskCommon={customer_id:'A1',customer_ids:['A1'],customer_name:'晨禾食堂',customer_names:['晨禾食堂'],salemenu_id:'Q1',salemenu_name:'日常配送报价单',begin:'2026-09-01',end:'2026-10-31',begin_time:'00:00',end_time:'23:59',time_limit:2,actor:'演示操作员',source:'演示样例',source_task_id:null,kind:'customer_adjustment',native_edit:false};
+    db.customerTasks=[
+      {...taskCommon,id:'CUSTOMER-DEMO-001',name:'晨禾鸡蛋锁价（演示样例）',created_at:'2026-09-01T09:00',processing_status:'completed',items:[taskItem('Q1-SKU0004')],rule_ids:['R-FIXED-A1']},
+      {...taskCommon,id:'CUSTOMER-DEMO-002',name:'晨禾蔬菜调价（演示样例）',created_at:'2026-09-02T09:00',processing_status:'partial',items:[taskItem('Q1-SKU0005',{operation:'delta',value:0.3,proposed_price:550,rule_type:1,yx_price:30,rule_ids:['R-VARIATION-A1']}),taskItem('Q1-SKU0001',{value:5.2,proposed_price:520,yx_price:520,status:'failed',reason:'演示样例：保存时商品资料发生变化，需重新核对后补处理',rule_ids:[]})],rule_ids:['R-VARIATION-A1']}
     ];
     return db;
   }

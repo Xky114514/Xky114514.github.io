@@ -22,7 +22,7 @@
   const customerOf = (db, id) => asArray(db.customers).find(c => eq(c.address_id, id));
   const currency = (db, sku) => quoteOf(db, sku.salemenu_id)?.fee_type || null;
   function linkedQuotes(db, addressId) {
-    const ids = new Set(asArray(db.links).filter(l => eq(l.restaurant_id, addressId)).map(l => String(l.salemenu_id)));
+    const ids = new Set(asArray(db.links).filter(l => eq(l.restaurant_id, addressId) && (!db.station_id || !l.station_id || eq(l.station_id,db.station_id))).map(l => String(l.salemenu_id)));
     return asArray(db.salemenus).filter(q => ids.has(String(q.id)));
   }
   function linkedCustomers(db, salemenuId) {
@@ -85,7 +85,7 @@
     const chosen = direct[0] || category[category.length - 1] || matches[0];
     if (chosen) {
       const {rule, entry} = chosen;
-      if ([3, 4].includes(Number(rule.rule_object_type))) return {...result, strategy: 'unsupported', rule_id: ruleId(rule), rule_ids: matches.map(m => ruleId(m.rule)), reason: '该价格涉及上浮率或整单规则，本离线原型不模拟精确结算价'};
+      if (Object.keys(rule.category1_change_rates||{}).length) return {...result, strategy:'unsupported',rule_id:ruleId(rule),reason:'涉及分类继承的上浮规则，需原系统确认'};
       const price = rulePrice(sku, rule, entry, options.basePriceOverride);
       return {...result, strategy: price == null ? 'unsupported' : 'rule', settle_price: price, rule_id: ruleId(rule), rule_ids: matches.map(m => ruleId(m.rule)), rule_type: entry.rule_type, reason: price == null ? '规则基价、金额或换算资料不足，无法确定客户适用价' : ''};
     }
@@ -94,12 +94,12 @@
     return {...result, strategy: cents(base) ? 'normal' : 'missing', settle_price: cents(base) ? base : null, reason: cents(base) ? '' : '报价单基础销售价缺失或不是原生分值'};
   }
   function periodError(spec) {
-    if (!validDate(spec.begin) || !validDate(spec.end)) return '客户专属价需要完整、有效的起止日期';
+    if (!validDate(spec.begin) || !validDate(spec.end)) return '客户协议价需要完整、有效的起止日期';
     if (spec.end < spec.begin) return '结束日期不能早于开始日期';
     if (!validTime(spec.begin_time) || !validTime(spec.end_time)) return '每日时段必须为 HH:MM';
     if (![1, 2].includes(Number(spec.time_limit))) return '请选择当天时段或跨午夜时段';
     if (Number(spec.time_limit) === 2 && spec.end_time < spec.begin_time) return '当天时段的结束时间不能早于开始时间';
-    if (Number(spec.time_limit) === 1 && spec.end_time > spec.begin_time) return '跨午夜时段必须以次日较早时间结束';
+    if (Number(spec.time_limit) === 1 && spec.end_time >= spec.begin_time) return '跨午夜时段必须以次日较早时间结束';
     return '';
   }
   const overlaps = (rule, spec) => datePart(rule.begin) <= spec.end && datePart(rule.end) >= spec.begin;
@@ -123,16 +123,21 @@
     const plan = {context: clone(context), spec, rows: [], affectedCustomers: [], errors: [], warnings: [], created_at: localNow(now), fingerprint: fingerprint(db), eligible_count: 0, skipped_count: 0, ok: false};
     const fail = text => {if (!plan.errors.includes(text)) plan.errors.push(text);};
     if (!customerOf(db, context.customerId)) fail('请选择有效客户');
-    if (!['customer', 'quote'].includes(context.scope)) fail('请选择客户专属价或报价单基础价');
+    if (!['customer', 'quote'].includes(context.scope)) fail('请选择客户协议价或报价单标准价');
     if (!quoteOf(db, context.quoteId) || !linkedQuotes(db, context.customerId).some(q => eq(q.id, context.quoteId))) fail('请明确选择当前客户关联的一张报价单');
+    const permissionError=root.GMP?.error(db,context.scope,context.quoteId,[context.customerId]); if(permissionError) fail(permissionError);
     if (!Number.isInteger(context.generation)) fail('调整上下文无效，请重新选择范围');
-    if (!spec.ids.length) fail('请至少选择一个商品');
+    if (!spec.ids.length) fail('请至少选择一个商品'); if(spec.ids.length>5000)fail('每次最多调整5000个商品');
     if (!['set', 'delta', 'percent', 'multiple'].includes(spec.operation)) fail('不支持该调价方式');
     if (!number(spec.value)) fail('请填写有效调整值');
+    if(['set','delta'].includes(spec.operation)&&Math.abs(spec.value)>999999.99)fail('金额绝对值不能超过999999.99');
+    if((spec.operation==='multiple'&&spec.value>100)||(spec.operation==='percent'&&spec.value>9900))fail('倍率不能超过100，百分比不能超过9900%');
     if (['set', 'delta'].includes(spec.operation) && number(spec.value) && Math.abs(spec.value * 100 - Math.round(spec.value * 100)) > 1e-7) fail('固定金额最多保留两位小数');
     if ((spec.operation === 'set' && spec.value < 0) || (spec.operation === 'percent' && spec.value <= -100) || (spec.operation === 'multiple' && spec.value <= 0)) fail('调整后价格不能为负数，倍数必须大于零');
     if (!['customer', 'quote'].includes(spec.base)) fail('请选择计算基准');
-    if (context.scope === 'customer') {const error = periodError(spec); if (error) fail(error);}
+    if (context.scope === 'customer') {const error = periodError(spec); if (error) fail(error); if(spec.end && spec.end<datePart(now))fail('有效结束日期不能早于演示当前日期；已到期规则不可重新启用');}
+    if(/[\r\n\t]/.test(String(spec.ruleName||'')))fail('规则名称不能含换行或制表符');
+    if(String(spec.ruleName||'').trim().length>80)fail('规则名称最多80个字符');
     const selected = spec.ids.map(id => skuOf(db, id)).filter(Boolean);
     if (selected.length !== spec.ids.length || selected.some(s => !eq(s.salemenu_id, context.quoteId))) fail('所选商品已改变或不属于当前报价单，请重新选择');
     if (['set', 'delta'].includes(spec.operation)) {
@@ -144,6 +149,7 @@
       const current = resolve(db, context.customerId, sku.sku_id, spec.quantities[sku.sku_id] ?? null, {now});
       const row = {sku_id: sku.sku_id, base_price: cents(sku.sale_price) ? sku.sale_price : null, customer_price: current.requires_quantity ? null : current.settle_price, proposed_price: null, rule_type: null, yx_price: null, skip: false, warning: '', current, update_rule_id: null};
       plan.rows.push(row);
+      if (context.scope==='quote' && sku.is_price_timing && sku.sale_price===0 && spec.operation!=='set') {row.skip=true;row.warning='时价标准价待定，已跳过；如需设置标准价请明确填写固定目标价';continue;}
       if (context.scope === 'customer' && current.strategy === 'step') {row.skip = true; row.warning = '阶梯价优先，客户协议调价不覆盖阶梯表；请使用原阶梯定价功能'; continue;}
       if (context.scope === 'customer' && current.strategy === 'timing' && spec.operation !== 'set') {row.error = '时价尚未确定，不能以占位零价计算调幅；请直接指定固定价'; fail(row.error); continue;}
       let conflict = {};
@@ -155,7 +161,7 @@
       if (spec.operation !== 'set' && operand == null) {row.error = '计算基准价缺失或待定，请补齐数量/价格，或使用固定价'; fail(row.error); continue;}
       const value = spec.value;
       const raw = spec.operation === 'set' ? value * 100 : spec.operation === 'delta' ? operand + value * 100 : spec.operation === 'percent' ? operand * (1 + value / 100) : operand * value;
-      if (!Number.isFinite(raw) || raw < 0 || !Number.isSafeInteger(round(raw))) {row.error = '拟调整价格无效或为负数'; fail(row.error); continue;}
+      if (!Number.isFinite(raw) || raw < 0 || raw>99999999 || !Number.isSafeInteger(round(raw))) {row.error = '目标价须为0至999999.99，且计算基准有效'; fail(row.error); continue;}
       row.proposed_price = round(raw);
       if (context.scope === 'customer') {
         row.rule_type = spec.base === 'customer' || spec.operation === 'set' ? 0 : spec.operation === 'delta' ? 1 : 2;
@@ -167,11 +173,11 @@
             row.yx_price /= sku.sale_ratio;
           }
         }
-        if (spec.base === 'customer' && spec.operation !== 'set') row.warning = '按当前客户价一次计算，保存为固定价规则';
+        if (spec.base === 'customer' && spec.operation !== 'set') row.warning = '按客户当前价一次计算，保存为固定价规则';
         if (spec.begin > datePart(now)) row.warning += (row.warning ? '；' : '') + '此处为规则设置值，不代表未来实际结算价';
       } else {
-        if (current.strategy === 'step') row.warning = '基础价调整不覆盖阶梯定价';
-        else if (current.strategy === 'timing') row.warning = '基础价调整后仍为时价待定价';
+        if (current.strategy === 'step') row.warning = '标准价调整不覆盖阶梯定价';
+        else if (current.strategy === 'timing') row.warning = '标准价调整后仍为时价待定价';
         else if (current.strategy === 'rule') row.warning = '客户实际价格继续按其协议计算';
       }
     }
@@ -189,6 +195,8 @@
   function applyPlan(db, plan, context, now = db.meta?.now || '2026-09-30T10:00') {
     if (!plan || !plan.ok) return {ok: false, error: '当前预览不可应用，请先处理阻止项'};
     if (['customerId', 'quoteId', 'scope', 'generation'].some(key => !eq(plan.context[key], context[key]))) return {ok: false, error: '客户、报价单或调价范围已切换，请重新生成预览'};
+    const permissionError=root.GMP?.error(db,context.scope,context.quoteId,[context.customerId]); if(permissionError)return {ok:false,error:permissionError};
+    if(root.GMP && ((context.scope==='quote'&&linkedCustomers(db,context.quoteId).length>1)||plan.skipped_count>0) && !plan.confirmed)return {ok:false,error:'请先确认全部关联客户和未处理商品'};
     if (plan.fingerprint !== fingerprint(db)) return {ok: false, error: '数据已变化，当前预览已过期，请重新生成'};
     const fresh = makePlan(db, context, plan.spec, now);
     if (!fresh.ok || planSignature(fresh) !== planSignature(plan)) return {ok: false, error: '价格、规则或适用时段已变化，请重新生成预览'};
@@ -217,9 +225,10 @@
       if (insert.length) {
         let suffix = 1;
         while (db.rules.some(r => eq(ruleId(r), 'LOCAL-RULE-' + suffix))) suffix++;
-        db.rules.push({id: 'LOCAL-RULE-' + suffix, name: (plan.spec.ruleName || '本地客户调价演示').trim(), type: 'customer', salemenu_id: context.quoteId, address_ids: [context.customerId], rule_object_type: 1, skus: insert.map(r => ({sku_id: r.sku_id, rule_type: r.rule_type, yx_price: r.yx_price})), category_2_list: [], begin: plan.spec.begin, end: plan.spec.end, begin_time: plan.spec.begin_time, end_time: plan.spec.end_time, time_limit: plan.spec.time_limit, locking_price_unit: 0, price_type: 1, status: plan.spec.begin > datePart(now) ? 2 : plan.spec.end < datePart(now) ? 1 : 3});
+        db.rules.push({id: 'LOCAL-RULE-' + suffix, name: (plan.spec.ruleName || '本地客户协议调价演示').trim(), type: 'customer', salemenu_id: context.quoteId, address_ids: [context.customerId], rule_object_type: 1, skus: insert.map(r => ({sku_id: r.sku_id, rule_type: r.rule_type, yx_price: r.yx_price})), category_2_list: [], begin: plan.spec.begin, end: plan.spec.end, begin_time: plan.spec.begin_time, end_time: plan.spec.end_time, time_limit: plan.spec.time_limit, locking_price_unit: 0, price_type: 1, status: plan.spec.begin > datePart(now) ? 2 : plan.spec.end < datePart(now) ? 1 : 3});
       }
     }
+    root.GMP?.record(db,{action:context.scope==='quote'?'调整标准价':'调整客户协议价',object_id:context.quoteId,quote_id:context.quoteId,customer_ids:fresh.affectedCustomers.map(c=>c.address_id),summary:`已调整 ${rows.length} 个商品，跳过 ${fresh.skipped_count} 个`,source:plan.spec.source||'按条件调整',changes:rows.map(r=>({field:skuOf(db,r.sku_id).outer_id+' '+skuOf(db,r.sku_id).sku_name,before:{price:context.scope==='quote'?r.base_price:r.customer_price,unit:skuOf(db,r.sku_id).sale_unit_name,currency:currency(db,skuOf(db,r.sku_id))},after:{price:r.proposed_price,unit:skuOf(db,r.sku_id).sale_unit_name,currency:currency(db,skuOf(db,r.sku_id)),rule_type:r.rule_type,yx_price:r.yx_price,begin:plan.spec.begin,end:plan.spec.end}}))});
     return {ok: true, changed: rows.length, skipped: fresh.skipped_count, message: `已应用本地演示：${rows.length} 个商品`};
   }
   function validateJobEdit(db, id, changes, now = db.meta?.now || '2026-09-30T10:00') {

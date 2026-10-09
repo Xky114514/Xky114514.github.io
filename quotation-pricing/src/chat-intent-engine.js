@@ -154,7 +154,7 @@
       .replace(/[\s，,。.!！?？：:；;（）()“”"'【】\[\]+\/]+/g, '');
     if (residue) return finish('clarify', '还有未识别的商品或条件：“' + residue.slice(0, 24) + '”。请明确后再预览，避免只调整部分商品。');
     if (!result.ids.length) return finish('clarify', '当前报价单中没有符合条件的商品，请检查名称或筛选条件。');
-    if (result.operation === 'set' && result.value <= 0) return finish('clarify', '指定单价需要大于 0 元。');
+    if (result.operation === 'set' && result.value < 0) return finish('clarify', '指定单价不能为负数。');
     if (result.operation === 'percent' && result.value <= -100) return finish('clarify', '降幅会使单价不大于 0，请重新指定调整幅度。');
     if ((result.operation === 'delta' || result.operation === 'percent') && !result.base) {
       return finish('clarify', '请明确按“当前执行价”还是“草稿价”增减，避免重复计算。');
