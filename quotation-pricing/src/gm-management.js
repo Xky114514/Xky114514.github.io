@@ -33,7 +33,7 @@
   function subset(){return catalog().filter(c=>(!u.query||[c.id,c.label,c.sub].some(x=>String(x).toLowerCase().includes(u.query.toLowerCase())))&&(u.category==='all'||c.sku.category_name_1===u.category)&&(!u.onlySelected||rows().some(r=>r[memberKey()]===c.id)));}
   function header(){
     const d=u.draft,job=u.kind==='job';
-    return `<form id="management-form" class="management-form">${field(job?'任务名称':'规则名称',`<input name="rule_name" required maxlength="80" value="${esc(job?d.rule_name:d.name)}">`)}${field('报价单',job?`<select name="salemenu_id" required ${d.rule_id?'disabled':''}>${opt('','请选择报价单',d.salemenu_id)}${db().salemenus.filter(x=>x.id===d.salemenu_id||!GMX.writableQuote(db(),x.id)&&!permission('job',x.id)).map(x=>opt(x.id,esc(x.name),d.salemenu_id)).join('')}</select>`:`<input value="${esc(q(d.salemenu_id)?.name)}" readonly>`,job?'任务保存后不可更换报价单；新建时切换报价单将清空商品。仅修改报价单标准价，关联客户仍按各自规则取价。':'编辑保留原规则的报价单、对象类型、计算基准和计价单位。')}${job?field('计划执行时间',`<input name="effective_time" type="datetime-local" step="3600" required value="${esc(d.effective_time||'')}">`,'演示当前时间为 '+api.now().replace('T',' ')+'。仅支持未来整点，一次执行。保存只安排任务，不立即调价；计划时点不保证秒级完成，时间到达不代表成功。'):''}${job?`<div class="management-context"><span>报价单标准价</span> ${help('先选商品，再批量设置价格，个别商品可单独设置。可直接指定标准价，或按现标准价调整一次；填入后保留目标价，未来不重新按比例计算。','任务价格计算说明')}</div>`:`${field('有效开始日期',`<input name="begin" type="date" required value="${d.begin}">`)}${field('有效结束日期',`<input name="end" type="date" required value="${d.end}">`)}${field('每日开始时间',`<input name="begin_time" type="time" required value="${d.begin_time}">`)}${field('每日结束时间',`<input name="end_time" type="time" required value="${d.end_time}">`)}${field('时段方式',`<select name="time_limit">${opt(2,'当日时段',d.time_limit)}${opt(1,'跨午夜',d.time_limit)}</select>`)}${field('规则开关',`<select name="enabled">${opt('yes','启用',d.status===1?'no':'yes')}${opt('no','停用',d.status===1?'no':'yes')}</select>`,'保存时根据启用状态和有效日期校验原生状态；关闭的历史规则不可修改。')}<div class="full"><div class="section-title">适用客户 ${help('编辑的是原规则，保留原编号。多个客户共用时，修改会影响全部所选客户；保存前需核对影响范围。','适用客户说明')}</div><div class="customer-checks">${GME.linkedCustomers(db(),d.salemenu_id).map(c=>`<label><input type="checkbox" name="address_ids" value="${c.address_id}" ${d.address_ids.includes(c.address_id)?'checked':''}> ${esc(c.name)} <span class="muted">${esc(c.customized_code)}</span></label>`).join('')}</div></div><div class="full management-context">${esc(({1:'SKU规则',2:'二级分类规则',3:'SPU上浮率',4:'整单折扣'})[d.rule_object_type])} · ${d.locking_price_unit===1?'基本单价':'销售单价'} ${help('金额按该规则的计价单位填写；倍率如0.95表示基准价的95%。保留原对象类型，避免将分类或整单规则改成商品固定价。','规则计算说明')}</div>${d.rule_object_type===4?field('整单折扣倍率',`<input name="change_rate" type="number" step="any" min="0.0001" max="1" required value="${d.change_rate/100}">`,'填0.98表示适用商品金额的98%，不包括配送费、运费等费用。'):''}`}</form>`;
+    return `<form id="management-form" class="management-form">${field(job?'任务名称':'规则名称',`<input name="rule_name" required maxlength="80" value="${esc(job?d.rule_name:d.name)}">`)}${field('报价单',job?`<select name="salemenu_id" required ${d.rule_id?'disabled':''}>${opt('','请选择报价单',d.salemenu_id)}${db().salemenus.filter(x=>x.id===d.salemenu_id||!GMX.writableQuote(db(),x.id)&&!permission('job',x.id)).map(x=>opt(x.id,esc(x.name),d.salemenu_id)).join('')}</select>`:`<input value="${esc(q(d.salemenu_id)?.name)}" readonly>`,job?'任务保存后不可更换报价单；新建时切换报价单将清空商品。仅修改报价单标准价，关联客户仍按各自规则取价。':'编辑保留原规则的报价单、对象类型、计算基准和计价单位。')}${job?field('计划执行时间',`<input name="effective_time" type="datetime-local" step="3600" required value="${esc(d.effective_time||'')}">`,'演示当前时间为 '+api.now().replace('T',' ')+'。仅支持未来整点，一次执行。保存只安排任务，不立即调价；计划时点不保证秒级完成，时间到达不代表成功。'):''}${job?`<div class="management-context"><span>报价单标准价</span> ${help('勾选一个或多个商品后，统一使用批量设置价格；不同价格分批勾选设置。可直接指定标准价，或按现标准价调整一次；填入后保留目标价，未来不重新按比例计算。','任务价格计算说明')}</div>`:`${field('有效开始日期',`<input name="begin" type="date" required value="${d.begin}">`)}${field('有效结束日期',`<input name="end" type="date" required value="${d.end}">`)}${field('每日开始时间',`<input name="begin_time" type="time" required value="${d.begin_time}">`)}${field('每日结束时间',`<input name="end_time" type="time" required value="${d.end_time}">`)}${field('时段方式',`<select name="time_limit">${opt(2,'当日时段',d.time_limit)}${opt(1,'跨午夜',d.time_limit)}</select>`)}${field('规则开关',`<select name="enabled">${opt('yes','启用',d.status===1?'no':'yes')}${opt('no','停用',d.status===1?'no':'yes')}</select>`,'保存时根据启用状态和有效日期校验原生状态；关闭的历史规则不可修改。')}<div class="full"><div class="section-title">适用客户 ${help('编辑的是原规则，保留原编号。多个客户共用时，修改会影响全部所选客户；保存前需核对影响范围。','适用客户说明')}</div><div class="customer-checks">${GME.linkedCustomers(db(),d.salemenu_id).map(c=>`<label><input type="checkbox" name="address_ids" value="${c.address_id}" ${d.address_ids.includes(c.address_id)?'checked':''}> ${esc(c.name)} <span class="muted">${esc(c.customized_code)}</span></label>`).join('')}</div></div><div class="full management-context">${esc(({1:'SKU规则',2:'二级分类规则',3:'SPU上浮率',4:'整单折扣'})[d.rule_object_type])} · ${d.locking_price_unit===1?'基本单价':'销售单价'} ${help('金额按该规则的计价单位填写；倍率如0.95表示基准价的95%。保留原对象类型，避免将分类或整单规则改成商品固定价。','规则计算说明')}</div>${d.rule_object_type===4?field('整单折扣倍率',`<input name="change_rate" type="number" step="any" min="0.0001" max="1" required value="${d.change_rate/100}">`,'填0.98表示适用商品金额的98%，不包括配送费、运费等费用。'):''}`}</form>`;
   }
   function editor(){
     u.stage='edit';const job=u.kind==='job';
@@ -45,7 +45,7 @@
     if(old&&old.rule_status!==0){viewJob(id);return;}
     let idQ=old?.salemenu_id||api.context().quoteId||'';if(!old&&(GMX.writableQuote(db(),idQ)||permission('job',idQ)))idQ=db().salemenus.find(x=>!GMX.writableQuote(db(),x.id)&&!permission('job',x.id))?.id||'';
     const access=permission('job',idQ)||GMX.writableQuote(db(),idQ);if(access){api.toast(access);return;}
-    u={kind:'job',token:++sequence,stage:'edit',draft:old?copy(old):{rule_name:'',salemenu_id:idQ,effective_time:'',items:[]},query:'',category:'all',page:1,size:25,onlySelected:false,bulk:'percent',bulkValue:''};u.draft.items ||= [];u.initial=JSON.stringify(u.draft);editor();
+    u={kind:'job',token:++sequence,stage:'edit',draft:old?copy(old):{rule_name:'',salemenu_id:idQ,effective_time:'',items:[]},query:'',category:'all',page:1,size:25,onlySelected:false,bulk:'percent',bulkValue:''};u.draft.items ||= [];u.selected=new Set();u.initial=JSON.stringify(u.draft);editor();
   }
   function openRule(id,sourceTaskId=null){
     const old=db().rules.find(r=>r.id===id);if(!old)return;const blocked=GMX.ruleReadOnly(db(),old)||GMX.writableQuote(db(),old.salemenu_id)||permission('rule',old.salemenu_id,old.address_ids);if(blocked){api.toast(blocked);return;}
@@ -62,28 +62,30 @@
     GMHelp.upgrade(root);
   }
   const jobConfigured=row=>!!row&&row.sale_price!=null&&Number.isFinite(row.sale_price)&&!row.error;
-  function jobPriceDraft(){return u.rowEdit||{operation:u.bulk,value:u.bulkValue};}
+  const jobSelectedRows=()=>rows().filter(row=>u.selected.has(row.sku_id));
+  function jobPriceDraft(){return {operation:u.bulk,value:u.bulkValue};}
   function updateJobPriceDraft(values){
-    if(u.rowEdit)Object.assign(u.rowEdit,values);
-    else{if('operation' in values)u.bulk=values.operation;if('value' in values)u.bulkValue=values.value;}
+    if('operation' in values)u.bulk=values.operation;if('value' in values)u.bulkValue=values.value;
   }
-  function jobPriceEditorDirty(){return u?.kind==='job'&&!!(u.rowEdit||u.bulkOpen)&&JSON.stringify(jobPriceDraft())!==u.priceInitial;}
-  function clearJobPriceEditor(){u.rowEdit=null;u.bulkOpen=false;u.priceError='';}
+  function jobPriceEditorDirty(){return u?.kind==='job'&&!!u.bulkOpen&&JSON.stringify(jobPriceDraft())!==u.priceInitial;}
+  function clearJobPriceEditor(){u.bulkOpen=false;u.priceError='';}
   function discardJobPriceEditor(){
     if(u.kind!=='job')return true;
     if(jobPriceEditorDirty()&&!window.confirm('放弃尚未填入商品的价格设置？'))return false;
     clearJobPriceEditor();return true;
   }
-  function openJobPriceEditor(id){
-    if(id&&u.rowEdit?.sku_id===id)return;
-    if(!discardJobPriceEditor())return;
-    if(id){const row=rows().find(r=>r.sku_id===id);if(!row)return;u.rowEdit=copy(row);}
-    else{if(!rows().length)return;u.bulkOpen=true;u.bulk='set';u.bulkValue='';}
+  function openJobPriceEditor(){
+    if(u.bulkOpen||!u.selected.size)return;
+    const targets=jobSelectedRows();if(!targets.length)return;
+    const first=targets[0],same=targets.every(r=>jobConfigured(r)&&r.operation===first.operation&&Number(r.value)===Number(first.value));
+    const row=same||targets.length===1?first:null,mixed=!row&&targets.some(r=>r.value!=null&&r.value!==''||jobConfigured(r));
+    u.bulkOpen=true;u.bulk=mixed?null:row?.operation||'set';u.bulkValue=row?.value??'';
     u.priceInitial=JSON.stringify(jobPriceDraft());renderProducts();
-    $('#management-price-editor')?.scrollIntoView({block:'nearest'});$('#management-price-value')?.focus();
+    $('#management-price-editor')?.scrollIntoView({block:'nearest'});($('#management-price-value')||$('#management-price-mode'))?.focus();
   }
   function jobPriceError(message){u.priceError=message;const target=$('#management-price-error');if(target)target.textContent=message;}
   function jobValueError(row){
+    if(!['set','delta','percent','multiple'].includes(row.operation))return '请选择本次统一修改的定价方式。';
     if(row.value==null||String(row.value).trim()===''||!Number.isFinite(Number(row.value)))return '请填写有效数值。';
     const v=Number(row.value);
     if(['set','delta'].includes(row.operation)&&(Math.abs(v)>999999.99||Math.abs(v*100-Math.round(v*100))>1e-7))return '金额最多两位小数，绝对值不超过999999.99元。';
@@ -100,44 +102,59 @@
     return `标准价 ${v>=0?'+':'−'} ${money(Math.abs(v)*100,product)}`;
   }
   function jobSetting(row,product){
-    if(!row)return '<span class="muted">未选入</span>';
+    if(!row)return '<span class="muted">未加入任务</span>';
     if(row.error)return `<span class="tag amber">需处理</span><div class="small error">${esc(row.error)}</div>`;
     if(!jobConfigured(row))return '<span class="tag amber">待设置</span>';
-    return `<strong>目标 ${money(row.sale_price,product)}</strong><div class="small muted">${jobFormula(row,product)}${row.operation==='set'?'':' · 计算一次'}</div>`;
+    return `<span class="tag price-result-flag">已设置</span><strong>目标 ${money(row.sale_price,product)}</strong><div class="small muted">${jobFormula(row,product)}${row.operation==='set'?'':' · 计算一次'}</div>`;
   }
   function renderJobPriceEditor(){
     const target=$('#management-price-editor');if(!target)return;
-    if(!u.rowEdit&&!u.bulkOpen){target.innerHTML='';return;}
-    const row=jobPriceDraft(),single=!!u.rowEdit,product=single?s(row.sku_id):null,fixed=row.operation==='set';
-    const units=[...new Set(rows().map(r=>s(r.sku_id)?.sale_unit_name).filter(Boolean))],unit=single?product.sale_unit_name:units.length===1?units[0]:'按商品单位';
+    if(!u.bulkOpen){target.innerHTML='';return;}
+    const targets=jobSelectedRows(),row=jobPriceDraft(),fixed=row.operation==='set',mixed=!row.operation,ready=targets.filter(jobConfigured).length;
+    const units=[...new Set(targets.map(r=>s(r.sku_id)?.sale_unit_name).filter(Boolean))],unit=units.length===1?units[0]:'按商品单位';
     const label=fixed?`新价格（元/${unit}）`:row.operation==='delta'?`增减金额（元/${unit}）`:row.operation==='percent'?'涨跌幅（%）':'倍数';
     const info=fixed?'直接填写新的报价单标准价，无需选择参考价。保存任务不会立即改价。':'参考填入时的报价单标准价计算一次目标价并保留；到计划时间写入该目标价，不再重新按涨幅计算。例：标准价5元上调3%，目标价为5.15元。';
-    const valueInfo=fixed?'金额按商品销售单位填写，最多两位小数；不同销售单位请分批设置或单独设置。':row.operation==='delta'?'增加填正数，减少填负数，例如-0.20表示减0.20元；不同销售单位请分批设置或单独设置。':row.operation==='percent'?'上调填正数，下调填负数，例如3表示上调3%，-3表示下调3%。':'例如1.03表示标准价的1.03倍，0.95表示标准价的95%。';
+    const valueInfo=fixed?'金额按商品销售单位填写，最多两位小数；不同销售单位请按相同单位分批勾选设置。':row.operation==='delta'?'增加填正数，减少填负数，例如-0.20表示减0.20元；不同销售单位请按相同单位分批勾选设置。':row.operation==='percent'?'上调填正数，下调填负数，例如3表示上调3%，-3表示下调3%。':'例如1.03表示标准价的1.03倍，0.95表示标准价的95%。';
     const ops=[['percent','按百分比调整'],['delta','加减金额'],['multiple','乘以倍数']].map(([v,label])=>opt(v,label,row.operation)).join('');
-    target.innerHTML=`<section class="ct-price-panel" aria-label="价格设置"><div class="flex spread"><strong>${single?'单独设置：'+esc(product.sku_name)+' · '+esc(product.outer_id):'统一设置已选 '+rows().length+' 个商品'}</strong>${help(single?'只修改此商品的任务草稿，其他商品和原目标价保持不变。':'作用于全部已选商品，包含其他页和筛选之外的已选商品；后续新增选品不会自动继承。','本次填写范围说明')}</div><div class="ct-price-fields">${field('定价方式',`<select id="management-price-mode">${opt('fixed','直接指定报价单标准价',fixed?'fixed':'quoteOnce')}${opt('quoteOnce','按现标准价调整一次',fixed?'fixed':'quoteOnce')}</select>`)}${fixed?'':field('怎样调整',`<select id="management-price-op">${ops}</select>`)}${field(label,`<input id="management-price-value" type="number" step="any" value="${esc(row.value??'')}" placeholder="${row.operation==='percent'?'例如 3 或 -3':row.operation==='multiple'?'例如 1.03':'请输入金额'}">`,valueInfo)}</div><div class="ct-save-kind">将保存：<strong>待执行的报价单标准价</strong> ${help(info,'保存方式说明')}${fixed?'':'<span class="small muted">参考：报价单标准价 · 计算一次</span>'}</div><p id="management-price-error" class="error" role="alert">${esc(u.priceError||'')}</p><div class="ct-price-actions"><button class="button" data-mg="cancel-price">取消</button><button class="button primary" data-mg="${single?'apply-price':'apply-bulk-price'}">${single?'填入此商品':'填入已选 '+rows().length+' 个商品'}</button></div></section>`;
+    const status=ready||mixed?`<div class="batch-retained-status" role="status">已保留 ${ready} 个商品的价格设置${mixed?' · 设置不一致':''}${targets.length>ready?' · '+(targets.length-ready)+' 个待设置或需处理':''} ${help('勾选、取消勾选、打开或取消面板都保留原目标价。相同方式和数值自动回显；不同设置需明确选择后才能统一修改。按现标准价调整一次，只有再次点击填入时才重新计算目标价。','已保留设置说明')}</div>`:'';
+    target.innerHTML=`<section class="ct-price-panel" aria-label="价格设置"><div class="flex spread"><strong>批量设置价格 · 本次勾选 ${targets.length} 个商品</strong>${help('只修改本次勾选商品，包含其他页和筛选之外仍勾选的商品。未勾选商品保留原目标价；不同价格可分批勾选设置。','本次填写范围说明')}</div>${status}<div class="ct-price-fields">${field('定价方式',`<select id="management-price-mode">${mixed?'<option value="mixed" selected disabled>多种设置，选择统一修改</option>':''}${opt('fixed','直接指定报价单标准价',mixed?'mixed':fixed?'fixed':'quoteOnce')}${opt('quoteOnce','按现标准价调整一次',mixed?'mixed':fixed?'fixed':'quoteOnce')}</select>`)}${fixed||mixed?'':field('怎样调整',`<select id="management-price-op">${ops}</select>`)}${mixed?'':field(label,`<input id="management-price-value" type="number" step="any" value="${esc(row.value??'')}" placeholder="${row.operation==='percent'?'例如 3 或 -3':row.operation==='multiple'?'例如 1.03':'请输入金额'}">`,valueInfo)}</div>${mixed?'':`<div class="ct-save-kind">将保存：<strong>待执行的报价单标准价</strong> ${help(info,'保存方式说明')}${fixed?'':'<span class="small muted">参考：报价单标准价 · 计算一次</span>'}</div>`}<p id="management-price-error" class="error" role="alert">${esc(u.priceError||'')}</p><div class="ct-price-actions"><button class="button" data-mg="cancel-price">取消</button><button class="button primary" data-mg="apply-bulk-price" ${mixed?'disabled':''}>填入本次勾选 ${targets.length} 个商品</button></div></section>`;
     GMHelp.upgrade(target);
   }
   function renderJobProducts(){
     const root=$('#management-products');if(!root)return;
     const all=subset(),list=rows(),pages=Math.max(1,Math.ceil(all.length/u.size));u.page=Math.max(1,Math.min(u.page,pages));
-    const count=list.length,ready=list.filter(jobConfigured).length,failed=list.filter(r=>r.error).length,cats=[...new Set(catalog().map(c=>c.sku.category_name_1))],selected=new Map(list.map(r=>[r.sku_id,r]));
-    root.innerHTML=`<div class="section-title flex spread"><strong>调价商品 <span class="tag">已选 ${count}</span>${count?` <span class="small muted">已设置 ${ready} · 待设置 ${count-ready-failed}${failed?' · 需处理 '+failed:''}</span>`:''}</strong>${help('先勾选商品，再用“批量设置价格”统一填写；例外商品可“单独设置”。选品只加入任务，不会默认沿用现价。最多5000项。','商品设置步骤')}</div><div class="toolbar"><input id="management-query" type="search" maxlength="100" aria-label="搜索调价商品" placeholder="搜索名称、编码或规格" value="${esc(u.query)}"><select id="management-category" aria-label="管理商品分类">${opt('all','全部分类',u.category)}${cats.map(c=>opt(c,esc(c),u.category)).join('')}</select><label class="inline-check"><input id="management-only" type="checkbox" ${u.onlySelected?'checked':''}>只看已选</label><select id="management-size" aria-label="管理每页条数">${[25,50,100].map(n=>opt(n,n+'条/页',u.size)).join('')}</select></div><div class="ct-selection"><button class="text-button" data-mg="select-page">选择本页</button><button class="text-button" data-mg="select-all">选择全部匹配（${all.length}）</button><button class="text-button" data-mg="clear" ${count?'':'disabled'}>清空选择</button><button class="button" data-mg="open-bulk-price" ${count?'':'disabled'}>批量设置价格${count?'（'+count+'）':''}</button></div><div class="management-actions"><button class="button" data-mg="template">下载导入模板</button><label class="button import-button">导入商品<input id="management-file" type="file" accept=".csv,.tsv,.xlsx"></label>${help('支持XLSX首张工作表、CSV、TSV。按模板填写商品编码、调整方式、数值和销售单位；也可用“目标价”列。百分比填3表示3%。公式需转为数值；检查并确认导入后加入草稿，可再单独设置。','商品导入说明')}</div><div id="management-price-editor"></div><div class="table-scroll ct-product-scroll"><table class="data-table job-products-table"><thead><tr><th>选择</th><th>商品／规格</th><th>报价单标准价 ${GMHelp.priceTip('报价单标准价')}</th><th>本次价格设置 ${help('显示已填入草稿的待执行目标价；按标准价调整一次会同时显示计算方式。目标价已确定，执行时不重新计算。没有填入的编辑不会改变此列。','本次价格设置说明')}</th><th>操作</th></tr></thead><tbody>${all.slice((u.page-1)*u.size,u.page*u.size).map(c=>{
+    const count=list.length,checked=u.selected.size,ready=list.filter(jobConfigured).length,failed=list.filter(r=>r.error).length,cats=[...new Set(catalog().map(c=>c.sku.category_name_1))],selected=new Map(list.map(r=>[r.sku_id,r]));
+    root.innerHTML=`<div class="section-title flex spread"><strong>调价商品 <span class="tag">任务商品 ${count}</span>${count?` <span class="small muted">已设置 ${ready} · 待设置 ${count-ready-failed}${failed?' · 需处理 '+failed:''}</span>`:''}</strong>${help('勾选后使用“批量设置价格”，不同价格分批勾选设置。取消勾选保留任务商品及目标价，移出任务请用“移除”。核对包含全部任务商品，新加商品待设置，最多5000项。','商品设置步骤')}</div><div class="toolbar"><input id="management-query" type="search" maxlength="100" aria-label="搜索调价商品" placeholder="搜索名称、编码或规格" value="${esc(u.query)}"><select id="management-category" aria-label="管理商品分类">${opt('all','全部分类',u.category)}${cats.map(c=>opt(c,esc(c),u.category)).join('')}</select><label class="inline-check"><input id="management-only" type="checkbox" ${u.onlySelected?'checked':''}>只看任务商品</label><select id="management-size" aria-label="管理每页条数">${[25,50,100].map(n=>opt(n,n+'条/页',u.size)).join('')}</select></div><div class="ct-selection"><button class="text-button" data-mg="select-page">勾选本页</button><button class="text-button" data-mg="select-all">勾选全部匹配（${all.length}）</button><button class="text-button" data-mg="clear" ${checked?'':'disabled'}>取消勾选</button><button class="text-button" data-mg="remove-selected" ${checked?'':'disabled'}>移除勾选商品</button><button class="button" data-mg="open-bulk-price" ${checked?'':'disabled'}>批量设置价格${checked?'（'+checked+'）':''}</button></div><div class="management-actions"><button class="button" data-mg="template">下载导入模板</button><label class="button import-button">导入商品<input id="management-file" type="file" accept=".csv,.tsv,.xlsx"></label>${help('支持XLSX首张工作表、CSV、TSV。按模板填写商品编码、调整方式、数值和销售单位；也可用“目标价”列。百分比填3表示3%。公式需转为数值；检查并确认导入后加入草稿，并勾选本次导入商品；可再用批量设置价格调整。','商品导入说明')}</div><div id="management-price-editor"></div><div class="table-scroll ct-product-scroll"><table class="data-table job-products-table"><thead><tr><th>本次勾选 ${help('取消勾选不移除任务商品，也不清除目标价；只有点击移除才会移出任务。','勾选与移除说明')}</th><th>商品／规格</th><th>报价单标准价 ${GMHelp.priceTip('报价单标准价')}</th><th>本次价格设置 ${help('显示已填入草稿的待执行目标价；按标准价调整一次会同时显示计算方式。目标价已确定，执行时不重新计算。没有填入的编辑不会改变此列。','本次价格设置说明')}</th><th>操作</th></tr></thead><tbody>${all.slice((u.page-1)*u.size,u.page*u.size).map(c=>{
       const row=selected.get(c.id);
-      return `<tr><td><input type="checkbox" data-mg-select="${esc(c.id)}" aria-label="选择 ${esc(c.label)} ${esc(c.sub)}" ${row?'checked':''}></td><td><strong>${esc(c.label)}</strong><div class="small muted">${esc(c.sub)}</div><div class="small muted">${esc(c.sku.sale_unit_name)}</div></td><td>${c.sku.is_price_timing?'待定价（时价）':money(c.sku.sale_price,c.sku)}</td><td>${jobSetting(row,c.sku)}</td><td>${row?`<button class="text-button" data-mg-edit-price="${esc(c.id)}">单独设置</button>`:'—'}</td></tr>`;
+      return `<tr><td><input type="checkbox" data-mg-select="${esc(c.id)}" aria-label="选择 ${esc(c.label)} ${esc(c.sub)}" ${u.selected.has(c.id)?'checked':''}></td><td><strong>${esc(c.label)}</strong><div class="small muted">${esc(c.sub)}</div><div class="small muted">${esc(c.sku.sale_unit_name)}</div></td><td>${c.sku.is_price_timing?'待定价（时价）':money(c.sku.sale_price,c.sku)}</td><td data-mg-setting="${esc(c.id)}">${jobSetting(row,c.sku)}</td><td>${row?`<button class="text-button" data-mg-remove="${esc(c.id)}" aria-label="移除${esc(c.label)} ${esc(c.sku.outer_id)}">移除</button>`:'—'}</td></tr>`;
     }).join('')||'<tr><td colspan="5" class="empty">请选择报价单或调整搜索条件</td></tr>'}</tbody></table></div><div class="pager"><span>共 ${all.length} 条 · ${u.page} / ${pages} 页</span><button class="button" data-mg-page="${u.page-1}" ${u.page===1?'disabled':''}>上一页</button><button class="button" data-mg-page="${u.page+1}" ${u.page===pages?'disabled':''}>下一页</button></div>`;
     renderJobPriceEditor();GMHelp.upgrade(root);if(u.imported)renderImport();
   }
   function applyJobPrices(){
-    const entry=jobPriceDraft(),single=!!u.rowEdit,targets=single?rows().filter(r=>r.sku_id===entry.sku_id):rows(),error=jobValueError(entry);
+    if(!u.bulkOpen)return;
+    const entry=jobPriceDraft(),targets=jobSelectedRows(),error=jobValueError(entry);
     if(error){jobPriceError(error);return;}if(!targets.length){jobPriceError('请先选择商品。');return;}
-    if(['set','delta'].includes(entry.operation)&&new Set(targets.map(r=>{const product=s(r.sku_id);return currency(product)+'|'+product.sale_unit_name;})).size>1){jobPriceError('固定金额不能跨销售单位设置，请分批选择或使用“单独设置”。');return;}
+    if(['set','delta'].includes(entry.operation)&&new Set(targets.map(r=>{const product=s(r.sku_id);return currency(product)+'|'+product.sale_unit_name;})).size>1){jobPriceError('固定金额不能跨销售单位设置，请按相同单位分批勾选，或使用百分比。');return;}
     const next=targets.map(row=>{const result=GMX.taskRow(db(),quoteId(),row.sku_id,entry.operation,Number(entry.value));return result.error?{...row,operation:entry.operation,value:Number(entry.value),sale_price:null,error:result.error}:result;});
-    if(single&&next[0].error){jobPriceError(next[0].error);return;}
     const overwrite=targets.filter((row,i)=>jobConfigured(row)&&(row.operation!==next[i].operation||row.value!==next[i].value||row.sale_price!==next[i].sale_price)).length;
-    if(!single&&overwrite&&!window.confirm(`将覆盖 ${overwrite} 个商品已有的不同价格设置，确定填入？`))return;
-    const replacements=new Map(next.map(row=>[row.sku_id,row]));setRows(rows().map(row=>replacements.get(row.sku_id)||row));
+    if(overwrite&&!window.confirm(`将更新本次勾选 ${targets.length} 个商品，其中 ${overwrite} 个已有价格设置将被替换，确定填入？`))return;
+    const replacements=new Map(next.map(row=>[row.sku_id,row]));setRows(rows().map(row=>replacements.get(row.sku_id)||row));u.preview=null;
     clearJobPriceEditor();$('#management-error').textContent='';renderProducts();
-    const failed=next.filter(row=>row.error).length;api.toast(failed?`已填入草稿，${failed} 个商品需单独处理；全部修正后才能保存任务。`:'价格已填入任务草稿，请核对后保存。');
+    const failed=next.filter(row=>row.error).length;api.toast(failed?`已填入草稿，${failed} 个商品需重新勾选设置；全部修正后才能保存任务。`:'价格已填入任务草稿，请核对后保存。');
+  }
+  function selectJobProducts(items){
+    const ids=new Set(items.map(c=>c.id)),fresh=items.filter(c=>!rows().some(r=>r.sku_id===c.id));
+    if(rows().length+fresh.length>5000){api.toast('每个任务最多5000个商品，请缩小范围。');return;}
+    if(!discardJobPriceEditor())return;
+    fresh.forEach(add);ids.forEach(id=>u.selected.add(id));u.preview=null;renderProducts();
+  }
+  function removeJobProducts(ids){
+    const removing=new Set(ids),targets=rows().filter(r=>removing.has(r.sku_id));if(!targets.length)return;
+    const ready=targets.filter(jobConfigured).length;
+    if(!window.confirm(`从任务草稿移除 ${targets.length} 个商品${ready?'，其中 '+ready+' 个已设置价格':''}？移除后不再参与本次保存。`))return;
+    if(!discardJobPriceEditor())return;
+    setRows(rows().filter(r=>!removing.has(r.sku_id)));ids.forEach(id=>u.selected.delete(id));u.preview=null;
+    $('#management-error').textContent='';renderProducts();
   }
   function add(c){
     if(!c)return;
@@ -159,7 +176,7 @@
     else{rows()[i].rule_type=nativeType[op];rows()[i].yx_price=Number.isNaN(value)?null:Math.round(value*100*1e8)/1e8;}
   }
   function review(){
-    if(u.kind==='job'&&(u.rowEdit||u.bulkOpen)){ $('#management-error').textContent='请先填入或取消正在编辑的价格设置，再核对任务。';return; }
+    if(u.kind==='job'&&u.bulkOpen){ $('#management-error').textContent='请先填入或取消正在编辑的价格设置，再核对任务。';return; }
     if(u.kind==='job'&&(u.imported||u.importing)){ $('#management-error').textContent='请先完成或取消商品导入，再核对任务。';return; }
     if(api.guard&&api.guard()===false){$('#management-error').textContent='其他窗口已更新数据，请核对表单并再次生成预览。';return;}
     capture();const errors=rows().filter(r=>r.error).map(r=>r.error);u.preview=u.kind==='job'?GMX.previewTask(db(),u.draft):GMX.previewRule(db(),u.draft.id,u.draft);
@@ -197,7 +214,7 @@
     const ids=[...new Set((old.failures||[]).map(f=>f.sku_id))];if(!ids.length){api.toast('没有明确失败商品，不能生成重试草稿。');return;}
     if(ids.some(id=>!(old.items||[]).some(r=>r.sku_id===id))){api.toast('部分失败项缺少原目标价格，请先在原系统核查。');return;}
     const items=ids.map(id=>{const oldRow=old.items.find(r=>r.sku_id===id),row=GMX.taskRow(db(),old.salemenu_id,id,'set',oldRow.sale_price/100);return row.error?{...copy(oldRow),error:row.error}:row;});
-    u={kind:'job',token:++sequence,stage:'edit',draft:{rule_name:(old.rule_name+' · 失败项重建').slice(0,80),salemenu_id:old.salemenu_id,effective_time:'',items,source_job_id:id},query:'',category:'all',page:1,size:25,onlySelected:true,bulk:'percent',bulkValue:''};u.initial='';editor();api.toast('已复制失败项。请修正问题并填写新的整点执行时间，原任务保持不变。');
+    u={kind:'job',token:++sequence,stage:'edit',draft:{rule_name:(old.rule_name+' · 失败项重建').slice(0,80),salemenu_id:old.salemenu_id,effective_time:'',items,source_job_id:id},query:'',category:'all',page:1,size:25,onlySelected:true,bulk:'percent',bulkValue:''};u.selected=new Set();u.initial='';editor();api.toast('已复制失败项。请修正问题并填写新的整点执行时间，原任务保持不变。');
   }
   function renderTaskFailures(){
     const root=$('#management-task-failures');if(!root||!detail)return;
@@ -224,7 +241,7 @@
   }
   function renderImport(){
     const r=u.imported,existing=new Set(rows().map(x=>x.sku_id)),duplicates=r.items.filter(x=>existing.has(x.sku_id)).length;
-    $('#management-import').innerHTML=r.errors.length?`<div class="import-check"><strong>导入未通过 · ${r.errors.length} 项问题</strong><ul class="error">${r.errors.slice(0,30).map(e=>'<li>'+esc(e)+'</li>').join('')}</ul>${r.errors.length>30?'<p>仅显示前30项，请修正后重新导入。</p>':''}<button class="button" data-mg="cancel-import">取消导入</button></div>`:`<div class="import-check"><div class="flex spread"><strong>检查通过 · ${r.items.length} 个商品</strong><span>新增 ${r.items.length-duplicates} · 更新已选 ${duplicates}</span></div><div class="table-scroll"><table class="data-table"><thead><tr><th>商品</th><th>本次价格设置</th><th>待执行目标价</th></tr></thead><tbody>${r.items.slice(0,10).map(x=>`<tr><td>${esc(s(x.sku_id).sku_name)}</td><td>${jobFormula(x,s(x.sku_id))}</td><td>${money(x.sale_price,s(x.sku_id))}</td></tr>`).join('')}</tbody></table></div><div class="toolbar"><span class="muted">${r.items.length>10?'展示前10条，确认后可搜索全部导入项。':''}</span><button class="button" data-mg="cancel-import">取消</button><button class="button primary" data-mg="confirm-import">${duplicates?'确认导入并更新重复项':'确认导入'}</button></div></div>`;
+    $('#management-import').innerHTML=r.errors.length?`<div class="import-check"><strong>导入未通过 · ${r.errors.length} 项问题</strong><ul class="error">${r.errors.slice(0,30).map(e=>'<li>'+esc(e)+'</li>').join('')}</ul>${r.errors.length>30?'<p>仅显示前30项，请修正后重新导入。</p>':''}<button class="button" data-mg="cancel-import">取消导入</button></div>`:`<div class="import-check"><div class="flex spread"><strong>检查通过 · ${r.items.length} 个商品</strong><span>新增 ${r.items.length-duplicates} · 更新任务内商品 ${duplicates}</span></div><div class="table-scroll"><table class="data-table"><thead><tr><th>商品</th><th>本次价格设置</th><th>待执行目标价</th></tr></thead><tbody>${r.items.slice(0,10).map(x=>`<tr><td>${esc(s(x.sku_id).sku_name)}</td><td>${jobFormula(x,s(x.sku_id))}</td><td>${money(x.sale_price,s(x.sku_id))}</td></tr>`).join('')}</tbody></table></div><div class="toolbar"><span class="muted">${r.items.length>10?'展示前10条，确认后可搜索全部导入项。':''}</span><button class="button" data-mg="cancel-import">取消</button><button class="button primary" data-mg="confirm-import">${duplicates?'确认导入并更新重复项':'确认导入'}</button></div></div>`;
   }
   function rerenderWithFocus(){const a=document.activeElement,id=a?.id,start=a?.selectionStart;renderProducts();const n=id?document.getElementById(id):null;if(n){n.focus();try{n.setSelectionRange(start,start);}catch(_){}}}
   document.addEventListener('click',e=>{
@@ -233,7 +250,7 @@
     if(d.mgFailurePage&&detail){detail.failurePage=Number(d.mgFailurePage);renderTaskFailures();return;}
     if(d.gmJobNew!==undefined){openJob();return;}if(d.gmJobView){viewJob(d.gmJobView);return;}if(d.mgDetailPage&&detail){detail.page=Number(d.mgDetailPage);renderTaskDetail();return;}
     if(!u||!$('#gm-dialog').open)return;
-    if(d.mgEditPrice&&u.kind==='job'){capture();openJobPriceEditor(d.mgEditPrice);return;}
+    if(d.mgRemove&&u.kind==='job'){capture();removeJobProducts([d.mgRemove]);return;}
     if(d.mgPage){u.page=Number(d.mgPage);renderProducts();return;}
     if(d.mgReviewPage){u.ack=!!$('#management-ack')?.checked;u.reviewPage=Number(d.mgReviewPage);renderReview();return;}
     if(!d.mg)return;
@@ -241,10 +258,11 @@
     capture();
     if(d.mg==='open-bulk-price'){openJobPriceEditor();return;}
     if(d.mg==='cancel-price'){clearJobPriceEditor();renderProducts();return;}
-    if(d.mg==='apply-price'||d.mg==='apply-bulk-price'){applyJobPrices();return;}
-    if(['select-page','select-all','clear','confirm-import'].includes(d.mg)&&!discardJobPriceEditor())return;
-    if(d.mg==='select-page'||d.mg==='select-all'){let items=subset();if(d.mg==='select-page')items=items.slice((u.page-1)*u.size,u.page*u.size);items.forEach(add);renderProducts();}
-    if(d.mg==='clear'){setRows(rows().filter(r=>protectedMember(r[memberKey()])));renderProducts();if(u.kind==='rule'&&u.draft.rule_object_type===3)api.toast('原有SPU对象保留；删除需在原系统处理。');}
+    if(d.mg==='apply-bulk-price'){applyJobPrices();return;}
+    if(d.mg==='remove-selected'&&u.kind==='job'){removeJobProducts([...u.selected]);return;}
+    if(['clear','confirm-import'].includes(d.mg)&&!discardJobPriceEditor())return;
+    if(d.mg==='select-page'||d.mg==='select-all'){let items=subset();if(d.mg==='select-page')items=items.slice((u.page-1)*u.size,u.page*u.size);if(u.kind==='job')selectJobProducts(items);else{items.forEach(add);renderProducts();}}
+    if(d.mg==='clear'){if(u.kind==='job')u.selected.clear();else setRows(rows().filter(r=>protectedMember(r[memberKey()])));renderProducts();if(u.kind==='rule'&&u.draft.rule_object_type===3)api.toast('原有SPU对象保留；删除需在原系统处理。');}
     if(d.mg==='bulk'){
       const op=$('#management-bulk-op').value,raw=$('#management-bulk-value').value;u.bulk=op;u.bulkValue=raw;
       if(!rows().length||raw===''){api.toast('请先选择商品并填写数值。');return;}
@@ -253,7 +271,7 @@
     }
     if(d.mg==='template')download();
     if(d.mg==='cancel-import'){u.imported=null;$('#management-import').innerHTML='';}
-    if(d.mg==='confirm-import'&&u.imported&&!u.imported.errors.length){const map=new Map(rows().map(x=>[x.sku_id,x]));u.imported.items.forEach(x=>map.set(x.sku_id,x));if(map.size>5000){api.toast('导入后超过5000个商品，请减少选择后再确认。');return;}u.draft.items=[...map.values()];u.draft.import_source=true;u.imported=null;$('#management-import').innerHTML='';u.onlySelected=true;u.query='';u.page=1;renderProducts();api.toast('已加入任务草稿，请核对后保存。');}
+    if(d.mg==='confirm-import'&&u.imported&&!u.imported.errors.length){const map=new Map(rows().map(x=>[x.sku_id,x]));u.imported.items.forEach(x=>map.set(x.sku_id,x));if(map.size>5000){api.toast('导入后超过5000个商品，请减少选择后再确认。');return;}u.draft.items=[...map.values()];u.selected=new Set(u.imported.items.map(x=>x.sku_id));u.preview=null;u.draft.import_source=true;u.imported=null;$('#management-import').innerHTML='';u.onlySelected=true;u.query='';u.page=1;renderProducts();api.toast('已加入任务草稿，请核对后保存。');}
   });
   document.addEventListener('input',e=>{
     if(e.target.id==='management-failure-query'&&detail){detail.failureQuery=e.target.value.slice(0,100);detail.failurePage=1;renderTaskFailures();return;}
@@ -268,8 +286,8 @@
     if(t.name==='salemenu_id'){
       if(u.draft.rule_id){t.value=u.draft.salemenu_id;api.toast('已保存任务不能更换报价单。');return;}
       if(t.value===u.draft.salemenu_id)return;
-      if((rows().length||u.imported||u.importing)&&!window.confirm('切换报价单将清空已选商品和待导入内容，确定切换？')){t.value=u.draft.salemenu_id;return;}
-      capture();u.draft.salemenu_id=t.value;u.draft.items=[];delete u.draft.import_source;clearJobPriceEditor();u.query='';u.page=1;u.category='all';u.imported=null;u.importing=false;u.token=++sequence;$('#management-import').innerHTML='';renderProducts();api.toast('已切换报价单，任务商品已清空。');
+      if((rows().length||u.imported||u.importing)&&!window.confirm('切换报价单将清空任务商品和待导入内容，确定切换？')){t.value=u.draft.salemenu_id;return;}
+      capture();u.draft.salemenu_id=t.value;u.draft.items=[];u.selected.clear();u.preview=null;u.onlySelected=false;delete u.draft.import_source;clearJobPriceEditor();u.query='';u.page=1;u.category='all';u.imported=null;u.importing=false;u.token=++sequence;$('#management-import').innerHTML='';renderProducts();api.toast('已切换报价单，任务商品已清空。');
     }
     else if(t.id==='management-category'){u.category=t.value;u.page=1;renderProducts();}
     else if(t.id==='management-only'){u.onlySelected=t.checked;u.page=1;renderProducts();}
@@ -278,7 +296,10 @@
     else if(t.id==='management-price-mode'){updateJobPriceDraft({operation:t.value==='fixed'?'set':'percent',value:''});u.priceError='';renderJobPriceEditor();}
     else if(t.id==='management-price-op'){updateJobPriceDraft({operation:t.value,value:''});u.priceError='';renderJobPriceEditor();}
     else if(t.id==='management-file')importFile(t.files[0]);
-    else if(d.mgSelect){if(!discardJobPriceEditor()){t.checked=rows().some(r=>r[memberKey()]===d.mgSelect);return;}if(t.checked)add(catalog().find(c=>c.id===d.mgSelect));else if(!protectedMember(d.mgSelect))setRows(rows().filter(r=>r[memberKey()]!==d.mgSelect));renderProducts();}
+    else if(d.mgSelect){
+      if(u.kind==='job'){if(t.checked){selectJobProducts(catalog().filter(c=>c.id===d.mgSelect));t.checked=u.selected.has(d.mgSelect);}else if(discardJobPriceEditor()){u.selected.delete(d.mgSelect);renderProducts();}else t.checked=true;}
+      else{if(t.checked)add(catalog().find(c=>c.id===d.mgSelect));else if(!protectedMember(d.mgSelect))setRows(rows().filter(r=>r[memberKey()]!==d.mgSelect));renderProducts();}
+    }
     else if(d.mgOp){const input=document.querySelector(`[data-mg-value="${d.mgOp}"]`);updateRow(d.mgOp,t.value,input.value);renderProducts();}
   });
   document.addEventListener('submit',e=>{if(e.target.id==='management-form'){e.preventDefault();review();}});

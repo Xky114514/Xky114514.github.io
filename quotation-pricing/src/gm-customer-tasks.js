@@ -49,7 +49,7 @@
     if (u && !canClose()) return;
     detail = null;
     u = { stage: 'edit', draft: { name: '', customer_id: cid, salemenu_id: qid, begin: '', end: '', begin_time: '00:00', end_time: '23:59', time_limit: 2, items: [], source: '手动客户协议调价', ...clone(initial) }, query: '', category: 'all', only: false, page: 1, size: 25, bulk: 'percent', bulkValue: '', bulkBase: 'quote', preview: null, reviewPage: 1, reviewQuery: '', ack: false };
-    u.draft.items ||= []; u.only = u.draft.items.length > 0; u.initial = initial.source_task_id || u.draft.items.length ? '' : JSON.stringify(u.draft); editor();
+    u.draft.items ||= []; u.selected = new Set(); u.only = u.draft.items.length > 0; u.initial = initial.source_task_id || u.draft.items.length ? '' : JSON.stringify(u.draft); editor();
   }
   function editor() {
     u.stage = 'edit'; const d = u.draft, linked = GME.linkedQuotes(db(), d.customer_id);
@@ -61,29 +61,34 @@
   function currentPrice(s, row) { const p = GME.resolve(db(), u.draft.customer_id, s.sku_id, row?.quantity ?? null, { now: api.now() }); return p.requires_quantity ? '填写数量后查看' : p.strategy === 'timing' ? '待定价' : p.settle_price == null ? '需原系统确认' : money(p.settle_price, s); }
   function basePrice(s) { return s.is_price_timing && s.sale_price === 0 ? '待定价（时价）' : money(s.sale_price, s); }
   const configured = row => row && row.value !== '' && row.value != null && Number.isFinite(Number(row.value));
-  const intentOf = row => row?.operation === 'set' || !row ? 'fixed' : row.base === 'customer' ? 'current' : 'follow';
-  const intentOptions = current => option('fixed', '直接指定客户价格', current) + option('follow', '随报价单标准价浮动', current) + option('current', '按客户当前价调整一次', current);
-  function priceDraft() { return u.rowEdit || {operation:u.bulk, value:u.bulkValue, base:u.bulkBase}; }
+  const intentOf = row => !row?.operation ? 'mixed' : row.operation === 'set' ? 'fixed' : row.base === 'customer' ? 'current' : 'follow';
+  const intentOptions = current => (current==='mixed'?'<option value="mixed" selected disabled>多种设置，选择统一修改</option>':'') + option('fixed', '直接指定客户价格', current) + option('follow', '随报价单标准价浮动', current) + option('current', '按客户当前价调整一次', current);
+  const selectedRows = () => u.draft.items.filter(row => u.selected.has(row.sku_id));
+  function priceDraft() { return {operation:u.bulk, value:u.bulkValue, base:u.bulkBase, quantity:u.bulkQuantity}; }
   function updatePriceDraft(values) {
-    if(u.rowEdit)Object.assign(u.rowEdit,values);
-    else {if('operation' in values)u.bulk=values.operation;if('value' in values)u.bulkValue=values.value;if('base' in values)u.bulkBase=values.base;}
+    if('operation' in values)u.bulk=values.operation;
+    if('value' in values)u.bulkValue=values.value;
+    if('base' in values)u.bulkBase=values.base;
+    if('quantity' in values)u.bulkQuantity=values.quantity;
   }
   function editorSnapshot() { return JSON.stringify(priceDraft()); }
-  function priceEditorDirty() { return !!u && !!(u.rowEdit || u.bulkOpen) && editorSnapshot() !== u.priceInitial; }
+  function priceEditorDirty() { return !!u?.bulkOpen && editorSnapshot() !== u.priceInitial; }
   function discardPriceEditor() {
     if (priceEditorDirty() && !window.confirm('放弃尚未填入商品的价格设置？')) return false;
-    u.rowEdit = null; u.bulkOpen = false; u.priceError = ''; return true;
+    u.bulkOpen = false; u.priceError = ''; return true;
   }
-  function openPriceEditor(id) {
-    if (id && u.rowEdit?.sku_id === id) return;
-    if (!discardPriceEditor()) return;
-    if (id) { const row = u.draft.items.find(i => i.sku_id === id); if (!row) return; u.rowEdit = clone(row); }
-    else { if (!u.draft.items.length) return; u.bulkOpen = true; u.bulk = 'set'; u.bulkValue = ''; u.bulkBase = 'quote'; }
-    u.priceInitial = editorSnapshot(); renderProducts();
-    $('#ct-price-editor')?.scrollIntoView({block:'nearest'}); $('#ct-price-value')?.focus();
+  function openPriceEditor() {
+    if (u.bulkOpen || !u.selected.size) return;
+    const targets=selectedRows();if(!targets.length)return;
+    const first=targets[0],same=targets.every(r=>configured(r)&&r.operation===first.operation&&(r.operation==='set'||r.base===first.base)&&Number(r.value)===Number(first.value));
+    const row=same||targets.length===1?first:null, mixed=!row&&targets.some(configured);
+    u.bulkOpen=true;u.bulk=mixed?null:row?.operation||'set';u.bulkValue=row?.value??'';u.bulkBase=row?.base||'quote';u.bulkQuantity=targets.length===1?first.quantity??null:null;
+    u.priceInitial=editorSnapshot();renderProducts();
+    $('#ct-price-editor')?.scrollIntoView({block:'nearest'});($('#ct-price-value')||$('#ct-price-mode'))?.focus();
   }
   function priceError(text) { u.priceError = text; const el = $('#ct-price-error'); if (el) el.textContent = text; else setError(text); }
   function valueError(row) {
+    if(!['set','delta','percent','multiple'].includes(row.operation))return '请选择本次统一修改的定价方式。';
     if (row.value == null || String(row.value).trim() === '' || !Number.isFinite(Number(row.value))) return '请填写有效数值。';
     const v = Number(row.value);
     if (['set','delta'].includes(row.operation) && (Math.abs(v)>999999.99 || Math.abs(v*100-Math.round(v*100))>1e-7)) return '金额最多两位小数，绝对值不超过999999.99元。';
@@ -94,63 +99,69 @@
     return '';
   }
   function settingsSummary(row,s) {
-    if (!row) return '<span class="muted">未选入</span>';
+    if (!row) return '<span class="muted">未加入任务</span>';
     if (!configured(row)) return '<span class="tag amber">待设置</span>';
-    const v=Number(row.value), basis=row.base==='customer'?'客户当前价':'报价单标准价';
-    if (row.operation==='set') return `<strong>固定 ${money(v*100,s)}</strong>`;
+    const flag='<span class="tag price-result-flag">已设置</span>', v=Number(row.value), basis=row.base==='customer'?'客户当前价':'报价单标准价';
+    if (row.operation==='set') return `${flag}<strong>固定 ${money(v*100,s)}</strong>`;
     const formula=row.operation==='percent'?`${basis}${v>=0?'上调':'下调'} ${Math.abs(v)}%`:row.operation==='multiple'?`${basis} × ${v}`:`${basis} ${v>=0?'+':'−'} ${money(Math.abs(v)*100,s)}`;
-    return `${formula}<div class="small muted">${row.base==='customer'?'算一次，保存固定价':'随标准价变化'}</div>`;
+    return `${flag}${formula}<div class="small muted">${row.base==='customer'?'算一次，保存固定价':'随标准价变化'}</div>`;
   }
   function renderPriceEditor() {
     const target=$('#ct-price-editor'); if (!target) return;
-    if (!u.rowEdit && !u.bulkOpen) { target.innerHTML=''; return; }
-    const row=priceDraft(), single=!!u.rowEdit, product=single?sku(row.sku_id):null, mode=intentOf(row);
-    const selected=u.draft.items.map(i=>sku(i.sku_id)), units=[...new Set(selected.map(s=>s?.sale_unit_name).filter(Boolean))];
+    if (!u.bulkOpen) { target.innerHTML=''; return; }
+    const targets=selectedRows(), row=priceDraft(), single=targets.length===1, product=single?sku(targets[0].sku_id):null, mode=intentOf(row),mixed=mode==='mixed',ready=targets.filter(configured).length;
+    const selected=targets.map(i=>sku(i.sku_id)), units=[...new Set(selected.map(s=>s?.sale_unit_name).filter(Boolean))];
     const unit=single?product.sale_unit_name:units.length===1?units[0]:'按商品单位';
     const valueLabel=row.operation==='set'?`新价格（元/${unit}）`:row.operation==='delta'?`增减金额（元/${unit}）`:row.operation==='percent'?'涨跌幅（%）':'倍数';
     const info=mode==='fixed'?'直接填写客户协议价，不需要参考其他价格。仍按阶梯价优先及原规则判断实际取价。':mode==='follow'?'保存相对报价单标准价的规则。例：标准价5元上浮3%，当前计算为5.15元；标准价以后变6元时，协议规则计算为6.18元。': '只读取一次客户当前价并算成固定价。例：当前4.80元上调3%，保存固定4.94元；以后标准价变化时，此固定值不跟着变化。';
     const valueInfo=row.operation==='set'?'金额按商品销售单位填写，最多两位小数。':row.operation==='delta'?'增加填正数，减少填负数，例如-0.20表示减0.20元。':row.operation==='percent'?'上调填正数，下调填负数，例如3表示上调3%，-3表示下调3%。':'例如1.03表示原价的1.03倍，0.95表示原价的95%。';
     const ops=[['percent','按百分比调整'],['delta','加减金额'],['multiple','乘以倍数']].map(([v,label])=>option(v,label,row.operation)).join('');
-    target.innerHTML=`<section class="ct-price-panel" aria-label="价格设置"><div class="flex spread"><strong>${single?'单独设置：'+esc(product.sku_name)+' · '+esc(product.outer_id):'统一设置已选 '+u.draft.items.length+' 个商品'}</strong>${help(single?'只修改此商品的草稿设置，其他商品保持不变。':'作用于全部已选商品，包含其他页和筛选之外的已选商品；后续新增选品不会自动继承。','本次填写范围说明')}</div><div class="ct-price-fields">${field('定价方式',`<select id="ct-price-mode">${intentOptions(mode)}</select>`)}${mode!=='fixed'?field('怎样调整',`<select id="ct-price-op">${ops}</select>`):''}${field(valueLabel,`<input id="ct-price-value" type="number" step="any" value="${esc(row.value??'')}" placeholder="${row.operation==='percent'?'例如 3 或 -3':row.operation==='multiple'?'例如 1.03':'请输入金额'}">`,valueInfo)}</div><div class="ct-save-kind">将保存：<strong>${mode==='follow'?'随标准价浮动的客户协议':'固定客户协议价'}</strong> ${help(info,'保存方式说明')}${mode!=='fixed'?`<span class="small muted">参考：${mode==='follow'?'报价单标准价':'客户当前价'}</span>`:''}</div>${single&&product.is_step_price?`<div class="ct-price-quantity">${field('取价数量',`<input id="ct-price-quantity" type="number" min="0.0001" step="any" value="${esc(row.quantity??'')}" placeholder="${esc(unit)}">`,'仅用来核对当前阶梯价；客户协议不修改阶梯档位，阶梯商品的跳过情况仍需在预览中核对。')}<span id="ct-edit-current">客户当前价：${currentPrice(product,row)}</span></div>`:''}<p id="ct-price-error" class="error" role="alert">${esc(u.priceError||'')}</p><div class="ct-price-actions"><button class="button" data-ct="cancel-price">取消</button><button class="button primary" data-ct="${single?'apply-row':'bulk'}">${single?'填入此商品':'填入已选 '+u.draft.items.length+' 个商品'}</button></div></section>`;
+    const status=ready?`<div class="batch-retained-status" role="status">已保留 ${ready} 个商品的价格设置${mixed?' · 设置不一致':''}${targets.length>ready?' · '+(targets.length-ready)+' 个待设置':''} ${help('列表保留各商品已填入的结果。相同设置会自动回显；不同设置需明确选择后才能统一修改。打开或取消面板、勾选或取消勾选都不会清除原结果。','已保留设置说明')}</div>`:'';
+    target.innerHTML=`<section class="ct-price-panel" aria-label="价格设置"><div class="flex spread"><strong>批量设置价格 · 本次勾选 ${targets.length} 个商品</strong>${help('只修改本次勾选的商品，包含其他页和筛选之外仍勾选的商品。未勾选商品保留已有设置；不同价格可分批勾选后设置。','本次填写范围说明')}</div>${status}<div class="ct-price-fields">${field('定价方式',`<select id="ct-price-mode">${intentOptions(mode)}</select>`)}${!mixed&&mode!=='fixed'?field('怎样调整',`<select id="ct-price-op">${ops}</select>`):''}${mixed?'':field(valueLabel,`<input id="ct-price-value" type="number" step="any" value="${esc(row.value??'')}" placeholder="${row.operation==='percent'?'例如 3 或 -3':row.operation==='multiple'?'例如 1.03':'请输入金额'}">`,valueInfo)}</div>${mixed?'':`<div class="ct-save-kind">将保存：<strong>${mode==='follow'?'随标准价浮动的客户协议':'固定客户协议价'}</strong> ${help(info,'保存方式说明')}${mode!=='fixed'?`<span class="small muted">参考：${mode==='follow'?'报价单标准价':'客户当前价'}</span>`:''}</div>`}${single&&product.is_step_price?`<div class="ct-price-quantity">${field('取价数量',`<input id="ct-price-quantity" type="number" min="0.0001" step="any" value="${esc(row.quantity??'')}" placeholder="${esc(unit)}">`,'仅用来核对当前阶梯价；客户协议不修改阶梯档位，阶梯商品的跳过情况仍需在预览中核对。')}<span id="ct-edit-current">客户当前价：${currentPrice(product,row)}</span></div>`:''}<p id="ct-price-error" class="error" role="alert">${esc(u.priceError||'')}</p><div class="ct-price-actions"><button class="button" data-ct="cancel-price">取消</button><button class="button primary" data-ct="bulk" ${mixed?'disabled':''}>填入本次勾选 ${targets.length} 个商品</button></div></section>`;
     GMHelp.upgrade(target);
   }
   function renderProducts() {
     const target = $('#ct-products'); if (!target || !u) return;
     if (!u.draft.salemenu_id) { target.innerHTML = '<p class="empty">先选择本次调整的报价单</p>'; return; }
     const all=matched(), pages=Math.max(1,Math.ceil(all.length/u.size));u.page=Math.max(1,Math.min(u.page,pages));
-    const cats=[...new Set(catalog().map(s=>s.category_name_1))], count=u.draft.items.length, ready=u.draft.items.filter(configured).length;
-    target.innerHTML=`<div class="section-title flex spread"><strong>调价商品 <span class="tag">已选 ${count}</span>${count?` <span class="small muted">已设置 ${ready} · 待设置 ${count-ready}</span>`:''}</strong>${help('先勾选本次调价商品，再用“批量设置价格”统一填写；例外商品可“单独设置”。勾选决定任务范围，搜索和分页不改变已选商品。最多5000项。','商品设置步骤')}</div><div class="toolbar"><input id="ct-query" type="search" maxlength="100" aria-label="搜索调价商品" placeholder="搜索名称、编码或规格" value="${esc(u.query)}"><select id="ct-category" aria-label="筛选商品分类">${option('all','全部分类',u.category)}${cats.map(c=>option(c,c,u.category)).join('')}</select><label class="inline-check"><input id="ct-only" type="checkbox" ${u.only?'checked':''}>只看已选</label><select id="ct-size" aria-label="商品每页条数">${[25,50,100].map(n=>option(n,n+'条/页',u.size)).join('')}</select></div><div class="ct-selection"><button class="text-button" data-ct="select-page">选择本页</button><button class="text-button" data-ct="select-all">选择全部匹配（${all.length}）</button><button class="text-button" data-ct="clear" ${count?'':'disabled'}>清空选择</button><button class="button" data-ct="open-bulk" ${count?'':'disabled'}>批量设置价格${count?'（'+count+'）':''}</button></div><div id="ct-price-editor"></div><div class="table-scroll ct-product-scroll"><table class="data-table ct-products-table"><thead><tr><th>选择</th><th>商品／规格</th><th>报价单标准价 ${GMHelp.priceTip('报价单标准价')}</th><th>客户当前价 ${GMHelp.priceTip('客户当前价')}</th><th>本次协议设置 ${GMHelp.priceTip('客户协议价')}</th><th>操作</th></tr></thead><tbody>${all.slice((u.page-1)*u.size,u.page*u.size).map(s=>{
+    const cats=[...new Set(catalog().map(s=>s.category_name_1))], count=u.draft.items.length, ready=u.draft.items.filter(configured).length, checked=u.selected.size;
+    target.innerHTML=`<div class="section-title flex spread"><strong>调价商品 <span class="tag">任务商品 ${count}</span>${count?` <span class="small muted">已设置 ${ready} · 待设置 ${count-ready}</span>`:''}</strong>${help('勾选商品后用“批量设置价格”填写，可分批使用不同价格。取消勾选只改变下次操作范围，保留任务商品及价格；移出任务请用“移除”。核对包含全部任务商品，最多5000项。','商品设置步骤')}</div><div class="toolbar"><input id="ct-query" type="search" maxlength="100" aria-label="搜索调价商品" placeholder="搜索名称、编码或规格" value="${esc(u.query)}"><select id="ct-category" aria-label="筛选商品分类">${option('all','全部分类',u.category)}${cats.map(c=>option(c,c,u.category)).join('')}</select><label class="inline-check"><input id="ct-only" type="checkbox" ${u.only?'checked':''}>只看任务商品</label><select id="ct-size" aria-label="商品每页条数">${[25,50,100].map(n=>option(n,n+'条/页',u.size)).join('')}</select></div><div class="ct-selection"><button class="text-button" data-ct="select-page">勾选本页</button><button class="text-button" data-ct="select-all">勾选全部匹配（${all.length}）</button><button class="text-button" data-ct="clear" ${checked?'':'disabled'}>取消勾选</button><button class="text-button" data-ct="remove-selected" ${checked?'':'disabled'}>移除勾选商品</button><button class="button" data-ct="open-bulk" ${checked?'':'disabled'}>批量设置价格${checked?'（'+checked+'）':''}</button></div><div id="ct-price-editor"></div><div class="table-scroll ct-product-scroll"><table class="data-table ct-products-table"><thead><tr><th>本次勾选 ${help('取消勾选不移除任务商品，也不清除价格；只有点击移除才会移出任务。','勾选与移除说明')}</th><th>商品／规格</th><th>报价单标准价 ${GMHelp.priceTip('报价单标准价')}</th><th>客户当前价 ${GMHelp.priceTip('客户当前价')}</th><th>本次协议设置 ${GMHelp.priceTip('客户协议价')}</th><th>操作</th></tr></thead><tbody>${all.slice((u.page-1)*u.size,u.page*u.size).map(s=>{
       const row=u.draft.items.find(i=>i.sku_id===s.sku_id);
-      return `<tr><td><input type="checkbox" data-ct-select="${esc(s.sku_id)}" aria-label="选择${esc(s.sku_name)} ${esc(s.outer_id)}" ${row?'checked':''}></td><td><strong>${esc(s.sku_name)}</strong><div class="small muted">${esc(s.outer_id)} · ${esc(s.specification_desc)}</div><div class="small muted">${esc(s.sale_unit_name)}</div></td><td>${basePrice(s)}</td><td data-ct-current="${esc(s.sku_id)}">${currentPrice(s,row)}</td><td>${settingsSummary(row,s)}</td><td>${row?`<button class="text-button" data-ct-edit-price="${esc(s.sku_id)}">单独设置</button>`:'—'}</td></tr>`;
+      return `<tr><td><input type="checkbox" data-ct-select="${esc(s.sku_id)}" aria-label="选择${esc(s.sku_name)} ${esc(s.outer_id)}" ${u.selected.has(s.sku_id)?'checked':''}></td><td><strong>${esc(s.sku_name)}</strong><div class="small muted">${esc(s.outer_id)} · ${esc(s.specification_desc)}</div><div class="small muted">${esc(s.sale_unit_name)}</div></td><td>${basePrice(s)}</td><td data-ct-current="${esc(s.sku_id)}">${currentPrice(s,row)}</td><td data-ct-setting="${esc(s.sku_id)}">${settingsSummary(row,s)}</td><td>${row?`<button class="text-button" data-ct-remove="${esc(s.sku_id)}" aria-label="移除${esc(s.sku_name)} ${esc(s.outer_id)}">移除</button>`:'—'}</td></tr>`;
     }).join('')||'<tr><td colspan="6" class="empty">没有匹配商品，请调整搜索或分类</td></tr>'}</tbody></table></div>${pager('products',u.page,pages,all.length)}`;
     renderPriceEditor(); GMHelp.upgrade(target);
   }
   function select(ids) {
-    const fresh=ids.filter(id=>!u.draft.items.some(i=>i.sku_id===id));
-    if (u.draft.items.length+fresh.length>5000) {setError('每次最多选择5000个商品，请缩小范围。');return;}
-    if (!fresh.length || !discardPriceEditor()) return;
-    u.draft.items.push(...fresh.map(sku_id=>({sku_id,operation:'set',value:'',base:'quote'})));u.preview=null;renderProducts();
+    const unique=[...new Set(ids)], fresh=unique.filter(id=>!u.draft.items.some(i=>i.sku_id===id));
+    if (u.draft.items.length+fresh.length>5000) {setError('每个任务最多5000个商品，请缩小范围。');return;}
+    if (!discardPriceEditor()) return;
+    u.draft.items.push(...fresh.map(sku_id=>({sku_id,operation:'set',value:'',base:'quote'})));
+    unique.forEach(id=>u.selected.add(id));if(fresh.length)u.preview=null;setError('');renderProducts();
+  }
+  function removeProducts(ids) {
+    const removing=new Set(ids), targets=u.draft.items.filter(i=>removing.has(i.sku_id));if(!targets.length)return;
+    const ready=targets.filter(configured).length;
+    if(!window.confirm(`从任务草稿移除 ${targets.length} 个商品${ready?'，其中 '+ready+' 个已设置价格':''}？移除后不再参与本次提交。`))return;
+    if(!discardPriceEditor())return;
+    u.draft.items=u.draft.items.filter(i=>!removing.has(i.sku_id));ids.forEach(id=>u.selected.delete(id));
+    u.preview=null;setError('');renderProducts();
   }
   function setError(text) { const target=$('#ct-error');if(target)target.textContent=text||'';else api.toast(text); }
-  function applyRow() {
-    const edit=u.rowEdit;if(!edit)return;const error=valueError(edit);if(error){priceError(error);return;}
-    const target=u.draft.items.find(i=>i.sku_id===edit.sku_id);if(!target){priceError('该商品已不在本次调价范围，请重新选择。');return;}
-    Object.assign(target,edit,{value:Number(edit.value),base:edit.operation==='set'?'quote':edit.base});u.rowEdit=null;u.preview=null;u.priceError='';setError('');renderProducts();
-  }
   function bulk() {
-    if(!u.draft.items.length){priceError('请先选择商品。');return;}
+    const targets=selectedRows();if(!u.bulkOpen||!targets.length){priceError('请先勾选商品。');return;}
     const draft=priceDraft(),error=valueError(draft);if(error){priceError(error);return;}
-    const units=new Set(u.draft.items.map(i=>{const s=sku(i.sku_id);return (s?.fee_type||'CNY')+'/'+s?.sale_unit_name;}));
-    if(['set','delta'].includes(draft.operation)&&units.size>1){priceError('固定价格或加减金额不能跨销售单位统一填写。可改用百分比，或对商品单独设置。');return;}
+    const units=new Set(targets.map(i=>{const s=sku(i.sku_id);return (s?.fee_type||'CNY')+'/'+s?.sale_unit_name;}));
+    if(['set','delta'].includes(draft.operation)&&units.size>1){priceError('固定价格或加减金额不能跨销售单位统一填写。请按相同单位分批勾选，或改用百分比。');return;}
     const next={operation:draft.operation,value:Number(draft.value),base:draft.operation==='set'?'quote':draft.base};
-    const replaceCount=u.draft.items.filter(i=>configured(i)&&(i.operation!==next.operation||Number(i.value)!==next.value||i.base!==next.base)).length;
-    if(replaceCount&&!window.confirm(`将更新全部已选 ${u.draft.items.length} 个商品，其中 ${replaceCount} 个已有设置将被替换，是否继续？`))return;
-    u.draft.items.forEach(i=>Object.assign(i,next));u.bulkOpen=false;u.preview=null;u.priceError='';setError('');renderProducts();
+    if(targets.length===1&&sku(targets[0].sku_id)?.is_step_price)next.quantity=draft.quantity;
+    const replaceCount=targets.filter(i=>configured(i)&&(i.operation!==next.operation||Number(i.value)!==next.value||i.base!==next.base||('quantity' in next&&i.quantity!==next.quantity))).length;
+    if(replaceCount&&!window.confirm(`将更新本次勾选 ${targets.length} 个商品，其中 ${replaceCount} 个已有设置将被替换，是否继续？`))return;
+    targets.forEach(i=>Object.assign(i,next));u.bulkOpen=false;u.preview=null;u.priceError='';setError('');renderProducts();
   }
 
   function review() {
     if (!u || api.guard?.() === false) { setError('其他页面已更新数据，请核对内容后重新预览。'); return; }
-    if(u.rowEdit||u.bulkOpen){priceError('请先把本次价格设置填入商品，或点击取消，再核对调价。');$('#ct-price-editor')?.scrollIntoView({block:'nearest'});return;}
+    if(u.bulkOpen){priceError('请先把本次价格设置填入商品，或点击取消，再核对调价。');$('#ct-price-editor')?.scrollIntoView({block:'nearest'});return;}
     readForm(); u.preview = GMT.preview(db(), u.draft, api.now());
     if (!u.preview.ok) {
       setError((u.preview.errors || ['无法生成预览']).map(e => typeof e === 'string' ? e : e.message || e.error || JSON.stringify(e)).join('；'));
@@ -218,7 +229,7 @@
     if (el.id === 'ct-review-query' && u) { u.reviewQuery = el.value; u.reviewPage = 1; preserveSearch(renderReview, el.id, el.value); }
     if (el.id === 'ct-detail-query' && detail) { detail.query = el.value; detail.page = 1; renderDetail(); }
     if (el.id === 'ct-price-value' && u) { updatePriceDraft({value:el.value});priceError(''); }
-    if (el.id === 'ct-price-quantity' && u?.rowEdit) { u.rowEdit.quantity=el.value===''?null:Number(el.value);const target=$('#ct-edit-current');if(target)target.innerHTML='客户当前价：'+currentPrice(sku(u.rowEdit.sku_id),u.rowEdit);priceError(''); }
+    if (el.id === 'ct-price-quantity' && u?.bulkOpen) { updatePriceDraft({quantity:el.value===''?null:Number(el.value)});const selected=selectedRows(),target=$('#ct-edit-current');if(target&&selected.length===1)target.innerHTML='客户当前价：'+currentPrice(sku(selected[0].sku_id),priceDraft());priceError(''); }
   });
   document.addEventListener('change', e => {
     const el = e.target;
@@ -229,9 +240,9 @@
     if (!u) return;
     if (el.id === 'ct-customer' || el.id === 'ct-quote') {
       const oldCustomer = u.draft.customer_id, oldQuote = u.draft.salemenu_id; readForm();
-      if (u.draft.items.length && !window.confirm('切换客户或报价单会清空已选商品及价格设置，确定继续？')) { el.value = el.id === 'ct-customer' ? oldCustomer : oldQuote; return; }
+      if (u.draft.items.length && !window.confirm('切换客户或报价单会清空任务商品及价格设置，确定继续？')) { el.value = el.id === 'ct-customer' ? oldCustomer : oldQuote; return; }
       if (el.id === 'ct-customer') { u.draft.customer_id = el.value; const linked = GME.linkedQuotes(db(), el.value); u.draft.salemenu_id = linked.length === 1 ? linked[0].id : ''; } else u.draft.salemenu_id = el.value;
-      u.draft.items = []; u.query = ''; u.category = 'all'; u.only = false; u.page = 1; u.preview = null; u.rowEdit=null;u.bulkOpen=false;u.priceError='';editor();
+      u.draft.items = []; u.selected.clear(); u.query = ''; u.category = 'all'; u.only = false; u.page = 1; u.preview = null; u.bulkOpen=false;u.priceError='';editor();
     }
     if (el.id === 'ct-category') { u.category = el.value; u.page = 1; renderProducts(); }
     if (el.id === 'ct-only') { u.only = el.checked; u.page = 1; renderProducts(); }
@@ -239,12 +250,12 @@
     if (el.id === 'ct-price-mode') { updatePriceDraft({operation:el.value==='fixed'?'set':'percent',base:el.value==='current'?'customer':'quote',value:''});u.priceError='';renderPriceEditor(); }
     if (el.id === 'ct-price-op') { updatePriceDraft({operation:el.value,value:''});u.priceError='';renderPriceEditor(); }
     if (el.id === 'ct-ack') u.ack = el.checked;
-    if (el.dataset.ctSelect) { if (el.checked) {select([el.dataset.ctSelect]);el.checked=u.draft.items.some(i=>i.sku_id===el.dataset.ctSelect);} else if(discardPriceEditor()){u.draft.items=u.draft.items.filter(i=>i.sku_id!==el.dataset.ctSelect);u.preview=null;renderProducts();}else el.checked=true; }
+    if (el.dataset.ctSelect) { const id=el.dataset.ctSelect;if(el.checked){select([id]);el.checked=u.selected.has(id);}else if(discardPriceEditor()){u.selected.delete(id);renderProducts();}else el.checked=true; }
   });
   document.addEventListener('click', e => {
-    const el = e.target.closest('[data-ct],[data-ct-view],[data-ct-repeat],[data-ct-failed],[data-ct-rule],[data-ct-page],[data-ct-error-sku],[data-ct-edit-price]'); if (!el || el.disabled) return;
-    if(el.dataset.ctEditPrice&&u)return openPriceEditor(el.dataset.ctEditPrice);
-    if (el.dataset.ctErrorSku && u) { readForm(); u.query = el.dataset.ctErrorSku; u.category = 'all'; u.only = false; u.page = 1; renderProducts(); openPriceEditor(el.dataset.ctErrorSku); return; }
+    const el = e.target.closest('[data-ct],[data-ct-view],[data-ct-repeat],[data-ct-failed],[data-ct-rule],[data-ct-page],[data-ct-error-sku],[data-ct-remove]'); if (!el || el.disabled) return;
+    if(el.dataset.ctRemove&&u)return removeProducts([el.dataset.ctRemove]);
+    if (el.dataset.ctErrorSku && u) { if(!discardPriceEditor())return;readForm();u.query=el.dataset.ctErrorSku;u.category='all';u.only=false;u.page=1;u.selected=new Set([el.dataset.ctErrorSku]);renderProducts();openPriceEditor();return; }
     if (el.dataset.ctView) return view(el.dataset.ctView);
     if (el.dataset.ctRepeat) return repeat(el.dataset.ctRepeat);
     if (el.dataset.ctFailed) return repeat(el.dataset.ctFailed, true);
@@ -255,10 +266,10 @@
     if (!u) return;
     if (action === 'select-page') select(matched().slice((u.page - 1) * u.size, u.page * u.size).map(s => s.sku_id));
     if (action === 'select-all') select(matched().map(s => s.sku_id));
-    if (action === 'clear' && discardPriceEditor()) { u.draft.items = [];u.preview=null;renderProducts(); }
+    if (action === 'clear' && discardPriceEditor()) { u.selected.clear();renderProducts(); }
+    if(action==='remove-selected')removeProducts([...u.selected]);
     if(action==='open-bulk')openPriceEditor();
-    if(action==='cancel-price'){u.rowEdit=null;u.bulkOpen=false;u.priceError='';renderProducts();}
-    if(action==='apply-row')applyRow();
+    if(action==='cancel-price'){u.bulkOpen=false;u.priceError='';renderProducts();}
     if (action === 'bulk') bulk(); if (action === 'back') editor(); if (action === 'submit') submit();
   });
   window.GCT = { connect: value => { api = value; }, list, openNew, view, repeat, canClose, hasUnsavedChanges, get state() { return u; }, get listState() { return listing; } };
