@@ -1941,6 +1941,53 @@ body.receipt-image-viewer-open {
   grid-column: 1 / -1;
 }
 
+/* 回单审核基础信息压缩为两行，减少大输入框对商品核对区的挤占。 */
+.receipt-form-grid.receipt-form-compact {
+  padding: 10px 14px;
+  gap: 8px 10px;
+}
+
+.receipt-form-compact .merchant-field,
+.receipt-form-compact .document-number-field {
+  grid-column: span 3;
+  grid-row: 1;
+}
+
+.receipt-form-compact .query-order-action {
+  grid-column: span 1;
+  grid-row: 1;
+}
+
+.receipt-form-compact .query-order-action .btn {
+  min-width: 0;
+  width: 100%;
+  padding-inline: 8px;
+}
+
+.receipt-form-compact .order-association-strip {
+  display: none;
+}
+
+.receipt-form-compact .wide:not(.order-association-strip) {
+  grid-column: span 5;
+  grid-row: 1;
+}
+
+body[data-readonly="true"] .receipt-form-compact .wide:not(.order-association-strip) {
+  grid-column: span 6;
+}
+
+.receipt-form-compact .order-time-field,
+.receipt-form-compact .receive-time-field {
+  grid-column: span 6;
+  grid-row: 2;
+}
+
+.receipt-form-compact input,
+.receipt-form-compact .query-order-action .btn {
+  height: 32px;
+}
+
 .order-query-modal {
   width: min(1180px, 96vw);
 }
@@ -1999,7 +2046,7 @@ body.receipt-image-viewer-open {
 }
 
 .receipt-reference-table {
-  min-width: 980px;
+  min-width: 1030px;
 }
 
 .receipt-reference-table th,
@@ -2021,17 +2068,83 @@ body.receipt-image-viewer-open {
   width: 170px;
 }
 
-.receipt-reference-table th:nth-child(4),
-.receipt-reference-table th:nth-child(6) {
-  width: 105px;
+.receipt-reference-table th:nth-child(4) {
+  width: 92px;
 }
 
 .receipt-reference-table th:nth-child(5) {
+  width: 92px;
+}
+
+.receipt-reference-table th:nth-child(6) {
   width: 140px;
 }
 
 .receipt-reference-table th:nth-child(7) {
+  width: 104px;
+}
+
+.receipt-reference-table th:nth-child(8) {
   width: 220px;
+}
+
+.column-title-with-tip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 5px;
+}
+
+.column-help {
+  position: relative;
+  width: 16px;
+  height: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #1677ff;
+  background: #eaf3ff;
+  border: 1px solid #91caff;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: help;
+  outline: 0;
+}
+
+.column-help::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  right: -4px;
+  bottom: calc(100% + 8px);
+  z-index: 30;
+  width: max-content;
+  max-width: 280px;
+  padding: 7px 9px;
+  color: #fff;
+  background: #262626;
+  border-radius: 5px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.16);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.45;
+  text-align: left;
+  white-space: normal;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(4px);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.column-help:hover::after,
+.column-help:focus::after {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.difference-active {
+  color: #ff4d4f;
 }
 
 .receipt-recognition-text {
@@ -2544,7 +2657,7 @@ body[data-readonly="true"] .add-product-bar {
 }
 
 body[data-readonly="true"] .receipt-reference-table {
-  min-width: 900px;
+  min-width: 875px;
 }
 
 body[data-readonly="true"] .receipt-ai-panel input[readonly] {
@@ -3313,6 +3426,23 @@ body[data-page="settings"] .table-toolbar {
     grid-column: 1 / -1;
   }
 
+  .receipt-form-grid.receipt-form-compact > * {
+    grid-row: auto;
+  }
+
+  .receipt-form-grid.receipt-form-compact .merchant-field,
+  .receipt-form-grid.receipt-form-compact .document-number-field,
+  .receipt-form-grid.receipt-form-compact .query-order-action,
+  .receipt-form-grid.receipt-form-compact .order-time-field,
+  .receipt-form-grid.receipt-form-compact .receive-time-field {
+    grid-column: auto;
+  }
+
+  .receipt-form-grid.receipt-form-compact .wide:not(.order-association-strip),
+  body[data-readonly="true"] .receipt-form-grid.receipt-form-compact .wide:not(.order-association-strip) {
+    grid-column: 1 / -1;
+  }
+
   .reference-filter-row .filter-spacer {
     display: none;
   }
@@ -3831,6 +3961,94 @@ body.is-batch-mode .receipt-reference-table [data-order-line],
 .after-sales-product-groups {
   display: grid;
   gap: 10px;
+}
+
+.after-sales-product-list {
+  min-width: 0;
+}
+
+.after-sales-flat-table-wrap {
+  overflow-x: auto;
+  border: 1px solid #e8e8e8;
+  border-radius: 7px;
+}
+
+.after-sales-flat-table {
+  width: 100%;
+  min-width: 1020px;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.after-sales-flat-table th,
+.after-sales-flat-table td {
+  height: 50px;
+  padding: 7px 10px;
+  border-bottom: 1px solid #f0f0f0;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.after-sales-flat-table th {
+  color: #595959;
+  background: #fafafa;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.after-sales-flat-table th .column-title-with-tip {
+  justify-content: flex-start;
+}
+
+.after-sales-flat-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.after-sales-flat-table th:nth-child(1) { width: 52px; }
+.after-sales-flat-table th:nth-child(2) { width: 126px; }
+.after-sales-flat-table th:nth-child(3),
+.after-sales-flat-table th:nth-child(4) { width: 90px; }
+.after-sales-flat-table th:nth-child(5) { width: 188px; }
+.after-sales-flat-table th:nth-child(6) { width: 176px; }
+.after-sales-flat-table th:nth-child(7) { width: 212px; }
+.after-sales-flat-table th:nth-child(8) { width: 70px; }
+
+.after-sales-flat-table .after-sales-action-operation {
+  text-align: center;
+  white-space: nowrap;
+}
+
+.after-sales-flat-table .right {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.after-sales-product-cell strong,
+.after-sales-type-text,
+.after-sales-reason-text {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.after-sales-flat-table .after-sales-select,
+.after-sales-flat-table .after-sales-reason-input {
+  width: 100%;
+}
+
+.after-sales-flat-table .after-sales-field {
+  gap: 5px;
+}
+
+.after-sales-flat-table .after-sales-quantity-input {
+  width: 72px;
+}
+
+.after-sales-workbench-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .after-sales-product-group {
